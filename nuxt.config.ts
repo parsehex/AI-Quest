@@ -71,6 +71,9 @@ export default defineNuxtConfig({
   },
 
   nitro: {
+    experimental: {
+      websocket: true,
+    },
     prerender: {
       crawlLinks: true,
       routes: ["/sitemap.xml"],
