@@ -25,6 +25,7 @@ const navigation = getNavigation("home");
           </NuxtLink>
         </nav>
       </div>
+      <Connection />
     </header>
   </div>
 </template>
