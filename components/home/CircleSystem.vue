@@ -9,6 +9,8 @@
 </template>
 
 <style scoped lang="scss">
+@use "sass:map";
+
 $circle-sizes: (
   "lg": 24rem,
   "md": 18rem,
@@ -16,7 +18,7 @@ $circle-sizes: (
 );
 
 @mixin circle($size) {
-  $circle-size: map-get($circle-sizes, $size);
+  $circle-size: map.get($circle-sizes, $size);
 
   width: $circle-size;
   height: $circle-size;
