@@ -1,5 +1,5 @@
 'use client';
-import type { Room } from '~/types/Game'
+import type { Message, Room } from '~/types/Game'
 import { socket } from '~/components/socket'
 import { ref, computed } from 'vue'
 
@@ -14,7 +14,7 @@ class GameSocketManager {
 	public currentRoom = ref<string | null>(null);
 	public thisRoom = computed(() => this.rooms.value.find(room => room.id === this.currentRoom.value));
 	public error = ref(null);
-	public messages = ref<{ sender: string, text: string }[]>([]);
+	public messages = ref<Message[]>([]);
 	public hasRooms = computed(() => this.rooms.value.length > 0);
 
 	private constructor() {
@@ -71,12 +71,12 @@ class GameSocketManager {
 		log.debug(`Player ${playerId} joined`);
 	}
 
-	private onChatHistory(history: { sender: string, text: string }[]): void {
+	private onChatHistory(history: Message[]): void {
 		log.debug('Received chat history:', history);
 		this.messages.value = [...history];
 	}
 
-	private onNewMessage(message: { sender: string, text: string }): void {
+	private onNewMessage(message: Message): void {
 		log.debug('Received new message:', message);
 		this.messages.value.push(message);
 	}
@@ -97,8 +97,9 @@ class GameSocketManager {
 	}
 
 	public joinRoom(roomId: string): void {
-		log.debug('Joining room:', roomId);
-		socket.emit('joinRoom', roomId);
+		const nickname = localStorage.getItem('nickname') || 'Anonymous';
+		log.debug('Joining room:', roomId, 'as', nickname);
+		socket.emit('joinRoom', { roomId, nickname });
 		this.currentRoom.value = roomId;
 		this.refreshMessages(roomId);
 	}

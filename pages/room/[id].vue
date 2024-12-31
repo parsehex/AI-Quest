@@ -18,7 +18,8 @@ onMounted(async () => {
   log.debug('mounted - roomIds', roomIds, 'this:', roomId)
 
   if (!roomIds.includes(roomId)) {
-    router.push('/')
+    // @ts-ignore
+    window.location.href = '/'
     return
   }
 
@@ -38,14 +39,10 @@ onBeforeRouteLeave((to, from) => {
   }
 })
 </script>
-
 <template>
   <h2 class="text-xl font-semibold text-center">{{ sock.thisRoom.value?.name }}</h2>
   <div class="container-fluid mx-auto py-8 flex gap-2">
-		<Game :roomId="roomId" />
-    <ChatRoom
-      :messages="messages"
-      :room-id="roomId"
-    />
+    <Game :roomId="roomId" />
+    <ChatRoom :messages="messages" :room-id="roomId" />
   </div>
 </template>

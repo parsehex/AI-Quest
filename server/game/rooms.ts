@@ -1,4 +1,4 @@
-import { Room } from '~/types/Game';
+import { Message, Room } from '~/types/Game';
 import { writeFile, readFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
@@ -59,10 +59,13 @@ export class RoomManager {
 		return room;
 	}
 
-	async joinRoom(socketId: string, roomId: string): Promise<Room | null> {
+	async joinRoom(socketId: string, roomId: string, nickname: string): Promise<Room | null> {
 		const room = this.rooms.get(roomId);
 		if (room) {
-			room.players.push(socketId);
+			room.players.push({
+				id: socketId,
+				nickname
+			});
 			await this.saveRooms();
 			return room;
 		}
@@ -72,9 +75,8 @@ export class RoomManager {
 	async leaveRoom(socketId: string, roomId: string): Promise<void> {
 		const room = this.rooms.get(roomId);
 		if (room) {
-			room.players = room.players.filter(id => id !== socketId);
+			room.players = room.players.filter(player => player.id !== socketId);
 			if (room.players.length === 0) {
-				// Commented out as per your version
 				// this.rooms.delete(roomId);
 			}
 			await this.saveRooms();
@@ -120,7 +122,7 @@ export class RoomManager {
 		}
 	}
 
-	async addMessage(roomId: string, message: { sender: string, text: string }): Promise<void> {
+	async addMessage(roomId: string, message: Message): Promise<void> {
 		try {
 			console.log('Adding message:', message);
 			const chatPath = this.getRoomChatPath(roomId)

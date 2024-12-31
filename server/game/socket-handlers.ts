@@ -1,5 +1,6 @@
 import { Server, Socket } from 'socket.io';
 import { RoomManager } from './rooms';
+import { Message } from '~/types/Game';
 
 export const registerRoomHandlers = (io: Server, socket: Socket, roomManager: RoomManager) => {
 	socket.on("createRoom", async (roomName: string) => {
@@ -9,11 +10,15 @@ export const registerRoomHandlers = (io: Server, socket: Socket, roomManager: Ro
 	});
 
 	// Add to existing handlers
-	socket.on('joinRoom', async (roomId: string) => {
-		const room = await roomManager.joinRoom(socket.id, roomId)
+	socket.on('joinRoom', async ({ roomId, nickname }) => {
+		const room = await roomManager.joinRoom(socket.id, roomId, nickname)
 		if (room) {
 			socket.join(roomId)
-			io.to(roomId).emit('playerJoined', socket.id)
+
+			// this might cause issues playing multiple games at once
+			socket.data.nickname = nickname
+
+			io.to(roomId).emit('playerJoined', { roomId, nickname })
 			io.emit('roomList', roomManager.getRooms())
 
 			// Send chat history to joining user
@@ -23,9 +28,12 @@ export const registerRoomHandlers = (io: Server, socket: Socket, roomManager: Ro
 	})
 
 	socket.on('message', async ({ roomId, text }) => {
-		const message = {
+		const nickname = socket.data.nickname || 'Anonymous'
+		const message: Message = {
 			sender: socket.id,
-			text
+			text,
+			timestamp: new Date(),
+			nickname
 		}
 		await roomManager.addMessage(roomId, message)
 		io.to(roomId).emit('newMessage', message)
