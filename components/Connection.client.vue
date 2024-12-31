@@ -31,12 +31,8 @@ onBeforeUnmount(() => {
 });
 
 </script>
-
 <template>
-  <p v-if="isConnected" class="text-green-500">
-    WebSocket connected (<b>{{ transport }} transport</b>)
-  </p>
-  <p v-else class="text-red-500">
-    WebSocket <b>disconnected</b>
+  <p v-if="isConnected" class="text-green-500"> Connected ({{ transport }} transport) </p>
+  <p v-else class="text-red-500"> WebSocket <b>disconnected</b>
   </p>
 </template>
