@@ -8,7 +8,7 @@ export class LLMManager {
 	private constructor() {
 		const cfg = useRuntimeConfig();
 		this.openai = new OpenAI({
-			baseURL: 'https://openrouter.ai/api/v1',
+			baseURL: cfg.private.openaiBaseUrl,
 			apiKey: cfg.private.openrouterApiKey,
 		});
 	}
@@ -26,6 +26,7 @@ export class LLMManager {
 			const completion = await this.openai.chat.completions.create({
 				messages,
 				model: useRuntimeConfig().private.model,
+				temperature: 0.25,
 			});
 			return completion.choices[0].message.content || "No response generated";
 		} catch (error) {

@@ -9,7 +9,14 @@ export interface Room {
 	players: Player[];
 	premise: string;
 	aiLoading?: boolean;
-	lastAiResponse?: string;
+	lastAiResponse?: {
+		intro: string;
+		narrative: string;
+		choices: string[];
+	};
+	currentTurn?: number;
+	currentPlayer?: string;
+	history?: string[];
 }
 
 export interface Message {

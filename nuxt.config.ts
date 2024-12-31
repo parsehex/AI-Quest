@@ -25,6 +25,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     private: {
       resendApiKey: process.env.RESEND_API_KEY,
+      openaiBaseUrl: process.env.OPENAI_BASE_URL,
       openrouterApiKey: process.env.OPENROUTER_API_KEY,
       model: process.env.MODEL,
     },

@@ -148,6 +148,11 @@ class GameSocketManager {
 			socket.on('connect', onConnect);
 		});
 	}
+
+	public makeChoice(roomId: string, choice: string): void {
+		log.debug('Making choice:', choice);
+		socket.emit('makeChoice', { roomId, choice });
+	}
 }
 
 // Composable
@@ -177,5 +182,6 @@ export function useGameSocket() {
 		leaveRoom: gameSocket.leaveRoom.bind(gameSocket),
 		sendMessage: gameSocket.sendMessage.bind(gameSocket),
 		waitConnected: gameSocket.waitConnected.bind(gameSocket),
+		makeChoice: gameSocket.makeChoice.bind(gameSocket),
 	}
 }

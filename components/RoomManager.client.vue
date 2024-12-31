@@ -1,6 +1,13 @@
 <script setup lang="ts">
-const newRoomName = ref('')
-const premise = ref('')
+const ranNum = Math.floor(Math.random() * 1000)
+const isDev = import.meta.env.DEV
+const starters = [
+  'A bank robbery',
+  'dragon robbery',
+  'exploring a forgotten city',
+]
+const newRoomName = ref(isDev ? `Game ${ranNum}` : '')
+const premise = ref(isDev ? starters[Math.floor(Math.random() * starters.length)] : '')
 const sock = useGameSocket()
 const { currentRoom, rooms, hasRooms } = sock
 
@@ -9,6 +16,7 @@ const handleCreateRoom = (e: any) => {
     sock.createRoom(newRoomName.value, premise.value)
     newRoomName.value = ''
     premise.value = ''
+    sock.refreshRooms()
   }
   e.preventDefault()
 }
