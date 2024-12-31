@@ -1,96 +1,171 @@
-// composables/useGameSocket.ts
+'use client';
 import type { Room } from '~/types/Game'
 import { socket } from '~/components/socket'
-import { ref, computed, onBeforeUnmount } from 'vue'
+import { ref, computed } from 'vue'
 
-export function useGameSocket() {
-	// Connection state
-	const isConnected = ref(false)
-	const transport = ref('N/A')
+const log = useLog('useGameSocket');
 
-	// Room state
-	const rooms = ref<Room[]>([])
-	const currentRoom = ref(null as string | null)
-	const error = ref(null)
+class GameSocketManager {
+	private static instance: GameSocketManager | null = null;
 
-	const hasRooms = computed(() => rooms.value.length > 0)
+	public isConnected = ref(false);
+	public transport = ref('N/A');
+	public rooms = ref<Room[]>([]);
+	public currentRoom = ref<string | null>(null);
+	public error = ref(null);
+	public messages = ref<{ sender: string, text: string }[]>([]);
+	public hasRooms = computed(() => this.rooms.value.length > 0);
 
-	// Connection handlers
-	function onConnect() {
-		isConnected.value = true
-		transport.value = socket.io.engine.transport.name
-
-		socket.io.engine.on("upgrade", (rawTransport) => {
-			transport.value = rawTransport.name
-		})
-
-		// Request initial room list on connect
-		socket.emit('getRooms')
-	}
-
-	function onDisconnect() {
-		isConnected.value = false
-		transport.value = 'N/A'
-	}
-
-	// Room handlers
-	const createRoom = (roomName: string) => {
-		socket.emit('createRoom', roomName)
-	}
-
-	const joinRoom = (roomId: string) => {
-		socket.emit('joinRoom', roomId)
-		currentRoom.value = roomId
-	}
-
-	const leaveRoom = () => {
-		if (currentRoom.value) {
-			socket.emit('leaveRoom', currentRoom.value)
-			currentRoom.value = null
+	private constructor() {
+		this.initializeSocketListeners();
+		if (socket.connected) {
+			this.onConnect();
+			log.debug('Already connected');
 		}
 	}
 
-	// Socket event listeners
-	socket.on('connect', onConnect)
-	socket.on('disconnect', onDisconnect)
-
-	socket.on('roomList', (updatedRooms) => {
-		console.log('Room list updated', updatedRooms)
-		rooms.value = [...updatedRooms]
-	})
-
-	socket.on('playerJoined', (playerId) => {
-		console.log(`Player ${playerId} joined`)
-		// Handle new player joining
-	})
-
-	// Initial connection check
-	if (socket.connected) {
-		onConnect()
+	static getInstance(): GameSocketManager {
+		if (!GameSocketManager.instance) {
+			GameSocketManager.instance = new GameSocketManager();
+		}
+		return GameSocketManager.instance;
 	}
 
-	// Cleanup
+	public reinitializeListeners(): void {
+		this.cleanup();
+		this.initializeSocketListeners();
+	}
+
+	private initializeSocketListeners(): void {
+		socket.on('connect', this.onConnect.bind(this));
+		socket.on('disconnect', this.onDisconnect.bind(this));
+		socket.on('roomList', this.onRoomList.bind(this));
+		socket.on('playerJoined', this.onPlayerJoined.bind(this));
+		socket.on('chatHistory', this.onChatHistory.bind(this));
+		socket.on('newMessage', this.onNewMessage.bind(this));
+	}
+
+	private onConnect(): void {
+		this.isConnected.value = true;
+		this.transport.value = socket.io.engine.transport.name;
+
+		socket.io.engine.on("upgrade", (rawTransport) => {
+			this.transport.value = rawTransport.name;
+		});
+
+		socket.emit('getRooms');
+	}
+
+	private onDisconnect(): void {
+		this.isConnected.value = false;
+		this.transport.value = 'N/A';
+	}
+
+	private onRoomList(updatedRooms: Room[]): void {
+		log.debug('Received room list:', updatedRooms);
+		this.rooms.value = [...updatedRooms];
+	}
+
+	private onPlayerJoined(playerId: string): void {
+		log.debug(`Player ${playerId} joined`);
+	}
+
+	private onChatHistory(history: { sender: string, text: string }[]): void {
+		log.debug('Received chat history:', history);
+		this.messages.value = [...history];
+	}
+
+	private onNewMessage(message: { sender: string, text: string }): void {
+		log.debug('Received new message:', message);
+		this.messages.value.push(message);
+	}
+
+	public cleanup(): void {
+		socket.off('connect');
+		socket.off('disconnect');
+		socket.off('roomList');
+		socket.off('playerJoined');
+		socket.off('chatHistory');
+		socket.off('newMessage');
+	}
+
+	// Public methods
+	public createRoom(roomName: string): void {
+		log.debug('Creating room:', roomName);
+		socket.emit('createRoom', roomName);
+	}
+
+	public joinRoom(roomId: string): void {
+		log.debug('Joining room:', roomId);
+		socket.emit('joinRoom', roomId);
+		this.currentRoom.value = roomId;
+		this.refreshMessages(roomId);
+	}
+
+	public leaveRoom(): void {
+		if (!this.currentRoom.value) return;
+		log.debug('Leaving room:', this.currentRoom.value);
+		socket.emit('leaveRoom', this.currentRoom.value);
+		this.currentRoom.value = null;
+	}
+
+	public sendMessage(roomId: string, text: string): void {
+		log.debug('Sending message:', text);
+		socket.emit('message', { roomId, text });
+	}
+
+	public refreshRooms(): void {
+		log.debug('Getting rooms');
+		socket.emit('getRooms');
+	}
+	public refreshMessages(roomId = ''): void {
+		if (roomId === '') {
+			roomId = this.currentRoom.value || '';
+		}
+		if (roomId === '') return;
+		log.debug('Getting messages for room:', roomId);
+		socket.emit('getMessages', roomId);
+	}
+
+	public async waitConnected(): Promise<void> {
+		if (this.isConnected.value) {
+			return;
+		}
+
+		return new Promise((resolve) => {
+			const onConnect = () => {
+				socket.off('connect', onConnect);
+				resolve();
+			};
+			socket.on('connect', onConnect);
+		});
+	}
+}
+
+// Composable
+export function useGameSocket() {
+	const gameSocket = GameSocketManager.getInstance();
+
 	onBeforeUnmount(() => {
-		socket.off('connect', onConnect)
-		socket.off('disconnect', onDisconnect)
-		socket.off('roomList')
-		socket.off('playerJoined')
-	})
+		gameSocket.cleanup();
+	});
 
 	return {
-		// Connection state
-		isConnected,
-		transport,
+		isConnected: gameSocket.isConnected,
+		transport: gameSocket.transport,
+		rooms: gameSocket.rooms,
+		currentRoom: gameSocket.currentRoom,
+		error: gameSocket.error,
+		messages: gameSocket.messages,
+		hasRooms: gameSocket.hasRooms,
 
-		// Room state
-		rooms,
-		currentRoom,
-		error,
-		hasRooms,
-
-		// Methods
-		createRoom,
-		joinRoom,
-		leaveRoom
+		reinitializeListeners: gameSocket.reinitializeListeners.bind(gameSocket),
+		refreshRooms: gameSocket.refreshRooms.bind(gameSocket),
+		refreshMessages: gameSocket.refreshMessages.bind(gameSocket),
+		createRoom: gameSocket.createRoom.bind(gameSocket),
+		joinRoom: gameSocket.joinRoom.bind(gameSocket),
+		leaveRoom: gameSocket.leaveRoom.bind(gameSocket),
+		sendMessage: gameSocket.sendMessage.bind(gameSocket),
+		waitConnected: gameSocket.waitConnected.bind(gameSocket),
 	}
 }

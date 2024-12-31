@@ -1,5 +1,5 @@
 import { Room } from '~/types/Game';
-import { writeFile, readFile } from 'fs/promises';
+import { writeFile, readFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
 
@@ -45,6 +45,15 @@ export class RoomManager {
 			name: roomName,
 			players: []
 		};
+
+		// Create room directory and chat file
+		const roomDir = path.join(this.storageDir, roomId)
+		await mkdir(roomDir, { recursive: true })
+		await writeFile(
+			this.getRoomChatPath(roomId),
+			JSON.stringify([], null, 2)
+		)
+
 		this.rooms.set(roomId, room);
 		await this.saveRooms();
 		return room;
@@ -93,6 +102,33 @@ export class RoomManager {
 		}
 		if (hasChanges) {
 			await this.saveRooms();
+		}
+	}
+
+	private getRoomChatPath(roomId: string): string {
+		return path.join(this.storageDir, roomId, 'chat.json')
+	}
+
+	async getChatHistory(roomId: string): Promise<any[]> {
+		try {
+			const chatPath = this.getRoomChatPath(roomId)
+			const data = await readFile(chatPath, 'utf-8')
+			return JSON.parse(data)
+		} catch (error) {
+			console.error('Error loading chat history:', error)
+			return []
+		}
+	}
+
+	async addMessage(roomId: string, message: { sender: string, text: string }): Promise<void> {
+		try {
+			console.log('Adding message:', message);
+			const chatPath = this.getRoomChatPath(roomId)
+			const history = await this.getChatHistory(roomId)
+			history.push(message)
+			await writeFile(chatPath, JSON.stringify(history, null, 2))
+		} catch (error) {
+			console.error('Error saving message:', error)
 		}
 	}
 }

@@ -10,6 +10,10 @@ const handleCreateRoom = (e: any) => {
   }
 	e.preventDefault()
 }
+
+onMounted(() => {
+  sock.refreshRooms()
+})
 </script>
 
 <template>
@@ -34,9 +38,9 @@ const handleCreateRoom = (e: any) => {
         <li v-for="room in rooms" :key="room.id">
           {{ room.name }}
           ({{ room.players.length }} players)
-          <button @click="sock.joinRoom(room.id)">
+          <NuxtLink :to="'/room/' + room.id">
             Join
-          </button>
+          </NuxtLink>
         </li>
       </ul>
     </div>
