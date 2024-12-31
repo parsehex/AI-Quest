@@ -1,6 +1,6 @@
 'use client';
 import type { Message, Room } from '~/types/Game'
-import { socket } from '~/components/socket'
+import { socket } from '~/lib/socket'
 import { ref, computed } from 'vue'
 
 const log = useLog('useGameSocket');

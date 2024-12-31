@@ -1,5 +1,5 @@
 <script setup>
-import { socket } from "./socket";
+import { socket } from "~/lib/socket";
 
 const isConnected = ref(false);
 const transport = ref("N/A");
