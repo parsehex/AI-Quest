@@ -38,12 +38,13 @@ export class RoomManager {
 		}
 	}
 
-	async createRoom(socketId: string, roomName: string): Promise<Room> {
+	async createRoom(socketId: string, roomName: string, premise: string): Promise<Room> {
 		const roomId = Math.random().toString(36).substring(7);
 		const room: Room = {
 			id: roomId,
 			name: roomName,
-			players: []
+			players: [],
+			premise
 		};
 
 		// Create room directory and chat file
@@ -81,6 +82,10 @@ export class RoomManager {
 			}
 			await this.saveRooms();
 		}
+	}
+
+	getRoom(roomId: string): Room | undefined {
+		return this.rooms.get(roomId);
 	}
 
 	getRooms(): Room[] {

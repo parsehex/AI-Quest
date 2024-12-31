@@ -38,6 +38,7 @@ export default defineNuxtConfig({
     "@nuxthq/ui",
     "nuxt-svgo",
     "@nuxt/image",
+    "@nuxtjs/mdc"
   ],
 
   colorMode: {

@@ -7,6 +7,9 @@ export interface Room {
 	id: string;
 	name: string;
 	players: Player[];
+	premise: string;
+	aiLoading?: boolean;
+	lastAiResponse?: string;
 }
 
 export interface Message {

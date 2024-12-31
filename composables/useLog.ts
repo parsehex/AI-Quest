@@ -1,3 +1,4 @@
+'use client';
 import { ref } from 'vue'
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error'

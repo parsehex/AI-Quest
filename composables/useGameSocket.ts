@@ -91,9 +91,9 @@ class GameSocketManager {
 	}
 
 	// Public methods
-	public createRoom(roomName: string): void {
-		log.debug('Creating room:', roomName);
-		socket.emit('createRoom', roomName);
+	public createRoom(roomName: string, premise: string): void {
+		log.debug('Creating room:', roomName, 'with premise:', premise);
+		socket.emit('createRoom', roomName, premise);
 	}
 
 	public joinRoom(roomId: string): void {
@@ -127,6 +127,12 @@ class GameSocketManager {
 		if (roomId === '') return;
 		log.debug('Getting messages for room:', roomId);
 		socket.emit('getMessages', roomId);
+	}
+
+	public regenerateResponse(roomId: string): void {
+		const premise = this.thisRoom.value?.premise || '';
+		log.debug('Regenerating response for room:', roomId, 'with premise:', premise);
+		socket.emit('regenerateResponse', roomId, premise);
 	}
 
 	public async waitConnected(): Promise<void> {
@@ -165,6 +171,7 @@ export function useGameSocket() {
 		reinitializeListeners: gameSocket.reinitializeListeners.bind(gameSocket),
 		refreshRooms: gameSocket.refreshRooms.bind(gameSocket),
 		refreshMessages: gameSocket.refreshMessages.bind(gameSocket),
+		regenerateResponse: gameSocket.regenerateResponse.bind(gameSocket),
 		createRoom: gameSocket.createRoom.bind(gameSocket),
 		joinRoom: gameSocket.joinRoom.bind(gameSocket),
 		leaveRoom: gameSocket.leaveRoom.bind(gameSocket),

@@ -1,12 +1,14 @@
 <script setup lang="ts">
 const newRoomName = ref('')
+const premise = ref('')
 const sock = useGameSocket()
 const { currentRoom, rooms, hasRooms } = sock
 
 const handleCreateRoom = (e: any) => {
   if (newRoomName.value.trim()) {
-    sock.createRoom(newRoomName.value)
+    sock.createRoom(newRoomName.value, premise.value)
     newRoomName.value = ''
+    premise.value = ''
   }
   e.preventDefault()
 }
@@ -22,6 +24,7 @@ onMounted(() => {
         width: 'w-48',
         input: 'text-sm'
       }" />
+      <UTextarea v-model="premise" placeholder="Enter your game premise" class="mt-2" :rows="3" />
       <UButton type="button" class="mt-2" @click="handleCreateRoom" @keyup.enter="handleCreateRoom"
         :disabled="!newRoomName.trim()"> Create Room </UButton>
     </div>
