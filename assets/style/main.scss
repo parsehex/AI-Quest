@@ -35,3 +35,14 @@
   margin-right: auto;
   margin-left: auto;
 }
+
+.text-muted {
+  @media (prefers-color-scheme: dark) {
+    --tw-text-opacity: 1;
+    color: rgb(var(--color-gray-400) / var(--tw-text-opacity, 1));
+  }
+  @media (prefers-color-scheme: light) {
+    --tw-text-opacity: 1;
+    color: rgb(var(--color-gray-500) / var(--tw-text-opacity, 1));
+  }
+}

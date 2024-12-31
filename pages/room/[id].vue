@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { delay } from '~/lib/utils'
+import ChatRoom from '~/components/game-room/ChatRoom.vue'
+import Game from '~/components/game-room/Game.vue'
 
 const log = useLog('room-id')
 const route = useRoute()
@@ -38,8 +40,9 @@ onBeforeRouteLeave((to, from) => {
 </script>
 
 <template>
-  <div class="container-fluid mx-auto py-8">
-		<!-- <Game /> -->
+  <h2 class="text-xl font-semibold text-center">{{ sock.thisRoom.value?.name }}</h2>
+  <div class="container-fluid mx-auto py-8 flex gap-2">
+		<Game :roomId="roomId" />
     <ChatRoom
       :messages="messages"
       :room-id="roomId"

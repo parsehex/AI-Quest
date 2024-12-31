@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const log = useLog('ChatRoom')
+
 interface Message {
   sender: string
   text: string
@@ -16,6 +18,7 @@ const sock = useGameSocket()
 
 const sendMessage = () => {
   if (message.value.trim()) {
+    log.debug('Sending message:', message.value)
     sock.sendMessage(props.roomId, message.value)
     message.value = ''
   }
@@ -35,7 +38,7 @@ watch(() => props.messages, () => {
   <div class="flex flex-col h-full rounded-lg border dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow w-1/3">
     <!-- Chat Header -->
     <div class="p-4 border-b dark:border-neutral-700">
-      <h2 class="text-lg font-semibold">Chat Room</h2>
+      <h2 class="text-lg text-muted font-semibold">Chat Room</h2>
       <p class="text-sm text-muted">{{ messages.length }} messages</p>
     </div>
 
@@ -92,9 +95,3 @@ watch(() => props.messages, () => {
     </div>
   </div>
 </template>
-
-<style scoped>
-.text-muted {
-  @apply text-gray-500 dark:text-gray-400;
-}
-</style>

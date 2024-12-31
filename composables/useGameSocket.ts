@@ -12,6 +12,7 @@ class GameSocketManager {
 	public transport = ref('N/A');
 	public rooms = ref<Room[]>([]);
 	public currentRoom = ref<string | null>(null);
+	public thisRoom = computed(() => this.rooms.value.find(room => room.id === this.currentRoom.value));
 	public error = ref(null);
 	public messages = ref<{ sender: string, text: string }[]>([]);
 	public hasRooms = computed(() => this.rooms.value.length > 0);
@@ -155,6 +156,7 @@ export function useGameSocket() {
 		transport: gameSocket.transport,
 		rooms: gameSocket.rooms,
 		currentRoom: gameSocket.currentRoom,
+		thisRoom: gameSocket.thisRoom,
 		error: gameSocket.error,
 		messages: gameSocket.messages,
 		hasRooms: gameSocket.hasRooms,
