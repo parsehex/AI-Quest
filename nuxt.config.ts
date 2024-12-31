@@ -83,4 +83,12 @@ export default defineNuxtConfig({
 
   plugins: [{ src: "~/plugins/vercel.ts", mode: "client" }],
   compatibilityDate: "2024-12-30",
+
+  vite: {
+    css: {
+      preprocessorOptions: {
+        scss: { api: 'modern' }
+      }
+    }
+  }
 });
