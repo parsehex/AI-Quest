@@ -53,5 +53,6 @@ export const useLog = (prefix = 'App', options: LoggerOptions = {}) => {
 		info,
 		warn,
 		error,
+		log: debug
 	}
 }
