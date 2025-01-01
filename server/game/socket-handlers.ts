@@ -23,14 +23,19 @@ Assistant's task is to create a response with the following sections:
 Use the choice text without anything preceding. Create choices which make sense to push the events forward.
 Pay attention and react to the latest choice in a natrual way.${players.length ? `\n\nPlayers in this game: ${players.join(', ')}` : ''}`;
 
+	const latestEvent = history.slice(-1)[0] || '';
+	history = history.slice(0, -1);
+
+	const fastMode = room.fastMode || false;
+
 	const response = await llm.generateResponse([
 		{ role: "system", content: prompt },
 		{
-			role: "user", content: `Premise: ${premise}
-${history.length ? 'Previous events:\n' + history.join('\n') : ''}
-Provide the next scene:`
+			role: "user", content: `Original premise: ${premise}
+${history.length ? 'Events:\n' + history.join('\n') : ''}
+${latestEvent ? 'Latest event:\n' + latestEvent : ''}`
 		}
-	]);
+	], fastMode);
 
 	// Parse sections
 	const sections = {
@@ -53,8 +58,8 @@ Provide the next scene:`
 };
 
 export const registerRoomHandlers = (io: Server, socket: Socket, roomManager: RoomManager) => {
-	socket.on("createRoom", async (roomName: string, premise: string) => {
-		const room = await roomManager.createRoom(socket.id, roomName, premise);
+	socket.on("createRoom", async (roomName: string, premise: string, fastMode: boolean) => {
+		const room = await roomManager.createRoom(socket.id, roomName, premise, fastMode);
 		socket.join(room.id);
 
 		// Generate initial AI response

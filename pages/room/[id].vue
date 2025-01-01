@@ -10,6 +10,8 @@ const sock = useGameSocket()
 const { messages } = sock
 const router = useRouter()
 
+const isChatOpen = ref(true)
+
 // Join room on page load
 onMounted(async () => {
   await sock.waitConnected()
@@ -43,8 +45,8 @@ onBeforeRouteLeave((to, from) => {
   <div>
     <h2 class="text-xl font-semibold text-center">{{ sock.thisRoom.value?.name }}</h2>
     <div class="container-fluid mx-auto py-8 flex gap-2">
-      <Game :roomId="roomId" />
-      <ChatRoom :messages="messages" :room-id="roomId" />
+      <Game :roomId="roomId" :is-full-width="!isChatOpen" />
+      <ChatRoom :messages="messages" :room-id="roomId" v-model:is-open="isChatOpen" />
     </div>
   </div>
 </template>

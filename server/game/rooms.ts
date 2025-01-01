@@ -38,7 +38,7 @@ export class RoomManager {
 		}
 	}
 
-	async createRoom(socketId: string, roomName: string, premise: string): Promise<Room> {
+	async createRoom(socketId: string, roomName: string, premise: string, fastMode: boolean): Promise<Room> {
 		const roomId = Math.random().toString(36).substring(7);
 		const room: Room = {
 			id: roomId,
@@ -46,6 +46,7 @@ export class RoomManager {
 			players: [],
 			premise,
 			history: [],
+			fastMode,
 		};
 
 		// Create room directory and chat file

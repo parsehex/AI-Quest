@@ -17,6 +17,7 @@ export interface Room {
 	currentTurn?: number;
 	currentPlayer?: string;
 	history?: string[];
+	fastMode?: boolean;
 }
 
 export interface Message {

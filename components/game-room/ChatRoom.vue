@@ -6,6 +6,11 @@ const log = useLog('ChatRoom')
 const props = defineProps<{
   messages: Message[]
   roomId: string
+  isOpen: boolean
+}>()
+
+const emit = defineEmits<{
+  'update:isOpen': [value: boolean]
 }>()
 
 const message = ref('')
@@ -13,6 +18,11 @@ const chatContainer = ref<HTMLElement | null>(null)
 const sock = useGameSocket()
 const room = computed(() => sock.thisRoom.value)
 const players = computed(() => room.value?.players || [])
+const currentTurnPlayer = computed(() => room.value?.players.find(p => p.id === room.value?.currentPlayer))
+
+const toggleChat = () => {
+  emit('update:isOpen', !props.isOpen)
+}
 
 const sendMessage = () => {
   if (message.value.trim()) {
@@ -33,7 +43,15 @@ watch(() => props.messages, () => {
 </script>
 <template>
   <div
-    class="flex flex-col h-full rounded-lg border dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow w-1/3 fixed right-4 top-4">
+    :class="`flex flex-col h-full rounded-lg border dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow fixed transition-all duration-300 top-0 bottom-0 ${isOpen ? 'right-2 w-1/3' : 'right-[-33%] w-1/3'}`">
+    <!-- Toggle Button -->
+    <div class="absolute top-1/2 left-0 -translate-x-full flex flex-col items-center">
+      <span class="text-xs text-muted mb-1 select-none">Chat</span>
+      <button @click="toggleChat"
+        class="bg-white dark:bg-neutral-800 p-2 rounded-l-lg border dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-700">
+        <i :class="isOpen ? 'i-heroicons-chevron-right' : 'i-heroicons-chevron-left'" class="w-5 h-5"></i>
+      </button>
+    </div>
     <!-- Chat Header -->
     <div class="p-4 border-b dark:border-neutral-700">
       <h2 class="text-lg text-muted font-semibold">Chat Room</h2>
@@ -43,7 +61,8 @@ watch(() => props.messages, () => {
     <div class="p-4 border-b dark:border-neutral-700 flex gap-4 overflow-x-auto">
       <h3 class="text-md text-muted font-semibold">Players</h3>
       <ul class="flex gap-4">
-        <li v-for="(player, index) in players" :key="index" class="flex items-center gap-2">
+        <li v-for="(player, index) in players" :key="index"
+          :class="'flex items-center gap-2' + (player.id === currentTurnPlayer?.id ? ' text-primary-500' : '')">
           <UAvatar :src="`https://api.dicebear.com/7.x/identicon/svg?seed=${player.id}`" :alt="player.nickname"
             size="sm" />
           <span class="text-sm">{{ player.nickname }}</span>

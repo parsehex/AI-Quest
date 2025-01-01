@@ -99,9 +99,9 @@ class GameSocketManager {
 	}
 
 	// Public methods
-	public createRoom(roomName: string, premise: string): void {
+	public createRoom(roomName: string, premise: string, fastMode = false): void {
 		log.debug('Creating room:', roomName, 'with premise:', premise);
-		socket.emit('createRoom', roomName, premise);
+		socket.emit('createRoom', roomName, premise, fastMode);
 	}
 
 	public joinRoom(roomId: string): void {

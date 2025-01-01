@@ -2,16 +2,7 @@ import OpenAI from "openai";
 
 export class LLMManager {
 	private static instance: LLMManager | null = null;
-	private openai: OpenAI;
 	private isProcessing = false;
-
-	private constructor() {
-		const cfg = useRuntimeConfig();
-		this.openai = new OpenAI({
-			baseURL: cfg.private.openaiBaseUrl,
-			apiKey: cfg.private.openrouterApiKey,
-		});
-	}
 
 	static getInstance(): LLMManager {
 		if (!LLMManager.instance) {
@@ -20,14 +11,34 @@ export class LLMManager {
 		return LLMManager.instance;
 	}
 
-	async generateResponse(messages: any[]): Promise<string> {
+	async generateResponse(messages: any[], fastMode: boolean = false): Promise<string> {
 		try {
 			this.isProcessing = true;
-			const completion = await this.openai.chat.completions.create({
+			const config = useRuntimeConfig();
+
+			// Use fast mode settings if enabled and available
+			const baseURL = fastMode && config.private.openaiBaseUrl_fast
+				? config.private.openaiBaseUrl_fast
+				: config.private.openaiBaseUrl;
+
+			const model = fastMode && config.private.model_fast
+				? config.private.model_fast
+				: config.private.model;
+
+			console.log('Using model:', model, 'and baseURL:', baseURL);
+
+			// Create a new OpenAI instance with the appropriate baseURL
+			const openai = new OpenAI({
+				baseURL,
+				apiKey: config.private.openrouterApiKey,
+			});
+
+			const completion = await openai.chat.completions.create({
 				messages,
-				model: useRuntimeConfig().private.model,
+				model,
 				temperature: 0.25,
 			});
+
 			return completion.choices[0].message.content || "No response generated";
 		} catch (error) {
 			console.error("Error generating response:", error);

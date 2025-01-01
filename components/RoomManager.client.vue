@@ -9,6 +9,7 @@ const starters = [
   'exploring a forgotten city',
 ]
 const newRoomName = ref(isDev ? `Game ${ranNum}` : '')
+const fastMode = ref(true)
 const premise = ref(isDev ? starters[Math.floor(Math.random() * starters.length)] : '')
 const sock = useGameSocket()
 const { currentRoom, rooms, hasRooms } = sock
@@ -24,7 +25,7 @@ const players = computed(() => {
 
 const handleCreateRoom = async (e: any) => {
   if (newRoomName.value.trim()) {
-    sock.createRoom(newRoomName.value, premise.value)
+    sock.createRoom(newRoomName.value, premise.value, fastMode.value)
     newRoomName.value = ''
     premise.value = ''
     await delay(100)
@@ -45,6 +46,12 @@ onMounted(() => {
         input: 'text-sm'
       }" />
       <UTextarea v-model="premise" placeholder="Enter your game premise" class="mt-2" :rows="3" />
+      <div class="mt-2 flex items-center space-x-2">
+        <UTooltip text="Fast Mode - Faster but lower quality">
+          <IconsF7Speedometer />
+        </UTooltip>
+        <UToggle id="fastMode" v-model="fastMode" />
+      </div>
       <UButton type="button" class="mt-2" @click="handleCreateRoom" @keyup.enter="handleCreateRoom"
         :disabled="!newRoomName.trim()"> Create Room </UButton>
     </div>
