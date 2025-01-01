@@ -2,6 +2,9 @@ import { Message, Room } from '~/types/Game';
 import { writeFile, readFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
+import { useLog } from '~/composables/useLog';
+
+const log = useLog('server/game/rooms');
 
 export class RoomManager {
 	private rooms: Map<string, Room> = new Map();
@@ -21,7 +24,7 @@ export class RoomManager {
 				this.rooms = new Map(rooms.map(room => [room.id, room]));
 			}
 		} catch (error) {
-			console.error('Error loading rooms:', error);
+			log.error('Error loading rooms:', error);
 		}
 	}
 
@@ -34,11 +37,12 @@ export class RoomManager {
 				JSON.stringify(roomsArray, null, 2)
 			);
 		} catch (error) {
-			console.error('Error saving rooms:', error);
+			log.error('Error saving rooms:', error);
 		}
 	}
 
 	async createRoom(socketId: string, roomName: string, premise: string, fastMode: boolean): Promise<Room> {
+		log.debug('Creating room:', roomName, (fastMode ? '(fast)' : '') + ' - Premise:', premise);
 		const roomId = Math.random().toString(36).substring(7);
 		const room: Room = {
 			id: roomId,
@@ -63,6 +67,7 @@ export class RoomManager {
 	}
 
 	async joinRoom(socketId: string, roomId: string, nickname: string): Promise<Room | null> {
+		log.debug(socketId, ' joining room:', roomId, 'as', nickname);
 		const room = this.rooms.get(roomId);
 		if (room) {
 			room.players.push({
@@ -76,6 +81,7 @@ export class RoomManager {
 	}
 
 	async leaveRoom(socketId: string, roomId: string): Promise<void> {
+		log.debug(socketId, ' leaving room:', roomId);
 		const room = this.rooms.get(roomId);
 		if (room) {
 			room.players = room.players.filter(player => player.id !== socketId);
@@ -131,13 +137,13 @@ export class RoomManager {
 
 	async addMessage(roomId: string, message: Message): Promise<void> {
 		try {
-			console.log('Adding message:', message);
+			log.log('Adding message:', message);
 			const chatPath = this.getRoomChatPath(roomId)
 			const history = await this.getChatHistory(roomId)
 			history.push(message)
 			await writeFile(chatPath, JSON.stringify(history, null, 2))
 		} catch (error) {
-			console.error('Error saving message:', error)
+			log.error('Error saving message:', error)
 		}
 	}
 }

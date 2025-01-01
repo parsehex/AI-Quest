@@ -7,6 +7,9 @@ import { mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import { RoomManager } from '../game/rooms';
 import { registerRoomHandlers } from '../game/socket-handlers';
+import { useLog } from '~/composables/useLog';
+
+const log = useLog('server/plugins/socket.io');
 
 export default defineNitroPlugin(async (nitroApp: NitroApp) => {
 	const dataDir = 'data/rooms';
@@ -21,7 +24,7 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
 	io.bind(engine);
 
 	io.on("connection", (socket) => {
-		console.log("A user connected", socket.id);
+		log.debug("A user connected", socket.id);
 
 		// Register all handlers
 		registerRoomHandlers(io, socket, roomManager);
