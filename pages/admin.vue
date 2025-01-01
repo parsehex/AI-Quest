@@ -72,7 +72,7 @@ const handleRemoveAllPlayers = () => {
 				</div>
 			</div>
 			<!-- Admin Tools -->
-			<div class="md:col-span-2 p-4 bg-white dark:bg-neutral-800 rounded-lg shadow">
+			<div v-show="isValidated" class="md:col-span-2 p-4 bg-white dark:bg-neutral-800 rounded-lg shadow">
 				<h2 class="text-xl font-semibold mb-2">Tools</h2>
 				<div class="flex gap-4">
 					<UButton @click="handleClearRooms" color="red" :disabled="!isValidated"> Clear All Rooms </UButton>
