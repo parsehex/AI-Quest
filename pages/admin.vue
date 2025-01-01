@@ -7,7 +7,8 @@ definePageMeta({
 
 const log = useLog('pages/admin');
 const sock = useGameSocket();
-const { rooms, isConnected } = sock;
+const admin = useAdminSocket();
+const { rooms } = sock;
 
 // # of players across all rooms
 const totalPlayers = computed(() => {
@@ -27,37 +28,67 @@ const uniquePlayers = computed(() => {
 
 onMounted(() => {
 	sock.refreshRooms();
+
+	const savedPassword = localStorage.getItem('adminPassword');
+	if (savedPassword) {
+		admin.checkPassword(savedPassword);
+	}
 });
+
+const { isValidated } = admin;
+
+const password = ref('');
+
+const handlePasswordSubmit = () => {
+	localStorage.setItem('adminPassword', password.value);
+	admin.checkPassword(password.value);
+};
+
+const handleClearRooms = () => {
+	admin.clearRooms();
+	sock.refreshRooms();
+};
+
+const handleRemoveAllPlayers = () => {
+	admin.removeAllPlayers();
+	sock.refreshRooms();
+};
 </script>
 <template>
 	<div class="container mx-auto p-4">
 		<h1 class="text-2xl font-bold mb-6">Admin Panel</h1>
-		<!-- Connection Status -->
-		<div class="mb-6 p-4 bg-white dark:bg-neutral-800 rounded-lg shadow">
-			<h2 class="text-xl font-semibold mb-2">Connection Status</h2>
-			<div class="flex items-center gap-2">
-				<div class="w-3 h-3 rounded-full" :class="isConnected ? 'bg-green-500' : 'bg-red-500'"></div>
-				<span>{{ isConnected ? 'Connected' : 'Disconnected' }}</span>
-			</div>
-		</div>
-		<!-- Stats Overview -->
+		<!-- Auth and Tools Grid -->
 		<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+			<!-- Authentication -->
 			<div class="p-4 bg-white dark:bg-neutral-800 rounded-lg shadow">
-				<h3 class="text-lg font-medium mb-2">Active Rooms</h3>
-				<p class="text-2xl font-bold">{{ rooms.length }}</p>
+				<h2 class="text-xl font-semibold mb-2">Authentication</h2>
+				<div class="flex flex-col gap-4">
+					<UInput v-if="!isValidated" v-model="password" type="password" placeholder="Enter admin password" />
+					<UButton v-if="!isValidated" @click="handlePasswordSubmit" color="primary"> Validate </UButton>
+					<div v-else class="flex items-center gap-2">
+						<div class="w-3 h-3 rounded-full bg-green-500"></div>
+						<span>Password validated</span>
+					</div>
+				</div>
 			</div>
-			<div class="p-4 bg-white dark:bg-neutral-800 rounded-lg shadow">
-				<h3 class="text-lg font-medium mb-2">Total Players</h3>
-				<p class="text-2xl font-bold">{{ totalPlayers }}</p>
-			</div>
-			<div class="p-4 bg-white dark:bg-neutral-800 rounded-lg shadow">
-				<h3 class="text-lg font-medium mb-2">Unique Players</h3>
-				<p class="text-2xl font-bold">{{ uniquePlayers }}</p>
+			<!-- Admin Tools -->
+			<div class="md:col-span-2 p-4 bg-white dark:bg-neutral-800 rounded-lg shadow">
+				<h2 class="text-xl font-semibold mb-2">Tools</h2>
+				<div class="flex gap-4">
+					<UButton @click="handleClearRooms" color="red" :disabled="!isValidated"> Clear All Rooms </UButton>
+					<UButton @click="handleRemoveAllPlayers" color="red" :disabled="!isValidated"> Remove All Players </UButton>
+				</div>
 			</div>
 		</div>
 		<!-- Rooms List -->
 		<div class="bg-white dark:bg-neutral-800 rounded-lg shadow p-4">
-			<h2 class="text-xl font-semibold mb-4">Active Rooms</h2>
+			<h2 class="text-xl font-semibold mb-4 flex items-center gap-1">
+				<span>{{ rooms.length }} Active Rooms</span> | <span>{{ totalPlayers }} Players ({{ uniquePlayers }} unique)
+				</span>
+				<UButton @click="sock.refreshRooms" color="sky">
+					<i class="i-heroicons-arrow-path-16-solid w-5 h-5"></i>
+				</UButton>
+			</h2>
 			<div class="overflow-x-auto">
 				<table class="w-full">
 					<thead>
@@ -79,7 +110,9 @@ onMounted(() => {
 										size="xs" /> {{ player.nickname }}
 								</div>
 							</td>
-							<td class="p-2">{{ room.fastMode ? 'Yes' : 'No' }}</td>
+							<td class="p-2 pl-8"><i
+									:class="'w-5 h-5 ' + (room.fastMode ? 'i-heroicons-check' : 'i-heroicons-x-mark')"></i>
+							</td>
 							<td class="p-2">{{ room.currentPlayer }}</td>
 						</tr>
 					</tbody>

@@ -120,6 +120,11 @@ export class RoomManager {
 		}
 	}
 
+	async clearAllRooms(): Promise<void> {
+		this.rooms = new Map();
+		await this.saveRooms();
+	}
+
 	private getRoomChatPath(roomId: string): string {
 		return path.join(this.storageDir, 'rooms', roomId, 'chat.json')
 	}

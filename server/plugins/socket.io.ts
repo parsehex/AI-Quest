@@ -8,6 +8,7 @@ import { existsSync } from 'fs';
 import { RoomManager } from '../game/rooms';
 import { registerRoomHandlers } from '../game/socket-handlers';
 import { useLog } from '~/composables/useLog';
+import { registerAdminHandlers } from '../game/admin-handlers';
 
 const log = useLog('server/plugins/socket.io');
 
@@ -28,6 +29,7 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
 
 		// Register all handlers
 		registerRoomHandlers(io, socket, roomManager);
+		registerAdminHandlers(io, socket, roomManager);
 	});
 
 	nitroApp.router.use("/socket.io/", defineEventHandler({

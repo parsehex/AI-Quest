@@ -24,7 +24,7 @@ const makeChoice = (choice: string) => {
     <div class="p-4 border-b dark:border-neutral-700">
       <h2 class="text-xl text-muted font-semibold"> Game <UTooltip class="float-right" text="Regenerate the last turn">
           <UButton @click="sock.regenerateResponse(props.roomId)" color="violet">
-            <IconsF7Arrow2CirclepathCircleFill />
+            <i class="i-heroicons-arrow-path-16-solid w-5 h-5"></i>
           </UButton>
         </UTooltip>
       </h2>
