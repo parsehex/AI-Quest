@@ -1,8 +1,9 @@
 <script setup>
 import { socket } from "~/lib/socket";
+import { ref, onBeforeUnmount } from "vue";
 
 const isConnected = ref(false);
-const transport = ref("N/A");
+const transport = ref("");
 
 if (socket.connected) {
   onConnect();
@@ -19,7 +20,7 @@ function onConnect() {
 
 function onDisconnect() {
   isConnected.value = false;
-  transport.value = "N/A";
+  transport.value = "";
 }
 
 socket.on("connect", onConnect);
@@ -29,10 +30,12 @@ onBeforeUnmount(() => {
   socket.off("connect", onConnect);
   socket.off("disconnect", onDisconnect);
 });
-
 </script>
 <template>
-  <p v-if="isConnected" class="text-green-500"> Connected ({{ transport }} transport) </p>
-  <p v-else class="text-red-500"> WebSocket <b>disconnected</b>
-  </p>
+  <div class="ml-2">
+    <UTooltip class="relative" :text="transport">
+      <span v-if="isConnected" class="inline-block w-3 h-3 bg-green-500 rounded-full"></span>
+      <span v-else class="inline-block w-3 h-3 bg-red-500 rounded-full"></span>
+    </UTooltip>
+  </div>
 </template>
