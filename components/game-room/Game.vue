@@ -22,10 +22,11 @@ const makeChoice = (choice: string) => {
   <div class="flex flex-col h-full rounded-lg border dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow w-2/3"
     :class="isFullWidth ? 'w-full' : ''">
     <div class="p-4 border-b dark:border-neutral-700">
-      <h2 class="text-xl text-muted font-semibold"> Game <UButton @click="sock.regenerateResponse(props.roomId)"
-          color="violet" class="float-right">
-          <IconsF7Arrow2CirclepathCircleFill />
-        </UButton>
+      <h2 class="text-xl text-muted font-semibold"> Game <UTooltip class="float-right" text="Regenerate the last turn">
+          <UButton @click="sock.regenerateResponse(props.roomId)" color="violet">
+            <IconsF7Arrow2CirclepathCircleFill />
+          </UButton>
+        </UTooltip>
       </h2>
     </div>
     <div class="flex-1 overflow-y-auto p-4 space-y-4">
