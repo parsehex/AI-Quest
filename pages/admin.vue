@@ -8,17 +8,16 @@ definePageMeta({
 const log = useLog('pages/admin');
 const sock = useGameSocket();
 const admin = useAdminSocket();
-const { rooms } = sock;
 
 // # of players across all rooms
 const totalPlayers = computed(() => {
-	return rooms.value.reduce((acc, room) => acc + room.players.length, 0);
+	return sock.rooms.value.reduce((acc, room) => acc + room.players.length, 0);
 });
 
 // unique players (by ID) across all rooms
 const uniquePlayers = computed(() => {
 	const players = new Set();
-	rooms.value.forEach(room => {
+	sock.rooms.value.forEach(room => {
 		room.players.forEach(player => {
 			players.add(player.id);
 		});
@@ -53,6 +52,21 @@ const handleRemoveAllPlayers = () => {
 	admin.removeAllPlayers();
 	sock.refreshRooms();
 };
+
+const handleCurrentPlayerChange = (roomId: string, playerId: string) => {
+	admin.setCurrentPlayer(roomId, playerId);
+	sock.refreshRooms();
+};
+
+const handleKickPlayer = (roomId: string, playerId: string) => {
+	admin.kickPlayer(roomId, playerId);
+	sock.refreshRooms();
+};
+
+const handleToggleFastMode = (roomId: string) => {
+	admin.toggleFastMode(roomId);
+	sock.refreshRooms();
+};
 </script>
 <template>
 	<div class="container mx-auto p-4">
@@ -76,15 +90,15 @@ const handleRemoveAllPlayers = () => {
 				<h2 class="text-xl font-semibold mb-2">Tools</h2>
 				<div class="flex gap-4">
 					<UButton @click="handleClearRooms" color="red" :disabled="!isValidated"> Clear All Rooms </UButton>
-					<UButton @click="handleRemoveAllPlayers" color="red" :disabled="!isValidated"> Remove All Players </UButton>
+					<UButton @click="handleRemoveAllPlayers" color="red" :disabled="!isValidated"> Kick All Players </UButton>
 				</div>
 			</div>
 		</div>
 		<!-- Rooms List -->
-		<div class="bg-white dark:bg-neutral-800 rounded-lg shadow p-4">
+		<div v-show="isValidated" class="bg-white dark:bg-neutral-800 rounded-lg shadow p-4">
 			<h2 class="text-xl font-semibold mb-4 flex items-center gap-1">
-				<span>{{ rooms.length }} Active Rooms</span> | <span>{{ totalPlayers }} Players ({{ uniquePlayers }} unique)
-				</span>
+				<span>{{ sock.rooms.value.length }} Active Rooms</span> | <span>{{ totalPlayers }} Players ({{ uniquePlayers }}
+					unique) </span>
 				<UButton @click="sock.refreshRooms" color="sky">
 					<i class="i-heroicons-arrow-path-16-solid w-5 h-5"></i>
 				</UButton>
@@ -101,19 +115,31 @@ const handleRemoveAllPlayers = () => {
 						</tr>
 					</thead>
 					<tbody>
-						<tr v-for="room in rooms" :key="room.id" class="border-b dark:border-neutral-700">
+						<tr v-for="room in sock.rooms.value" :key="room.id" class="border-b dark:border-neutral-700">
 							<td class="p-2">{{ room.id }}</td>
 							<td class="p-2">{{ room.name }}</td>
 							<td class="p-2">
 								<div v-for="player in room.players" :key="player.id" class="flex items-center gap-2">
 									<UAvatar :src="`https://api.dicebear.com/7.x/identicon/svg?seed=${player.id}`" :alt="player.nickname"
-										size="xs" /> {{ player.nickname }}
+										size="xs" /> {{ player.nickname }} <UButton @click="handleKickPlayer(room.id, player.id)"
+										color="red" size="xs" variant="outline">
+										<i class="i-heroicons-x-mark w-4 h-4"></i>
+									</UButton>
 								</div>
 							</td>
-							<td class="p-2 pl-8"><i
-									:class="'w-5 h-5 ' + (room.fastMode ? 'i-heroicons-check' : 'i-heroicons-x-mark')"></i>
+							<td class="p-2 pl-8">
+								<UButton @click="handleToggleFastMode(room.id)" size="xs" variant="outline"
+									:color="room.fastMode ? 'yellow' : 'orange'"
+									:title="room.fastMode ? 'Fast Mode is enabled' : 'Fast Mode is disabled'">
+									<i :class="'w-5 h-5 ' + (room.fastMode ? 'i-heroicons-check' : 'i-heroicons-x-mark')"></i>
+								</UButton>
 							</td>
-							<td class="p-2">{{ room.currentPlayer }}</td>
+							<td class="p-2">
+								<USelect v-model="room.currentPlayer"
+									:options="room.players.map(p => ({ label: p.nickname, value: p.id }))"
+									@update:modelValue="(value) => handleCurrentPlayerChange(room.id, value)">
+								</USelect>
+							</td>
 						</tr>
 					</tbody>
 				</table>

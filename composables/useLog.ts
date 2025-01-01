@@ -20,31 +20,32 @@ export const useLog = (prefix = 'App', options: LoggerOptions = {}) => {
 
 	const formatMessage = (message: any, level: string) => {
 		const timestamp = new Date().toISOString()
-		return `[${timestamp}] [${prefix}] [${level}] ${typeof message === 'object' ? JSON.stringify(message) : message
-			}`
+		const arr = [`[${timestamp}]`, `[${prefix}]`, `[${level}]`]
+		arr.push(...message)
+		return arr
 	}
 
 	const debug = (...args: any[]) => {
 		if (shouldLog('debug')) {
-			console.debug(formatMessage(args, 'DEBUG'))
+			console.debug(...formatMessage(args, 'DEBUG'))
 		}
 	}
 
 	const info = (...args: any[]) => {
 		if (shouldLog('info')) {
-			console.info(formatMessage(args, 'INFO'))
+			console.info(...formatMessage(args, 'INFO'))
 		}
 	}
 
 	const warn = (...args: any[]) => {
 		if (shouldLog('warn')) {
-			console.warn(formatMessage(args, 'WARN'))
+			console.warn(...formatMessage(args, 'WARN'))
 		}
 	}
 
 	const error = (...args: any[]) => {
 		if (shouldLog('error')) {
-			console.error(formatMessage(args, 'ERROR'))
+			console.error(...formatMessage(args, 'ERROR'))
 		}
 	}
 

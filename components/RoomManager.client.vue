@@ -6,18 +6,18 @@ const isDev = import.meta.env.DEV
 const starters = [
   'A bank robbery',
   'dragon robbery',
+  'bakery robbery',
   'exploring a forgotten city',
 ]
 const newRoomName = ref(isDev ? `Game ${ranNum}` : '')
 const fastMode = ref(true)
 const premise = ref(isDev ? starters[Math.floor(Math.random() * starters.length)] : '')
 const sock = useGameSocket()
-const { currentRoom, rooms, hasRooms } = sock
 
 // lookup object with arrays of player id and nickname
 // so that you can use the room's id to get its players
 const players = computed(() => {
-  return rooms.value.reduce((acc, room) => {
+  return sock.rooms.value.reduce((acc, room) => {
     acc[room.id] = room.players
     return acc
   }, {} as Record<string, { id: string; nickname: string }[]>)
@@ -34,15 +34,27 @@ const handleCreateRoom = async (e: any) => {
   e.preventDefault()
 }
 
+let refreshInterval: NodeJS.Timer | null = null
+
 onMounted(() => {
   sock.refreshRooms()
+  refreshInterval = setInterval(() => {
+    sock.refreshRooms()
+  }, 5000)
+})
+
+onUnmounted(() => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval)
+    refreshInterval = null
+  }
 })
 </script>
 <template>
-  <div v-if="sock.isConnected">
+  <div v-if="sock.isConnected.value">
     <NicknameInput />
     <hr class="my-2 border-t border-gray-700" />
-    <div v-if="!currentRoom" class="create-room">
+    <div v-if="!sock.currentRoom.value" class="create-room">
       <UInput v-model="newRoomName" placeholder="Room name" @keyup.enter="handleCreateRoom" :ui="{
         width: 'w-48',
         input: 'text-sm'
@@ -58,20 +70,20 @@ onMounted(() => {
         :disabled="!newRoomName.trim()"> Create Room </UButton>
     </div>
     <!-- Room List -->
-    <div v-if="!currentRoom" class="room-list mt-4">
+    <div v-if="!sock.currentRoom.value" class="room-list mt-4">
       <ul>
-        <UTooltip class="list-item" v-for="room in rooms" :key="room.id"
+        <UTooltip class="list-item" v-for="room in sock.rooms.value" :key="room.id"
           :text="'Players: ' + players[room.id].map(p => p.nickname).join(', ')">
           <li class="my-2 flex justify-between"> {{ room.name }} ({{ room.players.length }} players) <UButton
               type="button" @click="$router.push(`/room/${room.id}`)" color="green" class="ml-4"> Join </UButton>
           </li>
         </UTooltip>
-        <li v-if="!rooms.length"> No rooms available </li>
+        <li v-if="!sock.rooms.value.length"> No rooms available </li>
       </ul>
     </div>
     <!-- Current Room -->
-    <div v-if="currentRoom" class="current-room">
-      <p>In room: {{ currentRoom }}</p>
+    <div v-if="sock.currentRoom.value" class="current-room">
+      <p>In room: {{ sock.currentRoom.value }}</p>
       <button @click="sock.leaveRoom"> Leave Room </button>
     </div>
   </div>

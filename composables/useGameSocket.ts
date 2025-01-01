@@ -5,6 +5,15 @@ import { ref, computed } from 'vue'
 
 const log = useLog('useGameSocket');
 
+export function getClientId(): string {
+	let clientId = localStorage.getItem('clientId')
+	if (!clientId) {
+		clientId = `client_${Math.random().toString(36).substring(2)}`
+		localStorage.setItem('clientId', clientId)
+	}
+	return clientId
+}
+
 class GameSocketManager {
 	private static instance: GameSocketManager | null = null;
 	private refreshInterval: NodeJS.Timeout | null = null;
@@ -45,11 +54,15 @@ class GameSocketManager {
 		socket.on('playerJoined', this.onPlayerJoined.bind(this));
 		socket.on('chatHistory', this.onChatHistory.bind(this));
 		socket.on('newMessage', this.onNewMessage.bind(this));
+		socket.on('kicked', this.onKicked.bind(this));
 	}
 
 	private onConnect(): void {
 		this.isConnected.value = true;
 		this.transport.value = socket.io.engine.transport.name;
+
+		const clientId = getClientId();
+		socket.emit('identify', clientId);
 
 		socket.io.engine.on("upgrade", (rawTransport) => {
 			this.transport.value = rawTransport.name;
@@ -89,6 +102,11 @@ class GameSocketManager {
 		this.messages.value.push(message);
 	}
 
+	private onKicked(): void {
+		// @ts-ignore
+		window.location.href = '/';
+	}
+
 	public cleanup(): void {
 		socket.off('connect');
 		socket.off('disconnect');
@@ -106,8 +124,9 @@ class GameSocketManager {
 
 	public joinRoom(roomId: string): void {
 		const nickname = localStorage.getItem('nickname') || 'Anonymous';
-		log.debug('Joining room:', roomId, 'as', nickname);
-		socket.emit('joinRoom', { roomId, nickname });
+		const clientId = getClientId();
+		log.debug('Joining room:', roomId, 'as', nickname, 'with clientId:', clientId);
+		socket.emit('joinRoom', { roomId, nickname, clientId });
 		this.currentRoom.value = roomId;
 		this.refreshMessages(roomId);
 	}

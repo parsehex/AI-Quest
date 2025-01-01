@@ -8,9 +8,7 @@ const route = useRoute()
 const roomId = route.params.id as string
 const sock = useGameSocket()
 const { messages } = sock
-const router = useRouter()
-
-const isChatOpen = ref(true)
+const isChatOpen = useLocalStorage('game-chat-open', true)
 
 // Join room on page load
 onMounted(async () => {

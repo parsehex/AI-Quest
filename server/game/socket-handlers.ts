@@ -2,8 +2,11 @@ import { Server, Socket } from 'socket.io';
 import { RoomManager } from './rooms';
 import { Message } from '~/types/Game';
 import { LLMManager } from '~/lib/llm';
+import { useLog } from '~/composables/useLog';
 
-const generateAIResponse = async (roomId: string, premise: string, io: Server, roomManager: RoomManager, history: string[] = [], players: string[] = []) => {
+const log = useLog('socket-handlers');
+
+const generateAIResponse = async (roomId: string, premise: string, io: Server, roomManager: RoomManager, history: string[] = [], currentPlayer = '') => {
 	const room = roomManager.getRoom(roomId);
 	if (!room) return;
 
@@ -11,17 +14,26 @@ const generateAIResponse = async (roomId: string, premise: string, io: Server, r
 	io.to(room.id).emit("roomList", roomManager.getRooms());
 
 	const llm = LLMManager.getInstance();
-	const prompt = `Assistant is a creative game master crafting a${players.length > 1 ? ' multiplayer' : 'n'} interactive story.
-Assistant's task is to create a response with the following sections:
-<intro>A brief one-line intro of the current situation</intro>
-<narrative>Detailed description of what happens</narrative>
+	const prompt = `Assistant is a creative game master crafting a multiplayer interactive story.
+Assistant's task is to create a response with the following format:
+<intro>
+A brief intro of the current situation
+</intro>
+<narrative>
+Detailed description of the events and actions that happen. Talk in the 3rd person to keep it clear who is doing what. Follow up with relevant context and cue the current player to make a decision.
+</narrative>
 <choices>
 - First choice the player can make
 - Next choice
-- ...
+- (Up to 5 total choices)
 </choices>
 Use the choice text without anything preceding. Create choices which make sense to push the events forward.
-Pay attention and react to the latest choice in a natrual way.${players.length ? `\n\nPlayers in this game: ${players.join(', ')}` : ''}`;
+Pay attention and react to the latest choice in a natrual way.`;
+	// console.log(prompt);
+
+	// disjointed note:
+	// i want players to be able to join a room and they get added to the turn order / game
+	// here, i need to be able to highlight when a new player is up
 
 	const latestEvent = history.slice(-1)[0] || '';
 	history = history.slice(0, -1);
@@ -33,9 +45,11 @@ Pay attention and react to the latest choice in a natrual way.${players.length ?
 		{
 			role: "user", content: `Original premise: ${premise}
 ${history.length ? 'Events:\n' + history.join('\n') : ''}
-${latestEvent ? 'Latest event:\n' + latestEvent : ''}`
+${latestEvent ? 'Latest event:\n' + latestEvent : ''}${currentPlayer ? `\n\nCurrent Player's Turn: ${currentPlayer}` : ''}`
 		}
 	], fastMode);
+
+	console.log("AI Response:", response);
 
 	// Parse sections
 	const sections = {
@@ -48,7 +62,7 @@ ${latestEvent ? 'Latest event:\n' + latestEvent : ''}`
 	console.log(sections.choices);
 	if (sections.choices.length === 0) {
 		console.log("No choices found, regenerating response");
-		await generateAIResponse(roomId, premise, io, roomManager, history);
+		await generateAIResponse(roomId, premise, io, roomManager, history, currentPlayer);
 	}
 
 	room.lastAiResponse = sections;
@@ -58,19 +72,34 @@ ${latestEvent ? 'Latest event:\n' + latestEvent : ''}`
 };
 
 export const registerRoomHandlers = (io: Server, socket: Socket, roomManager: RoomManager) => {
+	let clientIdMap = new Map<string, string>();
+
+	socket.on('identify', (clientId: string) => {
+		log.debug('Identified client:', clientId, 'with socket:', socket.id);
+		clientIdMap.set(clientId, socket.id);
+	});
+
 	socket.on("createRoom", async (roomName: string, premise: string, fastMode: boolean) => {
-		const room = await roomManager.createRoom(socket.id, roomName, premise, fastMode);
+		const playerName = socket.data.nickname || 'Anonymous';
+		const room = await roomManager.createRoom(socket.id, roomName, premise, fastMode, playerName);
 		socket.join(room.id);
 
 		// Generate initial AI response
-		await generateAIResponse(room.id, premise, io, roomManager);
+		await generateAIResponse(room.id, premise, io, roomManager, [], playerName);
 	});
 
 	// Add to existing handlers
-	socket.on('joinRoom', async ({ roomId, nickname }) => {
-		const room = await roomManager.joinRoom(socket.id, roomId, nickname);
+	socket.on('joinRoom', async ({ roomId, nickname, clientId }) => {
+		const room = roomManager.getRoom(roomId);
 		if (room) {
 			socket.join(roomId);
+
+			const existingPlayer = room.players.find(p => p.clientId === clientId);
+			if (existingPlayer) {
+				existingPlayer.id = socket.id;
+			} else {
+				await roomManager.joinRoom(socket.id, roomId, nickname, clientId);
+			}
 
 			// this might cause issues playing multiple games at once
 			socket.data.nickname = nickname;
@@ -107,6 +136,9 @@ export const registerRoomHandlers = (io: Server, socket: Socket, roomManager: Ro
 
 		// Add choice to history
 		room.history = room.history || [];
+		if (room.history.length > 3) {
+			room.history.push('--')
+		}
 		room.history.push(room.lastAiResponse?.intro || '');
 		room.history.push(room.lastAiResponse?.narrative || '');
 		room.history.push(`${socket.data.nickname} chose: **${choice}**`);
@@ -114,12 +146,10 @@ export const registerRoomHandlers = (io: Server, socket: Socket, roomManager: Ro
 		// Move to next player
 		room.currentTurn = ((room.currentTurn || 0) + 1) % room.players.length;
 
-		const playerNames = room.players.map(player => player.nickname);
+		const playerName = room.players[room.currentTurn]?.nickname;
 
 		// Generate new response
-		await generateAIResponse(roomId, room.premise, io, roomManager, room.history, playerNames);
-
-		//
+		await generateAIResponse(roomId, room.premise, io, roomManager, room.history, playerName);
 	});
 
 	socket.on("leaveRoom", (roomId: string) => {
@@ -148,9 +178,9 @@ export const registerRoomHandlers = (io: Server, socket: Socket, roomManager: Ro
 		const room = roomManager.getRoom(roomId);
 		if (!room) return;
 		const history = room.history || [];
-		const newHistory = history.slice(-3);
-		const playerNames = room.players.map(player => player.nickname);
-		await generateAIResponse(roomId, premise, io, roomManager, newHistory, playerNames);
+		const newHistory = history.slice(-4);
+		const playerName = socket.data.nickname || 'Anonymous';
+		await generateAIResponse(roomId, premise, io, roomManager, newHistory, playerName);
 	});
 
 	socket.on("disconnect", () => {

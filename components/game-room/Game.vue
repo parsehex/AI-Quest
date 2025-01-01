@@ -17,6 +17,11 @@ const makeChoice = (choice: string) => {
   if (!isMyTurn.value) return;
   sock.makeChoice(props.roomId, choice);
 };
+
+onBeforeUnmount(() => {
+  sock.leaveRoom();
+  sock.refreshRooms();
+});
 </script>
 <template>
   <div class="flex flex-col h-full rounded-lg border dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow w-2/3"

@@ -41,7 +41,7 @@ export class RoomManager {
 		}
 	}
 
-	async createRoom(socketId: string, roomName: string, premise: string, fastMode: boolean): Promise<Room> {
+	async createRoom(socketId: string, roomName: string, premise: string, fastMode: boolean, createdBy: string): Promise<Room> {
 		log.debug('Creating room:', roomName, (fastMode ? '(fast)' : '') + ' - Premise:', premise);
 		const roomId = Math.random().toString(36).substring(7);
 		const room: Room = {
@@ -51,6 +51,7 @@ export class RoomManager {
 			premise,
 			history: [],
 			fastMode,
+			createdBy,
 		};
 
 		// Create room directory and chat file
@@ -66,12 +67,13 @@ export class RoomManager {
 		return room;
 	}
 
-	async joinRoom(socketId: string, roomId: string, nickname: string): Promise<Room | null> {
-		log.debug(socketId, ' joining room:', roomId, 'as', nickname);
+	async joinRoom(socketId: string, roomId: string, nickname: string, clientId: string): Promise<Room | null> {
+		log.info('socket', socketId, 'joining room:', roomId, 'as', nickname, 'with clientId:', clientId);
 		const room = this.rooms.get(roomId);
 		if (room) {
 			room.players.push({
 				id: socketId,
+				clientId,
 				nickname
 			});
 			await this.saveRooms();
@@ -81,7 +83,7 @@ export class RoomManager {
 	}
 
 	async leaveRoom(socketId: string, roomId: string): Promise<void> {
-		log.debug(socketId, ' leaving room:', roomId);
+		log.debug(socketId, 'leaving room:', roomId);
 		const room = this.rooms.get(roomId);
 		if (room) {
 			room.players = room.players.filter(player => player.id !== socketId);

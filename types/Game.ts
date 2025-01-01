@@ -1,5 +1,6 @@
 export interface Player {
-	id: string;
+	id: string; // socket id
+	clientId: string;
 	nickname: string;
 }
 
@@ -18,6 +19,7 @@ export interface Room {
 	currentPlayer?: string;
 	history?: string[];
 	fastMode?: boolean;
+	createdBy: string;
 }
 
 export interface Message {

@@ -2,7 +2,7 @@
 const navigation = getNavigation("home");
 </script>
 <template>
-  <div class="flex items-center justify-center mx-auto w-full my-2">
+  <div class="flex items-center justify-center mx-auto w-full my-2 mb-4">
     <header class="rounded-full">
       <div
         class="border border-white/10 rounded-full backdrop-blur-3xl bg-zinc-900/10 dark:bg-zinc-700/20 dark:border-zinc-900/20">

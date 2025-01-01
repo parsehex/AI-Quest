@@ -61,6 +61,24 @@ class AdminSocketManager {
 		socket.emit('admin:removeAllPlayers', this.password.value);
 	}
 
+	public setCurrentPlayer(roomId: string, playerId: string): void {
+		if (!this.isValidated.value) return;
+		log.debug('Setting current player');
+		socket.emit('admin:setCurrentPlayer', this.password.value, roomId, playerId);
+	}
+
+	public kickPlayer(roomId: string, playerId: string): void {
+		if (!this.isValidated.value) return;
+		log.debug('Kicking player');
+		socket.emit('admin:kickPlayer', this.password.value, roomId, playerId);
+	}
+
+	public toggleFastMode(roomId: string): void {
+		if (!this.isValidated.value) return;
+		log.debug('Toggling fast mode');
+		socket.emit('admin:toggleFastMode', this.password.value, roomId);
+	}
+
 	public cleanup(): void {
 		socket.off('admin:success');
 		socket.off('admin:error');
@@ -79,5 +97,8 @@ export function useAdminSocket() {
 		checkPassword: adminSocket.checkPassword.bind(adminSocket),
 		clearRooms: adminSocket.clearRooms.bind(adminSocket),
 		removeAllPlayers: adminSocket.removeAllPlayers.bind(adminSocket),
+		setCurrentPlayer: adminSocket.setCurrentPlayer.bind(adminSocket),
+		kickPlayer: adminSocket.kickPlayer.bind(adminSocket),
+		toggleFastMode: adminSocket.toggleFastMode.bind(adminSocket),
 	};
 }
