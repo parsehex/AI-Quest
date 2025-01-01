@@ -48,12 +48,11 @@ onMounted(() => {
         input: 'text-sm'
       }" />
       <UTextarea v-model="premise" placeholder="Enter your game premise" class="mt-2" :rows="3" />
-      <div class="mt-2 flex items-center space-x-2">
-        <UTooltip text="Fast Mode - Faster but lower quality">
-          <IconsF7Speedometer />
-        </UTooltip>
+      <UTooltip class="mt-2 flex items-center space-x-2" text="Fast Mode - Faster but lower quality">
+        <i class="i-heroicons-clock w-5 h-5"></i>
         <UToggle id="fastMode" v-model="fastMode" />
-      </div>
+      </UTooltip>
+      <br />
       <UButton type="button" class="mt-2" @click="handleCreateRoom" @keyup.enter="handleCreateRoom"
         :disabled="!newRoomName.trim()"> Create Room </UButton>
     </div>
