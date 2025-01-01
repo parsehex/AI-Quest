@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { delay } from '~/lib/utils'
+
 const ranNum = Math.floor(Math.random() * 1000)
 const isDev = import.meta.env.DEV
 const starters = [
@@ -11,11 +13,21 @@ const premise = ref(isDev ? starters[Math.floor(Math.random() * starters.length)
 const sock = useGameSocket()
 const { currentRoom, rooms, hasRooms } = sock
 
-const handleCreateRoom = (e: any) => {
+// lookup object with arrays of player id and nickname
+// so that you can use the room's id to get its players
+const players = computed(() => {
+  return rooms.value.reduce((acc, room) => {
+    acc[room.id] = room.players
+    return acc
+  }, {} as Record<string, { id: string; nickname: string }[]>)
+})
+
+const handleCreateRoom = async (e: any) => {
   if (newRoomName.value.trim()) {
     sock.createRoom(newRoomName.value, premise.value)
     newRoomName.value = ''
     premise.value = ''
+    await delay(100)
     sock.refreshRooms()
   }
   e.preventDefault()
@@ -39,9 +51,12 @@ onMounted(() => {
     <!-- Room List -->
     <div v-if="!currentRoom" class="room-list mt-4">
       <ul>
-        <li v-for="room in rooms" :key="room.id"> {{ room.name }} ({{ room.players.length }} players) <UButton
-            type="button" @click="$router.push(`/room/${room.id}`)" color="rose"> Join </UButton>
-        </li>
+        <UTooltip class="list-item" v-for="room in rooms" :key="room.id"
+          :text="'Players: ' + players[room.id].map(p => p.nickname).join(', ')">
+          <li class="my-2 flex justify-between"> {{ room.name }} ({{ room.players.length }} players) <UButton
+              type="button" @click="$router.push(`/room/${room.id}`)" color="green" class="ml-4"> Join </UButton>
+          </li>
+        </UTooltip>
         <li v-if="!rooms.length"> No rooms available </li>
       </ul>
     </div>

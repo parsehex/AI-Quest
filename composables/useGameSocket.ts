@@ -7,6 +7,7 @@ const log = useLog('useGameSocket');
 
 class GameSocketManager {
 	private static instance: GameSocketManager | null = null;
+	private refreshInterval: NodeJS.Timeout | null = null;
 
 	public isConnected = ref(false);
 	public transport = ref('N/A');
@@ -55,6 +56,13 @@ class GameSocketManager {
 		});
 
 		socket.emit('getRooms');
+
+		this.refreshInterval = setInterval(() => {
+			this.refreshRooms();
+			if (this.currentRoom.value) {
+				this.refreshMessages();
+			}
+		}, 5000);
 	}
 
 	private onDisconnect(): void {
@@ -105,7 +113,6 @@ class GameSocketManager {
 	}
 
 	public leaveRoom(): void {
-		if (!this.currentRoom.value) return;
 		log.debug('Leaving room:', this.currentRoom.value);
 		socket.emit('leaveRoom', this.currentRoom.value);
 		this.currentRoom.value = null;
