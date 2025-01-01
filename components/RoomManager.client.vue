@@ -48,8 +48,9 @@ onMounted(() => {
         input: 'text-sm'
       }" />
       <UTextarea v-model="premise" placeholder="Enter your game premise" class="mt-2" :rows="3" />
-      <UTooltip class="mt-2 flex items-center space-x-2" text="Fast Mode - Faster but lower quality">
-        <i class="i-heroicons-clock w-5 h-5"></i>
+      <UTooltip class="mt-2 flex items-center space-x-2" text="Fast Mode - Faster but lower quality"> <label
+          class="flex items-center gap-1" for="fastMode">Fast Mode <i class="i-heroicons-clock w-5 h-5"></i>
+        </label>
         <UToggle id="fastMode" v-model="fastMode" />
       </UTooltip>
       <br />
