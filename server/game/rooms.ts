@@ -5,7 +5,7 @@ import path from 'path';
 
 export class RoomManager {
 	private rooms: Map<string, Room> = new Map();
-	private readonly storageDir = 'data/rooms';
+	private readonly storageDir = 'data';
 	private readonly storageFile = path.join(this.storageDir, 'rooms.json');
 
 	constructor() {
@@ -50,7 +50,7 @@ export class RoomManager {
 		};
 
 		// Create room directory and chat file
-		const roomDir = path.join(this.storageDir, roomId)
+		const roomDir = path.join(this.storageDir, 'rooms', roomId)
 		await mkdir(roomDir, { recursive: true })
 		await writeFile(
 			this.getRoomChatPath(roomId),
@@ -115,7 +115,7 @@ export class RoomManager {
 	}
 
 	private getRoomChatPath(roomId: string): string {
-		return path.join(this.storageDir, roomId, 'chat.json')
+		return path.join(this.storageDir, 'rooms', roomId, 'chat.json')
 	}
 
 	async getChatHistory(roomId: string): Promise<any[]> {
