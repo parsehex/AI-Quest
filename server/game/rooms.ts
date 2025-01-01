@@ -44,7 +44,8 @@ export class RoomManager {
 			id: roomId,
 			name: roomName,
 			players: [],
-			premise
+			premise,
+			history: [],
 		};
 
 		// Create room directory and chat file
