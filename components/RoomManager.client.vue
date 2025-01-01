@@ -40,6 +40,8 @@ onMounted(() => {
 </script>
 <template>
   <div v-if="sock.isConnected">
+    <NicknameInput />
+    <hr class="my-2 border-t border-gray-700" />
     <div v-if="!currentRoom" class="create-room">
       <UInput v-model="newRoomName" placeholder="Room name" @keyup.enter="handleCreateRoom" :ui="{
         width: 'w-48',

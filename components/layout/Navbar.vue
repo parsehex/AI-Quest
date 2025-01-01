@@ -19,7 +19,6 @@ const navigation = getNavigation("home");
             <component :is="item.icon" class="w-7 h-7 sm:w-6 sm:h-6 font-medium" />
             <span class="hidden sm:inline-block ml-2 font-medium">{{ item.name }}</span>
           </NuxtLink>
-          <NicknameInput v-if="$route.path === '/'" />
         </nav>
       </div>
     </header>
