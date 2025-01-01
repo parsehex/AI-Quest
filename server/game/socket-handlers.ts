@@ -3,7 +3,7 @@ import { RoomManager } from './rooms';
 import { Message } from '~/types/Game';
 import { LLMManager } from '~/lib/llm';
 
-const generateAIResponse = async (roomId: string, premise: string, io: Server, roomManager: RoomManager, history: string[] = []) => {
+const generateAIResponse = async (roomId: string, premise: string, io: Server, roomManager: RoomManager, history: string[] = [], players: string[] = []) => {
 	const room = roomManager.getRoom(roomId);
 	if (!room) return;
 
@@ -11,24 +11,25 @@ const generateAIResponse = async (roomId: string, premise: string, io: Server, r
 	io.to(room.id).emit("roomList", roomManager.getRooms());
 
 	const llm = LLMManager.getInstance();
-	const prompt = `You are a creative game master narrating an interactive story.
-Format your response with the following sections:
+	const prompt = `Assistant is a creative game master crafting a${players.length > 1 ? ' multiplayer' : 'n'} interactive story.
+Assistant's task is to create a response with the following sections:
 <intro>A brief one-line intro of the current situation</intro>
 <narrative>Detailed description of what happens</narrative>
 <choices>
-1. [First choice the player can make]
-2. [Second choice]
-3. [Third choice]
+- First choice the player can make
+- Next choice
+- ...
 </choices>
-
-Premise: ${premise}
-${history.length ? 'Previous events:\n' + history.join('\n') : ''}
-
-Provide the next scene:`;
+Use the choice text without anything preceding. Create choices which make sense to push the events forward.
+Pay attention and react to the latest choice in a natrual way.${players.length ? `\n\nPlayers in this game: ${players.join(', ')}` : ''}`;
 
 	const response = await llm.generateResponse([
-		{ role: "system", content: "You are a creative game master narrating an interactive story." },
-		{ role: "user", content: prompt }
+		{ role: "system", content: prompt },
+		{
+			role: "user", content: `Premise: ${premise}
+${history.length ? 'Previous events:\n' + history.join('\n') : ''}
+Provide the next scene:`
+		}
 	]);
 
 	// Parse sections
@@ -37,6 +38,13 @@ Provide the next scene:`;
 		narrative: response.match(/<narrative>(.*?)<\/narrative>/s)?.[1] || '',
 		choices: response.match(/<choices>(.*?)<\/choices>/s)?.[1].trim().split('\n') || []
 	};
+	sections.choices = sections.choices.map(choice => choice.replace(/- /, ''));
+
+	console.log(sections.choices);
+	if (sections.choices.length === 0) {
+		console.log("No choices found, regenerating response");
+		await generateAIResponse(roomId, premise, io, roomManager, history);
+	}
 
 	room.lastAiResponse = sections;
 	room.currentPlayer = room.players[room.currentTurn || 0]?.id;
@@ -96,14 +104,17 @@ export const registerRoomHandlers = (io: Server, socket: Socket, roomManager: Ro
 		room.history = room.history || [];
 		room.history.push(room.lastAiResponse?.intro || '');
 		room.history.push(room.lastAiResponse?.narrative || '');
-		choice = choice.replace(/- |#./g, '');
-		room.history.push(`${socket.data.nickname} chose: ${choice}`);
+		room.history.push(`${socket.data.nickname} chose: **${choice}**`);
 
 		// Move to next player
 		room.currentTurn = ((room.currentTurn || 0) + 1) % room.players.length;
 
+		const playerNames = room.players.map(player => player.nickname);
+
 		// Generate new response
-		await generateAIResponse(roomId, room.premise, io, roomManager, room.history);
+		await generateAIResponse(roomId, room.premise, io, roomManager, room.history, playerNames);
+
+		//
 	});
 
 	socket.on("leaveRoom", (roomId: string) => {
@@ -118,21 +129,28 @@ export const registerRoomHandlers = (io: Server, socket: Socket, roomManager: Ro
 
 	socket.on("getMessages", async (roomId: string) => {
 		const socketioRooms = io.sockets.adapter.rooms;
-		const roomNames = Array.from(socketioRooms.keys());
-		console.log("Rooms:", roomNames);
-		const listeners = io.sockets.adapter.rooms.get(roomId);
-		console.log(roomId + " Current listeners:", listeners);
+		// const roomNames = Array.from(socketioRooms.keys());
+		// console.log("Rooms:", roomNames);
+		// const listeners = io.sockets.adapter.rooms.get(roomId);
+		// console.log(roomId + " Current listeners:", listeners);
 		const messages = await roomManager.getChatHistory(roomId);
-		console.log("Sending chat history:", messages, "for room", roomId);
+		// console.log("Sending chat history:", messages, "for room", roomId);
 		socket.to(roomId).emit("chatHistory", messages);
 	});
 
 	socket.on("regenerateResponse", async (roomId: string, premise: string) => {
-		await generateAIResponse(roomId, premise, io, roomManager);
+		console.log("Regenerating response for room", roomId, "with premise", premise);
+		const room = roomManager.getRoom(roomId);
+		if (!room) return;
+		const history = room.history || [];
+		const newHistory = history.slice(-3);
+		const playerNames = room.players.map(player => player.nickname);
+		await generateAIResponse(roomId, premise, io, roomManager, newHistory, playerNames);
 	});
 
 	socket.on("disconnect", () => {
 		roomManager.removePlayerFromAllRooms(socket.id);
+		console.log("A user disconnected", socket.id);
 		io.emit("roomList", roomManager.getRooms());
 	});
 
