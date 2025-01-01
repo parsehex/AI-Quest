@@ -8,6 +8,7 @@ const props = defineProps<{
 const sock = useGameSocket();
 const isAiLoading = computed(() => sock.thisRoom.value?.aiLoading || false);
 const isMyTurn = computed(() => sock.thisRoom.value?.currentPlayer === socket?.id);
+const choice = ref('');
 
 const room = computed(() => sock.thisRoom.value);
 
@@ -19,10 +20,8 @@ const makeChoice = (choice: string) => {
 <template>
   <div class="flex flex-col h-full rounded-lg border dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow w-2/3">
     <div class="p-4 border-b dark:border-neutral-700">
-      <h2 class="text-xl text-muted font-semibold"> Game <UButton @click="sock.regenerateResponse" color="violet"
-          class="float-right">
-          <UIcon name="f7-arrow-clockwise-circle-fill" />
-        </UButton>
+      <h2 class="text-xl text-muted font-semibold"> Game <UButton @click="sock.regenerateResponse(props.roomId)"
+          color="violet" class="float-right"> Try again </UButton>
       </h2>
     </div>
     <div class="flex-1 overflow-y-auto p-4 space-y-4">
@@ -43,6 +42,8 @@ const makeChoice = (choice: string) => {
             <div class="space-y-2">
               <UButton v-for="(choice, i) in sock.thisRoom.value.lastAiResponse.choices" :key="i" block
                 @click="makeChoice(choice)"> {{ choice }} </UButton>
+              <UInput v-model="choice" placeholder="Enter your own choice"
+                @keyup.enter="makeChoice(choice); choice = ''" />
             </div>
           </div>
           <div v-else class="mt-4 text-muted"> Waiting for {{ sock.thisRoom.value.players.find(p => p.id ===
