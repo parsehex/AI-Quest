@@ -1,44 +1,57 @@
-'use client';
-import { ref } from 'vue'
-
 type LogLevel = 'debug' | 'info' | 'warn' | 'error'
-interface LogEntry {
-	timestamp: Date
-	level: LogLevel
-	args: any[]
+
+interface LoggerOptions {
+	level?: LogLevel
 }
 
-export function useLog(componentName?: string) {
-	const logs = ref<LogEntry[]>([])
-	const maxLogs = 100
+const LOG_LEVELS: Record<LogLevel, number> = {
+	debug: 0,
+	info: 1,
+	warn: 2,
+	error: 3
+}
 
-	const addLog = (level: LogLevel, ...args: any[]) => {
-		// Add component name prefix to first argument if it's a string
-		if (componentName && typeof args[0] === 'string') {
-			args[0] = `[${componentName}] ${args[0]}`
+export const useLog = (prefix = 'App', options: LoggerOptions = {}) => {
+	const currentLevel = options.level || 'info'
+
+	const shouldLog = (messageLevel: LogLevel): boolean => {
+		return LOG_LEVELS[messageLevel] >= LOG_LEVELS[currentLevel]
+	}
+
+	const formatMessage = (message: any, level: string) => {
+		const timestamp = new Date().toISOString()
+		return `[${timestamp}] [${prefix}] [${level}] ${typeof message === 'object' ? JSON.stringify(message) : message
+			}`
+	}
+
+	const debug = (...args: any[]) => {
+		if (shouldLog('debug')) {
+			console.debug(formatMessage(args, 'DEBUG'))
 		}
+	}
 
-		const entry: LogEntry = {
-			timestamp: new Date(),
-			level,
-			args
+	const info = (...args: any[]) => {
+		if (shouldLog('info')) {
+			console.info(formatMessage(args, 'INFO'))
 		}
+	}
 
-		logs.value.unshift(entry)
-		if (logs.value.length > maxLogs) {
-			logs.value.pop()
+	const warn = (...args: any[]) => {
+		if (shouldLog('warn')) {
+			console.warn(formatMessage(args, 'WARN'))
 		}
+	}
 
-		// Use spread operator to pass args to console
-		console[level](...args)
+	const error = (...args: any[]) => {
+		if (shouldLog('error')) {
+			console.error(formatMessage(args, 'ERROR'))
+		}
 	}
 
 	return {
-		logs,
-		debug: (...args: any[]) => addLog('debug', ...args),
-		info: (...args: any[]) => addLog('info', ...args),
-		warn: (...args: any[]) => addLog('warn', ...args),
-		error: (...args: any[]) => addLog('error', ...args),
-		clear: () => logs.value = []
+		debug,
+		info,
+		warn,
+		error,
 	}
 }
