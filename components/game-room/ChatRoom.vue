@@ -99,6 +99,7 @@ watch(() => props.messages, () => {
       <form @submit.prevent="sendMessage" class="flex gap-2">
         <UInput v-model="message" placeholder="Type a message..." :ui="{
           width: 'w-full',
+          wrapper: 'grow',
           padding: 'p-2',
           focus: 'focus:ring-2 focus:ring-primary-500'
         }" />
