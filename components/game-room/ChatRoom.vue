@@ -102,7 +102,7 @@ watch(() => props.messages, () => {
           padding: 'p-2',
           focus: 'focus:ring-2 focus:ring-primary-500'
         }" />
-        <UButton type="submit" color="primary" :disabled="!message.trim()" icon="i-heroicons-paper-airplane"> Send
+        <UButton type="submit" color="primary" :disabled="!message.trim()" icon="i-heroicons-paper-airplane">
         </UButton>
       </form>
     </div>
