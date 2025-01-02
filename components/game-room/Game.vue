@@ -7,7 +7,7 @@ const props = defineProps<{
 }>();
 
 const sock = useGameSocket();
-const isAiLoading = computed(() => sock.thisRoom.value?.aiLoading || false);
+const isAiLoading = computed(() => sock.thisRoom.value?.aiLoading || undefined);
 const isMyTurn = computed(() => sock.thisRoom.value?.currentPlayer === socket?.id);
 const choice = ref('');
 
@@ -40,8 +40,8 @@ onBeforeUnmount(() => {
         <MDC v-for="(msg, i) in room?.history" :key="i" :value="msg" />
       </div>
       <div v-if="isAiLoading" class="text-center flex flex-col items-center space-y-2">
-        <Spinner />
-        <span class="text-muted">Loading...</span>
+        <Spinner :progress="isAiLoading.progress" />
+        <span class="text-muted">{{ isAiLoading.message }}</span>
       </div>
       <template v-else-if="sock.thisRoom.value?.lastAiResponse">
         <div class="prose dark:prose-invert max-w-none">

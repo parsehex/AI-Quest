@@ -4,14 +4,26 @@ import { Server } from 'socket.io';
 
 const log = useLog('GameRoomManager');
 
+let roomManagerInstance: GameRoomManager | null = null;
+
+export function useRoomManager(): GameRoomManager {
+	if (!roomManagerInstance) {
+		roomManagerInstance = new GameRoomManager();
+	}
+	return roomManagerInstance;
+}
+
 export class GameRoomManager {
-	private io: Server;
+	private io: Server | null = null;
 	private rooms: Map<string, Room> = new Map();
 	private storage = useStorage();
 
-	constructor(io: Server) {
-		this.io = io;
+	constructor() {
 		this.loadRooms();
+	}
+
+	addIO(io: Server) {
+		this.io = io;
 	}
 
 	private async loadRooms() {
@@ -36,7 +48,7 @@ export class GameRoomManager {
 
 	public async saveRoom(room: Room): Promise<void> {
 		this.rooms.set(room.id, room);
-		this.io.to(room.id).emit('roomList', this.getRooms());
+		this.io?.to(room.id).emit('roomList', this.getRooms());
 		await this.saveRooms();
 	}
 
@@ -119,7 +131,7 @@ export class GameRoomManager {
 	async clearAllRooms(): Promise<void> {
 		const currentRoomIds = Array.from(this.rooms.keys());
 		this.rooms = new Map();
-		this.io.to(currentRoomIds).emit('kicked');
+		this.io?.to(currentRoomIds).emit('kicked');
 		await this.saveRooms();
 	}
 

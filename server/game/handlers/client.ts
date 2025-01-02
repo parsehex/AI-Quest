@@ -1,10 +1,12 @@
-import { Server, Socket } from 'socket.io';
-import type { GameRoomManager } from '../GameRoomManager';
+import { type Socket } from 'socket.io';
+import { useRoomManager } from '../GameRoomManager';
 import { useLog } from '~/composables/useLog';
+import { useIO } from '~/server/plugins/socket.io';
 
 const log = useLog('handlers/client');
 
-export const registerClientHandlers = (io: Server, socket: Socket, roomManager: GameRoomManager) => {
+export const registerClientHandlers = (socket: Socket) => {
+	const io = useIO();
 	let clientIdMap = new Map<string, string>();
 
 	socket.on('identify', (clientId: string) => {
@@ -15,6 +17,7 @@ export const registerClientHandlers = (io: Server, socket: Socket, roomManager: 
 	});
 
 	socket.on('disconnect', () => {
+		const roomManager = useRoomManager();
 		roomManager.removePlayerFromAllRooms(socket.id);
 		const SocketId = socket.id;
 		log.debug({ _context: { SocketId } }, 'Socket disconnected');

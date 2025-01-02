@@ -31,7 +31,7 @@ const formatTimestamp = (date: Date): string => {
 
 	return `${pad(date.getMonth() + 1)}/${pad(date.getDate())} ` +
 		`${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}.` +
-		`${pad(date.getMilliseconds(), 3)}`
+		`${pad(date.getMilliseconds(), 4)}`
 }
 
 export const useLog = (prefix = 'App', options: LoggerOptions = {}) => {

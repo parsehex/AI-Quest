@@ -1,11 +1,15 @@
-import { Server, Socket } from 'socket.io';
-import type { GameRoomManager } from '../GameRoomManager';
+import { type Socket } from 'socket.io';
+import { useRoomManager } from '../GameRoomManager';
 import { useLog } from '~/composables/useLog';
 import { ChatMessage } from '~/types/Game';
+import { useIO } from '~/server/plugins/socket.io';
 
 const log = useLog('handlers/chat');
 
-export const registerChatHandlers = (io: Server, socket: Socket, roomManager: GameRoomManager) => {
+export const registerChatHandlers = (socket: Socket) => {
+	const io = useIO();
+	const roomManager = useRoomManager();
+
 	socket.on('message', async ({ roomId, text }) => {
 		log.debug('Socket', socket.id, 'sent message', text, 'in room', roomId);
 		const nickname = socket.data.nickname || 'Anonymous';

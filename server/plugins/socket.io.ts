@@ -12,10 +12,19 @@ import { registerClientHandlers } from '../game/handlers/client';
 
 const log = useLog('server/plugins/socket.io');
 
+let ioInstance: Server | null = null;
+
+export const useIO = () => {
+	if (!ioInstance) throw new Error('Socket.IO instance not initialized');
+	return ioInstance;
+};
+
+
 export default defineNitroPlugin(async (nitroApp: NitroApp) => {
 	const engine = new Engine();
 	const io = new Server();
-	const roomManager = new GameRoomManager(io);
+
+	ioInstance = io;
 
 	io.bind(engine);
 
@@ -24,11 +33,11 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
 		log.debug({ _context: { SocketId } }, "Socket connected");
 
 		// Register all handlers
-		registerAdminHandlers(io, socket, roomManager);
-		registerClientHandlers(io, socket, roomManager);
-		registerChatHandlers(io, socket, roomManager);
-		registerChoiceHandlers(io, socket, roomManager);
-		registerRoomHandlers(io, socket, roomManager);
+		registerAdminHandlers(socket);
+		registerClientHandlers(socket);
+		registerChatHandlers(socket);
+		registerChoiceHandlers(socket);
+		registerRoomHandlers(socket);
 	});
 
 	nitroApp.router.use("/socket.io/", defineEventHandler({

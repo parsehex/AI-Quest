@@ -4,12 +4,17 @@ export interface Player {
 	nickname: string;
 }
 
+export interface LoadingState {
+	message: string;
+	progress?: number;
+}
+
 export interface Room {
 	id: string;
 	name: string;
 	players: Player[];
 	premise: string;
-	aiLoading?: boolean;
+	aiLoading?: LoadingState;
 	lastAiResponse?: {
 		intro: string;
 		narrative: string;

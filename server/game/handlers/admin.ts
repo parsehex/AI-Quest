@@ -1,6 +1,7 @@
-import { Server, Socket } from 'socket.io';
-import type { GameRoomManager } from '../GameRoomManager';
+import { type Socket } from 'socket.io';
+import { useRoomManager, type GameRoomManager } from '../GameRoomManager';
 import { useLog } from '~/composables/useLog';
+import { useIO } from '~/server/plugins/socket.io';
 
 const log = useLog('handlers/admin');
 
@@ -8,7 +9,10 @@ const validateAdminPassword = (password: string): boolean => {
 	return password === 'test';
 };
 
-export const registerAdminHandlers = (io: Server, socket: Socket, roomManager: GameRoomManager) => {
+export const registerAdminHandlers = (socket: Socket) => {
+	const io = useIO();
+	const roomManager = useRoomManager();
+
 	const adminGuard = (password: string, callback: Function) => {
 		if (!validateAdminPassword(password)) {
 			socket.emit('admin:error', { message: 'Invalid admin password' });
@@ -18,16 +22,20 @@ export const registerAdminHandlers = (io: Server, socket: Socket, roomManager: G
 	};
 
 	socket.on('admin:checkPassword', (password: string) => {
+		const SocketId = socket.id;
 		if (validateAdminPassword(password)) {
+			log.info({ _context: { SocketId } }, 'Socket is admin');
 			socket.emit('admin:success', { message: 'Password is correct' });
 		} else {
+			log.warn({ _context: { SocketId }, message: 'Invalid admin password' });
 			socket.emit('admin:error', { message: 'Invalid admin password' });
 		}
 	});
 
 	socket.on('admin:clearRooms', (password: string) => {
 		adminGuard(password, () => {
-			log.info('Clearing all rooms');
+			const SocketId = socket.id;
+			log.info({ _context: { SocketId } }, 'Clearing all rooms');
 			roomManager.clearAllRooms();
 			io.emit('roomList', roomManager.getRooms());
 			socket.emit('admin:success', { message: 'All rooms cleared' });
@@ -36,7 +44,8 @@ export const registerAdminHandlers = (io: Server, socket: Socket, roomManager: G
 
 	socket.on('admin:removeAllPlayers', (password: string) => {
 		adminGuard(password, () => {
-			log.info('Removing all players');
+			const SocketId = socket.id;
+			log.info({ _context: { SocketId } }, 'Removing all players');
 			const rooms = roomManager.getRooms();
 			rooms.forEach(room => {
 				room.players = [];
@@ -51,7 +60,9 @@ export const registerAdminHandlers = (io: Server, socket: Socket, roomManager: G
 
 	socket.on('admin:setCurrentPlayer', (password: string, roomId: string, playerId: string) => {
 		adminGuard(password, () => {
-			log.info('Setting current player. Room id:', roomId, 'Player id:', playerId);
+			const SocketId = socket.id;
+			const TargetPlayer = playerId;
+			log.info({ _context: { SocketId, roomId, TargetPlayer } }, 'Setting current player');
 			const room = roomManager.getRoom(roomId);
 			if (room) {
 				room.currentPlayer = playerId;
@@ -65,7 +76,9 @@ export const registerAdminHandlers = (io: Server, socket: Socket, roomManager: G
 
 	socket.on('admin:kickPlayer', (password: string, roomId: string, playerId: string) => {
 		adminGuard(password, () => {
-			log.info('Kicking player. Room id:', roomId, 'Player id:', playerId);
+			const SocketId = socket.id;
+			const TargetPlayer = playerId;
+			log.info({ _context: { SocketId, roomId, TargetPlayer } }, 'Kicking player');
 			const room = roomManager.getRoom(roomId);
 			if (room) {
 				room.players = room.players.filter(player => player.id !== playerId);
@@ -80,7 +93,8 @@ export const registerAdminHandlers = (io: Server, socket: Socket, roomManager: G
 
 	socket.on('admin:toggleFastMode', (password: string, roomId: string) => {
 		adminGuard(password, () => {
-			log.info('Toggling fast mode. Room id:', roomId);
+			const SocketId = socket.id;
+			log.info({ _context: { SocketId, roomId } }, 'Toggling fast mode');
 			const room = roomManager.getRoom(roomId);
 			if (room) {
 				room.fastMode = !room.fastMode;

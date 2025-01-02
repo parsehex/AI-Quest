@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import RoomLogsModal from '~/components/admin/RoomLogsModal.vue';
+
 definePageMeta({
 	title: "Admin",
 	name: "Admin",
@@ -67,6 +69,14 @@ const handleToggleFastMode = (roomId: string) => {
 	admin.toggleFastMode(roomId);
 	sock.refreshRooms();
 };
+
+const selectedRoomId = ref('');
+const showLogsModal = ref(false);
+
+const handleShowRoomLogs = (roomId: string) => {
+	selectedRoomId.value = roomId;
+	showLogsModal.value = true;
+};
 </script>
 <template>
 	<div class="container mx-auto p-4">
@@ -120,20 +130,22 @@ const handleToggleFastMode = (roomId: string) => {
 						</tr>
 					</thead>
 					<tbody>
-						<tr v-for="room in sock.rooms.value" :key="room.id" class="border-b dark:border-neutral-700">
+						<tr v-for="room in sock.rooms.value" :key="room.id"
+							class="border-b dark:border-neutral-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-neutral-700"
+							@click="handleShowRoomLogs(room.id)">
 							<td class="p-2">{{ room.id }}</td>
 							<td class="p-2">{{ room.name }}</td>
 							<td class="p-2">
 								<div v-for="player in room.players" :key="player.id" class="flex items-center gap-2">
 									<UAvatar :src="`https://api.dicebear.com/7.x/identicon/svg?seed=${player.id}`" :alt="player.nickname"
-										size="xs" /> {{ player.nickname }} <UButton @click="handleKickPlayer(room.id, player.id)"
-										color="red" size="xs" variant="outline">
+										size="xs" /> {{ player.nickname }} <UButton
+										@click.stop.prevent="handleKickPlayer(room.id, player.id)" color="red" size="xs" variant="outline">
 										<i class="i-heroicons-x-mark w-4 h-4"></i>
 									</UButton>
 								</div>
 							</td>
 							<td class="p-2 pl-8">
-								<UButton @click="handleToggleFastMode(room.id)" size="xs" variant="outline"
+								<UButton @click.stop.prevent="handleToggleFastMode(room.id)" size="xs" variant="outline"
 									:color="room.fastMode ? 'yellow' : 'orange'"
 									:title="room.fastMode ? 'Fast Mode is enabled' : 'Fast Mode is disabled'">
 									<i :class="'w-5 h-5 ' + (room.fastMode ? 'i-heroicons-check' : 'i-heroicons-x-mark')"></i>
@@ -151,5 +163,6 @@ const handleToggleFastMode = (roomId: string) => {
 				</table>
 			</div>
 		</div>
+		<RoomLogsModal v-model="showLogsModal" :room-id="selectedRoomId" />
 	</div>
 </template>

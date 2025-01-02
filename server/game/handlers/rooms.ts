@@ -1,25 +1,31 @@
-import { Server, Socket } from 'socket.io';
-import type { GameRoomManager } from '../GameRoomManager';
+import { type Socket } from 'socket.io';
+import { useRoomManager } from '../GameRoomManager';
 import { useLog } from '~/composables/useLog';
-import { playChoice } from './choices';
+import { playChoice, updateRoom } from './choices';
+import { useIO } from '~/server/plugins/socket.io';
 
 const log = useLog('handlers/rooms');
 
-export const registerRoomHandlers = (io: Server, socket: Socket, roomManager: GameRoomManager) => {
+export const registerRoomHandlers = (socket: Socket) => {
+	const io = useIO();
+	const roomManager = useRoomManager();
+
 	socket.on("createRoom", async (roomName: string, premise: string, fastMode: boolean) => {
-		log.debug("Socket", socket.id, "creating room", roomName, "with fast mode", fastMode);
+		const SocketId = socket.id;
 		const playerName = socket.data.nickname || 'Anonymous';
+		log.debug({ _context: { SocketId, roomName, playerName, premise, fastMode } }, "Creating room");
 		const room = await roomManager.createRoom(socket.id, roomName, premise, fastMode, playerName);
 		socket.join(room.id);
 
 		// Generate initial turnm
-		await playChoice(io, roomManager, room.id, playerName);
+		playChoice(room.id, playerName);
 	});
 
 	socket.on('joinRoom', async ({ roomId, nickname, clientId }) => {
 		const room = roomManager.getRoom(roomId);
 		if (room) {
-			log.debug("Socket", socket.id, "joining room", roomId, "as", nickname, "with clientId", clientId);
+			const SocketId = socket.id;
+			log.debug({ _context: { SocketId, roomId, nickname, clientId } }, "Player joined room");
 			socket.join(roomId);
 
 			const existingPlayer = room.players.find(p => p.clientId === clientId);
@@ -34,15 +40,18 @@ export const registerRoomHandlers = (io: Server, socket: Socket, roomManager: Ga
 
 			// are there 1 players now? then set currentPlayer to that player and generate their turn
 			if (room.players.length === 1) {
-				log.debug("Setting current player to", room.players[0].id, "and generating AI response");
-				room.currentPlayer = room.players[0].id;
-				room.history = room.history.slice(-4);
-				const playerName = socket.data.nickname || 'Anonymous';
-				playChoice(io, roomManager, roomId, playerName);
+				const CurrentPlayer = room.players[0].id;
+				log.debug({ _context: { roomId, CurrentPlayer } }, "Setting current player");
+				// TODO maybe just expose this from choices.ts
+				updateRoom(roomId, room => {
+					room.currentPlayer = room.players[0].id;
+					room.history = room.history.slice(-4);
+					const playerName = socket.data.nickname || 'Anonymous';
+					playChoice(roomId, playerName);
+				});
 			}
 
 			io.to(roomId).emit('playerJoined', { roomId, nickname });
-			io.to(roomId).emit('roomList', roomManager.getRooms());
 
 			// Send chat history to joining user
 			const history = await roomManager.getChatHistory(roomId);
@@ -51,7 +60,8 @@ export const registerRoomHandlers = (io: Server, socket: Socket, roomManager: Ga
 	});
 
 	socket.on("leaveRoom", (roomId: string) => {
-		log.debug("Socket ", socket.id, "leaving room", roomId);
+		const SocketId = socket.id;
+		log.debug({ _context: { SocketId, roomId } }, "Player left room");
 		roomManager.leaveRoom(socket.id, roomId);
 		socket.leave(roomId);
 		io.emit("roomList", roomManager.getRooms());
