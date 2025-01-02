@@ -21,22 +21,23 @@ export const registerRoomHandlers = (socket: Socket) => {
 		playChoice(room.id, playerName);
 	});
 
-	socket.on('joinRoom', async ({ roomId, nickname, clientId }) => {
+	socket.on('joinRoom', async ({ roomId, nickname, clientId, playerCharacter }) => {
 		const room = roomManager.getRoom(roomId);
 		if (room) {
 			const SocketId = socket.id;
-			log.debug({ _context: { SocketId, roomId, nickname, clientId } }, "Player joined room");
+			log.debug({ _context: { SocketId, roomId, nickname, clientId, playerCharacter } }, "Player joined room");
 			socket.join(roomId);
 
 			const existingPlayer = room.players.find(p => p.clientId === clientId);
 			if (existingPlayer) {
 				existingPlayer.id = socket.id;
 			} else {
-				await roomManager.joinRoom(socket.id, roomId, nickname, clientId);
+				await roomManager.joinRoom(socket.id, roomId, nickname, clientId, playerCharacter);
 			}
 
 			// this might cause issues playing multiple games at once
 			socket.data.nickname = nickname;
+			socket.data.playerCharacter = playerCharacter;
 
 			// are there 1 players now? then set currentPlayer to that player and generate their turn
 			if (room.players.length === 1) {

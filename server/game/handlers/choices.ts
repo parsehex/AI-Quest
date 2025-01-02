@@ -36,6 +36,7 @@ const generateAIResponse = async (roomId: string, currentPlayer = '', isRetrying
 	const llm = LLMManager.getInstance();
 	const playerNames = history.map(event => event.match(/(.+) chose:/)?.[1]).filter(Boolean);
 	const isNewPlayer = playerNames.includes(currentPlayer);
+	const playerCharacter = room.players.find(player => player.nickname === currentPlayer)?.character;
 	const prompt = GameMasterSystem({ currentPlayer });
 
 	const latestEvent = history.slice(-1)[0] || '';
@@ -49,10 +50,11 @@ const generateAIResponse = async (roomId: string, currentPlayer = '', isRetrying
 				premise,
 				history,
 				latestEvent,
-				isNewPlayer
+				isNewPlayer,
+				playerCharacter
 			}),
 		}
-	], room.fastMode, { roomId, currentPlayer, isRetrying });
+	], room.fastMode, { roomId, currentPlayer, isRetrying, playerCharacter, history });
 
 	// The last closing tag is often cut off in LLM responses
 	if (!response.includes('</choices>') && response.includes('<choices>')) {

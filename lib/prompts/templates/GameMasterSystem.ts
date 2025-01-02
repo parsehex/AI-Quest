@@ -10,10 +10,10 @@ Assistant's task is to create a response with the following format:
 A brief intro of the current situation
 </intro>
 <narrative>
-Detailed description of the events and actions that happen. Talk in the 3rd person to keep it clear who is doing what. Follow up with relevant context and provide ${input.currentPlayer}  with a cue to make a decision.
+Detailed description of the events and actions that happen. Talk in the 3rd person to keep it clear who is doing what. Follow up with relevant context and provide \`${input.currentPlayer}\`  with a cue to make a decision.
 </narrative>
 <choices>
-- First choice ${input.currentPlayer} can make
+- First choice \`${input.currentPlayer}\` can make
 - Next choice
 - (Up to 5 total choices)
 </choices>

@@ -13,17 +13,11 @@ const updateNickname = () => {
   }
 }
 </script>
-
 <template>
-  <div class="flex items-center gap-2">
-    <UInput
-      v-model="nickname"
-      placeholder="Enter nickname"
-      @change="updateNickname"
-      :ui="{
-        width: 'w-48',
-        input: 'text-sm'
-      }"
-    />
+  <div class="flex items-center gap-2 px-4">
+    <UInput v-model="nickname" placeholder="Enter nickname" @change="updateNickname" :ui="{
+      width: 'w-48',
+      input: 'text-sm'
+    }" />
   </div>
 </template>

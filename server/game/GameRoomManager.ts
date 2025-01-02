@@ -1,4 +1,4 @@
-import { ChatMessage, Room } from '~/types/Game';
+import { ChatMessage, PlayerCharacter, Room } from '~/types/Game';
 import { useLog } from '~/composables/useLog';
 import { Server } from 'socket.io';
 
@@ -73,14 +73,15 @@ export class GameRoomManager {
 		return room;
 	}
 
-	async joinRoom(socketId: string, roomId: string, nickname: string, clientId: string): Promise<Room | null> {
-		log.info('socket', socketId, 'joining room:', roomId, 'as', nickname, 'with clientId:', clientId);
+	async joinRoom(SocketId: string, roomId: string, nickname: string, clientId: string, character?: PlayerCharacter): Promise<Room | null> {
+		log.info({ _context: { SocketId, roomId, clientId, nickname, character } }, 'Joining room');
 		const room = this.rooms.get(roomId);
 		if (room) {
 			room.players.push({
-				id: socketId,
+				id: SocketId,
 				clientId,
-				nickname
+				nickname,
+				character,
 			});
 			await this.saveRooms();
 			return room;

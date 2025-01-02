@@ -1,5 +1,5 @@
 'use client';
-import type { ChatMessage, Room } from '~/types/Game'
+import type { ChatMessage, PlayerCharacter, Room } from '~/types/Game'
 import { socket } from '~/lib/socket'
 import { ref, computed } from 'vue'
 
@@ -12,6 +12,22 @@ export function getClientId(): string {
 		localStorage.setItem('clientId', clientId)
 	}
 	return clientId
+}
+
+export function getPlayerCharacter(): PlayerCharacter {
+	let playerCharacter = localStorage.getItem('playerCharacter')
+	if (!playerCharacter) {
+		const obj: PlayerCharacter = {
+			class: 'Warrior',
+			race: 'Human',
+			background: 'Noble',
+			traits: ['Brave', 'Loyal'],
+			skills: ['Swordsmanship', 'Leadership'],
+			equipment: ['Sword', 'Shield']
+		};
+		localStorage.setItem('playerCharacter', JSON.stringify(obj));
+	}
+	return JSON.parse(playerCharacter || '{}');
 }
 
 class GameSocketManager {
@@ -125,8 +141,9 @@ class GameSocketManager {
 	public joinRoom(roomId: string): void {
 		const nickname = localStorage.getItem('nickname') || 'Anonymous';
 		const clientId = getClientId();
-		log.debug('Joining room:', roomId, 'as', nickname, 'with clientId:', clientId);
-		socket.emit('joinRoom', { roomId, nickname, clientId });
+		const playerCharacter = getPlayerCharacter();
+		log.debug({ _context: { roomId, clientId, nickname, playerCharacter } }, 'Joined room:');
+		socket.emit('joinRoom', { roomId, nickname, clientId, playerCharacter });
 		this.currentRoom.value = roomId;
 		this.refreshMessages(roomId);
 	}
