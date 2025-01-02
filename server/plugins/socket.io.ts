@@ -3,11 +3,10 @@ import { Server } from "socket.io";
 import { defineEventHandler } from "h3";
 import type { NitroApp } from 'nitropack/types';
 import { useLog } from '~/composables/useLog';
-import { GameRoomManager } from '../game/GameRoomManager';
 import { registerAdminHandlers } from '../game/handlers/admin';
 import { registerChatHandlers } from '../game/handlers/chat';
 import { registerChoiceHandlers } from '../game/handlers/choices';
-import { registerRoomHandlers } from '../game/handlers/rooms';
+import { registerRoomHandlers } from '../game/handlers/room';
 import { registerClientHandlers } from '../game/handlers/client';
 
 const log = useLog('server/plugins/socket.io');
