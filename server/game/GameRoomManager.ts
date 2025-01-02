@@ -8,8 +8,6 @@ const log = useLog('server/game/GameRoomManager');
 export class GameRoomManager {
 	private io: Server;
 	private rooms: Map<string, Room> = new Map();
-	private readonly storageDir = 'data';
-	private readonly storageFile = path.join(this.storageDir, 'rooms.json');
 	private storage = useStorage();
 
 	constructor(io: Server) {
@@ -19,7 +17,7 @@ export class GameRoomManager {
 
 	private async loadRooms() {
 		try {
-			const rooms = await this.storage.getItem('rooms') as Room[] || [];
+			const rooms = await this.storage.getItem('rooms:list.json') as Room[] || [];
 			this.rooms = new Map(rooms.map(room => [room.id, room]));
 		} catch (error) {
 			log.error('Error loading rooms:', error);
@@ -29,7 +27,7 @@ export class GameRoomManager {
 	private async saveRooms() {
 		try {
 			const roomsArray = Array.from(this.rooms.values());
-			await this.storage.setItem('rooms', roomsArray);
+			await this.storage.setItem('rooms:list.json', roomsArray);
 		} catch (error) {
 			log.error('Error saving rooms:', error);
 		}
@@ -55,7 +53,7 @@ export class GameRoomManager {
 		};
 
 		// Initialize empty chat history for the room
-		await this.storage.setItem(`rooms:${roomId}:chat`, []);
+		await this.storage.setItem(`rooms:${roomId}:chat.json`, []);
 
 		this.rooms.set(roomId, room);
 		await this.saveRooms();
@@ -127,7 +125,7 @@ export class GameRoomManager {
 	async getChatHistory(roomId: string): Promise<any[]> {
 		try {
 			// @ts-ignore
-			return await this.storage.getItem(`rooms:${roomId}:chat`) || [];
+			return await this.storage.getItem(`rooms:${roomId}:chat.json`) || [];
 		} catch (error) {
 			log.error('Error loading chat history:', error);
 			return [];
@@ -142,7 +140,7 @@ export class GameRoomManager {
 			if (history.length > 1000) {
 				history.shift();
 			}
-			await this.storage.setItem(`rooms:${roomId}:chat`, history);
+			await this.storage.setItem(`rooms:${roomId}:chat.json`, history);
 		} catch (error) {
 			log.error('Error saving message:', error);
 		}

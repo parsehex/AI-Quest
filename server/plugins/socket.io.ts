@@ -19,7 +19,8 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
 	io.bind(engine);
 
 	io.on("connection", (socket) => {
-		log.debug("A user connected. Socket id:", socket.id);
+		const SocketId = socket.id;
+		log.debug({ _context: { SocketId } }, "A user connected");
 
 		// Register all handlers
 		registerAdminHandlers(io, socket, roomManager);

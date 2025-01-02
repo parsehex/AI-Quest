@@ -84,6 +84,16 @@ export default defineNuxtConfig({
       crawlLinks: true,
       routes: ["/sitemap.xml"],
     },
+    storage: {
+      'server-logs': {
+        driver: 'fs',
+        base: './data/logs',
+      },
+      'rooms': {
+        driver: 'fs',
+        base: './data/rooms',
+      },
+    },
   },
 
   svgo: {

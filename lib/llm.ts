@@ -14,6 +14,7 @@ export class LLMManager {
 		return LLMManager.instance;
 	}
 
+	// TODO add logContext
 	async generateResponse(messages: any[], fastMode: boolean = false): Promise<string> {
 		try {
 			this.isProcessing = true;
