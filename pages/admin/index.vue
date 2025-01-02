@@ -139,10 +139,11 @@ const handleToggleFastMode = (roomId: string) => {
 								</UButton>
 							</td>
 							<td class="p-2">
-								<USelect v-model="room.currentPlayer"
+								<USelect v-if="room.players.length" v-model="room.currentPlayer"
 									:options="room.players.map(p => ({ label: p.nickname, value: p.id }))"
 									@update:modelValue="(value) => handleCurrentPlayerChange(room.id, value)">
 								</USelect>
+								<span v-else class="select-none text-muted" title="No players in this room"> -- </span>
 							</td>
 						</tr>
 					</tbody>
