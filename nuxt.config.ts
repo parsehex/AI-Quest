@@ -100,7 +100,7 @@ export default defineNuxtConfig({
     autoImportPath: "./assets/logo/",
   },
 
-  plugins: [{ src: "~/plugins/vercel.ts", mode: "client" }],
+  plugins: [],
   compatibilityDate: "2024-12-30",
 
   vite: {
