@@ -44,7 +44,7 @@ Pay attention and react to the latest choice in a natural way.`;
 
 	const fastMode = room.fastMode || false;
 
-	const response = await llm.generateResponse([
+	let response = await llm.generateResponse([
 		{ role: "system", content: prompt },
 		{
 			role: "user", content: `Original premise: ${premise}
@@ -53,7 +53,10 @@ ${latestEvent ? 'Latest event:\n' + latestEvent : ''}${isNewPlayer ? `\n\nNew Pl
 		}
 	], fastMode, { roomId, currentPlayer, isRetrying });
 
-	// console.log("AI Response:", response);
+	// The last closing tag is often cut off in LLM responses
+	if (!response.includes('</choices>') && response.includes('<choices>')) {
+		response += '</choices>';
+	}
 
 	// Parse sections
 	const sections = {
@@ -61,9 +64,11 @@ ${latestEvent ? 'Latest event:\n' + latestEvent : ''}${isNewPlayer ? `\n\nNew Pl
 		narrative: response.match(/<narrative>(.*?)<\/narrative>/s)?.[1] || '',
 		choices: response.match(/<choices>(.*?)<\/choices>/s)?.[1].trim().split('\n') || []
 	};
-	sections.choices = sections.choices.map(choice => choice.replace(/- /, ''));
+	sections.intro = sections.intro.trim();
+	sections.narrative = sections.narrative.trim();
+	sections.choices = sections.choices.map(choice => choice.replace(/- /, '').trim());
 
-	if (sections.choices.length === 0) {// why is this running
+	if (sections.choices.length === 0) {
 		log.log("No choices found, regenerating response");
 		await generateAIResponse(io, roomManager, roomId, currentPlayer, true);
 	}
