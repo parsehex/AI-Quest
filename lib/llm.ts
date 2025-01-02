@@ -1,4 +1,7 @@
-import OpenAI from "openai";
+import OpenAI from 'openai';
+import { useLog } from '~/composables/useLog';
+
+const log = useLog('lib/llm');
 
 export class LLMManager {
 	private static instance: LLMManager | null = null;
@@ -25,7 +28,7 @@ export class LLMManager {
 				? config.private.model_fast
 				: config.private.model;
 
-			console.log('Using model:', model, 'and baseURL:', baseURL);
+			log.debug('Using model:', model, 'and baseURL:', baseURL);
 
 			// Create a new OpenAI instance with the appropriate baseURL
 			const openai = new OpenAI({
@@ -41,7 +44,7 @@ export class LLMManager {
 
 			return completion.choices[0].message.content || "No response generated";
 		} catch (error) {
-			console.error("Error generating response:", error);
+			log.error("Error generating response:", error);
 			return "Error generating AI response";
 		} finally {
 			this.isProcessing = false;

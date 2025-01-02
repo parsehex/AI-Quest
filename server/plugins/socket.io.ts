@@ -2,8 +2,6 @@ import { Server as Engine } from "engine.io";
 import { Server } from "socket.io";
 import { defineEventHandler } from "h3";
 import type { NitroApp } from 'nitropack/types';
-import { mkdir } from 'fs/promises';
-import { existsSync } from 'fs';
 import { useLog } from '~/composables/useLog';
 import { GameRoomManager } from '../game/GameRoomManager';
 import { registerAdminHandlers } from '../game/handlers/admin';
@@ -14,11 +12,6 @@ import { registerRoomHandlers } from '../game/handlers/rooms';
 const log = useLog('server/plugins/socket.io');
 
 export default defineNitroPlugin(async (nitroApp: NitroApp) => {
-	const dataDir = 'data/rooms';
-	if (!existsSync(dataDir)) {
-		await mkdir(dataDir, { recursive: true });
-	}
-
 	const engine = new Engine();
 	const io = new Server();
 	const roomManager = new GameRoomManager(io);

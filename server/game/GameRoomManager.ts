@@ -1,6 +1,4 @@
 import { ChatMessage, Room } from '~/types/Game';
-import { writeFile, readFile, mkdir } from 'fs/promises';
-import { existsSync } from 'fs';
 import path from 'path';
 import { useLog } from '~/composables/useLog';
 import { Server } from 'socket.io';
@@ -12,33 +10,26 @@ export class GameRoomManager {
 	private rooms: Map<string, Room> = new Map();
 	private readonly storageDir = 'data';
 	private readonly storageFile = path.join(this.storageDir, 'rooms.json');
+	private storage = useStorage();
 
 	constructor(io: Server) {
 		this.io = io;
 		this.loadRooms();
 	}
 
-	// Load rooms from storage
 	private async loadRooms() {
 		try {
-			if (existsSync(this.storageFile)) {
-				const data = await readFile(this.storageFile, 'utf-8');
-				const rooms = JSON.parse(data) as Room[];
-				this.rooms = new Map(rooms.map(room => [room.id, room]));
-			}
+			const rooms = await this.storage.getItem('rooms') as Room[] || [];
+			this.rooms = new Map(rooms.map(room => [room.id, room]));
 		} catch (error) {
 			log.error('Error loading rooms:', error);
 		}
 	}
 
-	// Save rooms to storage
 	private async saveRooms() {
 		try {
 			const roomsArray = Array.from(this.rooms.values());
-			await writeFile(
-				this.storageFile,
-				JSON.stringify(roomsArray, null, 2)
-			);
+			await this.storage.setItem('rooms', roomsArray);
 		} catch (error) {
 			log.error('Error saving rooms:', error);
 		}
@@ -63,13 +54,8 @@ export class GameRoomManager {
 			createdBy,
 		};
 
-		// Create room directory and chat file
-		const roomDir = path.join(this.storageDir, 'rooms', roomId)
-		await mkdir(roomDir, { recursive: true })
-		await writeFile(
-			this.getRoomChatPath(roomId),
-			JSON.stringify([], null, 2)
-		)
+		// Initialize empty chat history for the room
+		await this.storage.setItem(`rooms:${roomId}:chat`, []);
 
 		this.rooms.set(roomId, room);
 		await this.saveRooms();
@@ -138,30 +124,27 @@ export class GameRoomManager {
 		await this.saveRooms();
 	}
 
-	private getRoomChatPath(roomId: string): string {
-		return path.join(this.storageDir, 'rooms', roomId, 'chat.json')
-	}
-
 	async getChatHistory(roomId: string): Promise<any[]> {
 		try {
-			const chatPath = this.getRoomChatPath(roomId)
-			const data = await readFile(chatPath, 'utf-8')
-			return JSON.parse(data)
+			// @ts-ignore
+			return await this.storage.getItem(`rooms:${roomId}:chat`) || [];
 		} catch (error) {
-			console.error('Error loading chat history:', error)
-			return []
+			log.error('Error loading chat history:', error);
+			return [];
 		}
 	}
 
 	async addMessage(roomId: string, message: ChatMessage): Promise<void> {
 		try {
 			log.log('Adding message:', message);
-			const chatPath = this.getRoomChatPath(roomId)
-			const history = await this.getChatHistory(roomId)
-			history.push(message)
-			await writeFile(chatPath, JSON.stringify(history, null, 2))
+			const history = await this.getChatHistory(roomId);
+			history.push(message);
+			if (history.length > 1000) {
+				history.shift();
+			}
+			await this.storage.setItem(`rooms:${roomId}:chat`, history);
 		} catch (error) {
-			log.error('Error saving message:', error)
+			log.error('Error saving message:', error);
 		}
 	}
 }
