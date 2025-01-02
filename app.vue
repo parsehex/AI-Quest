@@ -5,7 +5,7 @@ useHead({
   meta: [
     { name: "viewport", content: "width=device-width, initial-scale=1" },
     { name: "keywords", content: "Home" },
-    { name: "description", content: "Nuxt Starter" },
+    { name: "description", content: "AI Quest" },
   ],
   link: [
     {
@@ -28,76 +28,71 @@ const toast = computed(() => {
 });
 
 useHead({
-  title: "Nuxt Starter - Start your next Nuxt project in seconds",
+  title: "AI Quest",
   meta: [
     { name: "viewport", content: "width=device-width, initial-scale=1" },
-    { name: "author", content: "Hugo Richard" },
+    { name: "author", content: "parsehex" },
     { charset: "utf-8" },
-    {
-      name: "description",
-      content: "Start your next Nuxt project in seconds, with everything you need included",
-    },
-    {
-      name: "keywords",
-      content: "Nuxt, Starter, Resend, Bun, Tailwind, TypeScript, ESLint",
-    },
+    // {
+    //   name: "description",
+    //   content: "Start your next Nuxt project in seconds, with everything you need included",
+    // },
+    // {
+    //   name: "keywords",
+    //   content: "Nuxt, Starter, Resend, Bun, Tailwind, TypeScript, ESLint",
+    // },
     {
       property: "og:title",
-      content: "Nuxt Starter - Start your next Nuxt project in seconds",
+      content: "AI Quest",
     },
-    {
-      property: "og:url",
-      content: "https://nuxtstarter.hrcd.fr/",
-    },
-    {
-      property: "og:description",
-      content: "Start your next Nuxt project in seconds, with everything you need included",
-    },
-    {
-      property: "og:image",
-      content: "https://nuxtstarter.hrcd.fr/homescreen.png",
-    },
-    {
-      property: "twitter:card",
-      content: "summary_large_image",
-    },
-    {
-      property: "twitter:image",
-      content: "https://nuxtstarter.hrcd.fr/homescreen.png",
-    },
-    {
-      property: "twitter:url",
-      content: "https://nuxtstarter.hrcd.fr/",
-    },
+    // {
+    //   property: "og:url",
+    //   content: "https://nuxtstarter.hrcd.fr/",
+    // },
+    // {
+    //   property: "og:description",
+    //   content: "Start your next Nuxt project in seconds, with everything you need included",
+    // },
+    // {
+    //   property: "og:image",
+    //   content: "https://nuxtstarter.hrcd.fr/homescreen.png",
+    // },
+    // {
+    //   property: "twitter:card",
+    //   content: "summary_large_image",
+    // },
+    // {
+    //   property: "twitter:image",
+    //   content: "https://nuxtstarter.hrcd.fr/homescreen.png",
+    // },
+    // {
+    //   property: "twitter:url",
+    //   content: "https://nuxtstarter.hrcd.fr/",
+    // },
     {
       property: "twitter:title",
-      content: "Nuxt Starter - Start your next Nuxt project in seconds",
+      content: "AI Quest",
     },
-    {
-      property: "twitter:description",
-      content: "Start your next Nuxt project in seconds, with everything you need included",
-    },
+    // {
+    //   property: "twitter:description",
+    //   content: "Start your next Nuxt project in seconds, with everything you need included",
+    // },
   ],
 });
 </script>
-
 <template>
   <Html :lang="$i18n.locale">
-    <ToastsBasic
-      :show="toast.show"
-      :title="toast.title"
-      :description="toast.message"
-      :type="toast.type"
-      :infos="toast.infos"
-      @close="toastStore.closeToast()"
-    />
-    <Body class="bg-white dark:bg-zinc-950">
-      <LayoutCommandConsole />
-      <LayoutScrollToTop />
-      <NuxtLayout>
-        <NuxtPage />
-      </NuxtLayout>
-      <UNotifications />
-    </Body>
+  <ToastsBasic :show="toast.show" :title="toast.title" :description="toast.message" :type="toast.type"
+    :infos="toast.infos" @close="toastStore.closeToast()" />
+
+  <Body class="bg-white dark:bg-zinc-950">
+    <LayoutCommandConsole />
+    <LayoutScrollToTop />
+    <NuxtLayout>
+      <NuxtPage />
+    </NuxtLayout>
+    <UNotifications />
+  </Body>
+
   </Html>
 </template>
