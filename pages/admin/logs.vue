@@ -66,7 +66,8 @@
 		<UModal v-model="isModalOpen" :ui="{ width: 'max-w-2xl' }">
 			<template #header> Log Context </template>
 			<!-- TODO json viewer -->
-			<pre class="rounded p-4 overflow-x-auto"><code>{{ JSON.stringify(selectedLog?.context, null, 2) }}</code></pre>
+			<pre class="rounded p-4 overflow-x-auto whitespace-pre-wrap break-words"><code>{{ JSON.stringify(selectedLog?.context,
+				null, 2) }}</code></pre>
 		</UModal>
 	</div>
 </template>
@@ -167,10 +168,6 @@ const fetchLogs = async () => {
 	if (filters.value.fromDate) params.append('from', filters.value.fromDate)
 
 	logs.value = [...await $fetch('/api/logs?' + params.toString())]
-	logs.value = logs.value.map(log => {
-		log.context = JSON.parse(log.context)
-		return log
-	})
 }
 
 const exportLogs = () => {

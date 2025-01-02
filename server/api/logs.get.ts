@@ -1,23 +1,15 @@
-import { LogEntry } from '~/types/Logs'
+import { useLogManager } from '../utils/LogManager'
 
 export default defineEventHandler(async (event) => {
-	const storage = useStorage()
-	const logs = await storage.getItem('server-logs:logs.json') as LogEntry[] || []
+	const logManager = useLogManager()
+	await logManager.waitForInit()
 
-	// Add query parameters for filtering
+	const logs = logManager.getLogs()
 	const query = getQuery(event)
 
-	let filteredLogs = logs
-
-	if (query.level) {
-		filteredLogs = filteredLogs.filter(log => log.level === query.level)
-	}
-
-	if (query.from) {
-		filteredLogs = filteredLogs.filter(log =>
-			new Date(log.timestamp) >= new Date(query.from as string)
-		)
-	}
-
-	return filteredLogs
+	return logs.filter(log => {
+		if (query.level && log.level !== query.level) return false
+		if (query.from && new Date(log.timestamp) < new Date(query.from as string)) return false
+		return true
+	})
 })

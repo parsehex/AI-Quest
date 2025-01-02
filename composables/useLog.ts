@@ -1,3 +1,4 @@
+import { useLogManager } from '~/server/utils/LogManager'
 import type { LogLevel } from '~/types/Logs'
 
 interface LoggerOptions {
@@ -27,7 +28,7 @@ interface LoggerOptions {
 
 export const useLog = (prefix = 'App', options: LoggerOptions = {}) => {
 	const currentLevel = options.level || 'info'
-	const isServer = process.server
+	const isServer = import.meta.server
 	const defaultContext = options.context || {}
 
 	const shouldLog = (messageLevel: LogLevel): boolean => {
@@ -41,20 +42,13 @@ export const useLog = (prefix = 'App', options: LoggerOptions = {}) => {
 		return arr
 	}
 
-	// Helper to save logs on server
 	const saveLog = async (entry: LogEntry) => {
 		if (!isServer) return
 
 		try {
-			const storage = useStorage()
-			let logs = await storage.getItem('server-logs:logs.json') as LogEntry[]
-			if (!logs) logs = []
-			else if (typeof logs === 'string') logs = JSON.parse(logs)
-			logs.push(entry)
-
-			// if (logs.length > 1000) logs.shift()
-
-			await storage.setItem('server-logs:logs.json', logs)
+			const logManager = useLogManager()
+			await logManager.waitForInit()
+			logManager.addLog(entry)
 		} catch (e) {
 			console.error('Failed to save log:', e)
 		}
@@ -98,7 +92,7 @@ export const useLog = (prefix = 'App', options: LoggerOptions = {}) => {
 	const error = async (...args: any[]) => {
 		const { messages, context } = processArgs(args)
 		const entry = createLogEntry('error', messages, context)
-		await saveLog(entry)
+		saveLog(entry)
 		if (shouldLog('error')) {
 			console.error(...formatMessage(messages, 'ERROR'))
 		}
@@ -107,7 +101,7 @@ export const useLog = (prefix = 'App', options: LoggerOptions = {}) => {
 	const warn = async (...args: any[]) => {
 		const { messages, context } = processArgs(args)
 		const entry = createLogEntry('warn', messages, context)
-		await saveLog(entry)
+		saveLog(entry)
 		if (shouldLog('warn')) {
 			console.warn(...formatMessage(messages, 'WARN'))
 		}
@@ -116,7 +110,7 @@ export const useLog = (prefix = 'App', options: LoggerOptions = {}) => {
 	const info = async (...args: any[]) => {
 		const { messages, context } = processArgs(args)
 		const entry = createLogEntry('info', messages, context)
-		await saveLog(entry)
+		saveLog(entry)
 		if (shouldLog('info')) {
 			console.info(...formatMessage(messages, 'INFO'))
 		}
@@ -125,7 +119,7 @@ export const useLog = (prefix = 'App', options: LoggerOptions = {}) => {
 	const debug = async (...args: any[]) => {
 		const { messages, context } = processArgs(args)
 		const entry = createLogEntry('debug', messages, context)
-		await saveLog(entry)
+		saveLog(entry)
 		if (shouldLog('debug')) {
 			console.debug(...formatMessage(messages, 'DEBUG'))
 		}
