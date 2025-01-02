@@ -70,7 +70,9 @@ const handleToggleFastMode = (roomId: string) => {
 </script>
 <template>
 	<div class="container mx-auto p-4">
-		<h1 class="text-2xl font-bold mb-6">Admin Panel</h1>
+		<h1 class="text-2xl font-bold mb-6"> Admin Panel <ULink v-if="isValidated" to="/admin/logs"
+				class="text-blue-500 hover:underline ml-2 border-l border-gray-500 pl-2">View Server Logs</ULink>
+		</h1>
 		<!-- Auth and Tools Grid -->
 		<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
 			<!-- Authentication -->
