@@ -89,8 +89,10 @@ const handleToggleFastMode = (roomId: string) => {
 			<div v-show="isValidated" class="md:col-span-2 p-4 bg-white dark:bg-neutral-800 rounded-lg shadow">
 				<h2 class="text-xl font-semibold mb-2">Tools</h2>
 				<div class="flex gap-4">
-					<UButton @click="handleClearRooms" color="red" :disabled="!isValidated"> Clear All Rooms </UButton>
-					<UButton @click="handleRemoveAllPlayers" color="red" :disabled="!isValidated"> Kick All Players </UButton>
+					<UButton @click="handleClearRooms" color="red" :disabled="!isValidated || sock.rooms.value.length === 0">
+						Clear All Rooms </UButton>
+					<UButton @click="handleRemoveAllPlayers" color="red" :disabled="!isValidated || totalPlayers.valueOf() === 0">
+						Kick All Players </UButton>
 				</div>
 			</div>
 		</div>
@@ -110,7 +112,7 @@ const handleToggleFastMode = (roomId: string) => {
 							<th class="text-left p-2">Room ID</th>
 							<th class="text-left p-2">Name</th>
 							<th class="text-left p-2">Players</th>
-							<th class="text-left p-2">Fast Mode</th>
+							<th class="text-left p-2">Fast / Dev Mode</th>
 							<th class="text-left p-2">Current Turn</th>
 						</tr>
 					</thead>

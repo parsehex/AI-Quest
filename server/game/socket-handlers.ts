@@ -14,21 +14,23 @@ const generateAIResponse = async (roomId: string, premise: string, io: Server, r
 	io.to(room.id).emit("roomList", roomManager.getRooms());
 
 	const llm = LLMManager.getInstance();
+	const playerNames = history.map(event => event.match(/(.+) chose:/)?.[1]).filter(Boolean);
+	const isNewPlayer = playerNames.includes(currentPlayer);
 	const prompt = `Assistant is a creative game master crafting a multiplayer interactive story.
 Assistant's task is to create a response with the following format:
 <intro>
 A brief intro of the current situation
 </intro>
 <narrative>
-Detailed description of the events and actions that happen. Talk in the 3rd person to keep it clear who is doing what. Follow up with relevant context and cue the current player to make a decision.
+Detailed description of the events and actions that happen. Talk in the 3rd person to keep it clear who is doing what. Follow up with relevant context and cue ${currentPlayer} to make a decision.
 </narrative>
 <choices>
-- First choice the player can make
+- First choice ${currentPlayer} can make
 - Next choice
 - (Up to 5 total choices)
 </choices>
 Use the choice text without anything preceding. Create choices which make sense to push the events forward.
-Pay attention and react to the latest choice in a natrual way.`;
+Pay attention and react to the latest choice in a natural way.`;
 	// console.log(prompt);
 
 	// disjointed note:
@@ -45,7 +47,7 @@ Pay attention and react to the latest choice in a natrual way.`;
 		{
 			role: "user", content: `Original premise: ${premise}
 ${history.length ? 'Events:\n' + history.join('\n') : ''}
-${latestEvent ? 'Latest event:\n' + latestEvent : ''}${currentPlayer ? `\n\nCurrent Player's Turn: ${currentPlayer}` : ''}`
+${latestEvent ? 'Latest event:\n' + latestEvent : ''}${isNewPlayer ? `\n\nNew Player: ${currentPlayer}` : currentPlayer ? `\n\nCurrent Player: ${currentPlayer}` : ''}`
 		}
 	], fastMode);
 
@@ -107,6 +109,11 @@ export const registerRoomHandlers = (io: Server, socket: Socket, roomManager: Ro
 			// are there 1 players now? then set currentPlayer to that player
 			if (room.players.length === 1) {
 				room.currentPlayer = room.players[0].id;
+
+				const history = room.history || [];
+				const newHistory = history.slice(-4);
+				const playerName = socket.data.nickname || 'Anonymous';
+				generateAIResponse(roomId, room.premise, io, roomManager, newHistory, playerName);
 			}
 
 			io.to(roomId).emit('playerJoined', { roomId, nickname });
