@@ -14,8 +14,7 @@ export class LLMManager {
 		return LLMManager.instance;
 	}
 
-	// TODO add logContext
-	async generateResponse(messages: any[], fastMode: boolean = false): Promise<string> {
+	async generateResponse(messages: any[], fastMode: boolean = false, extraCtx?: Record<string, unknown>): Promise<string> {
 		try {
 			this.isProcessing = true;
 			const config = useRuntimeConfig();
@@ -37,13 +36,24 @@ export class LLMManager {
 				apiKey: config.private.openrouterApiKey,
 			});
 
-			const completion = await openai.chat.completions.create({
+			const req = {
 				messages,
 				model,
 				temperature: 0.25,
-			});
+			};
 
-			return completion.choices[0].message.content || "No response generated";
+			if (extraCtx) {
+				log.debug({ _context: { ...extraCtx, req } }, 'LLM call');
+			}
+
+			const completion = await openai.chat.completions.create(req);
+
+			const res = completion.choices[0]
+			const resStr = res.message.content || "No response generated";
+			if (extraCtx) {
+				log.debug({ _context: { ...extraCtx, res } }, 'LLM response');
+			}
+			return resStr;
 		} catch (error) {
 			log.error("Error generating response:", error);
 			return "Error generating AI response";

@@ -4,6 +4,7 @@ import { ref, onBeforeUnmount } from "vue";
 
 const isConnected = ref(false);
 const transport = ref("");
+const myClientId = ref("");
 
 if (socket.connected) {
   onConnect();
@@ -12,6 +13,7 @@ if (socket.connected) {
 function onConnect() {
   isConnected.value = true;
   transport.value = socket.io.engine.transport.name;
+  myClientId.value = getClientId();
 
   socket.io.engine.on("upgrade", (rawTransport) => {
     transport.value = rawTransport.name;
@@ -33,7 +35,7 @@ onBeforeUnmount(() => {
 </script>
 <template>
   <div class="ml-2">
-    <UTooltip class="relative" :text="transport">
+    <UTooltip class="relative" :text="`ClientID: ${myClientId}, Transport: ${transport}`">
       <span v-if="isConnected" class="inline-block w-3 h-3 bg-green-500 rounded-full"></span>
       <span v-else class="inline-block w-3 h-3 bg-red-500 rounded-full"></span>
     </UTooltip>

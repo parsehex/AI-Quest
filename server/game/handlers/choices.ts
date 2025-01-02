@@ -34,7 +34,6 @@ Detailed description of the events and actions that happen. Talk in the 3rd pers
 </choices>
 Use the choice text without anything preceding. Create choices which make sense to push the events forward.
 Pay attention and react to the latest choice in a natural way.`;
-	// console.log(prompt);
 
 	// disjointed note:
 	// i want players to be able to join a room and they get added to the turn order / game
@@ -52,7 +51,7 @@ Pay attention and react to the latest choice in a natural way.`;
 ${history.length ? 'Events:\n' + history.join('\n') : ''}
 ${latestEvent ? 'Latest event:\n' + latestEvent : ''}${isNewPlayer ? `\n\nNew Player: ${currentPlayer}` : currentPlayer ? `\n\nCurrent Player: ${currentPlayer}` : ''}`
 		}
-	], fastMode);
+	], fastMode, { roomId, currentPlayer });
 
 	// console.log("AI Response:", response);
 

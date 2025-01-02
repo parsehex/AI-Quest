@@ -8,13 +8,16 @@ export const registerClientHandlers = (io: Server, socket: Socket, roomManager: 
 	let clientIdMap = new Map<string, string>();
 
 	socket.on('identify', (clientId: string) => {
-		log.debug('Identified client:', clientId, 'with socket:', socket.id);
+		const SocketId = socket.id;
+		const nickname = socket.data.nickname || 'Anonymous';
+		log.debug({ _context: { SocketId, clientId, nickname } }, 'Identified client');
 		clientIdMap.set(clientId, socket.id);
 	});
 
-	socket.on("disconnect", () => {
+	socket.on('disconnect', () => {
 		roomManager.removePlayerFromAllRooms(socket.id);
-		log.debug("A user disconnected. Socket id:", socket.id);
-		io.emit("roomList", roomManager.getRooms());
+		const SocketId = socket.id;
+		log.debug({ _context: { SocketId } }, 'Socket disconnected');
+		io.emit('roomList', roomManager.getRooms());
 	});
 };

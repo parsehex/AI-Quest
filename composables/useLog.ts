@@ -47,7 +47,9 @@ export const useLog = (prefix = 'App', options: LoggerOptions = {}) => {
 
 		try {
 			const storage = useStorage()
-			const logs = await storage.getItem('server-logs:logs.json') as LogEntry[] || []
+			let logs = await storage.getItem('server-logs:logs.json') as LogEntry[]
+			if (!logs) logs = []
+			else if (typeof logs === 'string') logs = JSON.parse(logs)
 			logs.push(entry)
 
 			// if (logs.length > 1000) logs.shift()

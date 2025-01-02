@@ -17,7 +17,9 @@ export class GameRoomManager {
 
 	private async loadRooms() {
 		try {
-			const rooms = await this.storage.getItem('rooms:list.json') as Room[] || [];
+			let rooms = await this.storage.getItem('rooms:list.json') as Room[];
+			if (!rooms) rooms = [];
+			else if (typeof rooms === 'string') rooms = JSON.parse(rooms);
 			this.rooms = new Map(rooms.map(room => [room.id, room]));
 		} catch (error) {
 			log.error('Error loading rooms:', error);
@@ -124,8 +126,10 @@ export class GameRoomManager {
 
 	async getChatHistory(roomId: string): Promise<any[]> {
 		try {
-			// @ts-ignore
-			return await this.storage.getItem(`rooms:${roomId}:chat.json`) || [];
+			let chat = await this.storage.getItem(`rooms:${roomId}:chat.json`) as any[];
+			if (!chat) chat = [];
+			else if (typeof chat === 'string') chat = JSON.parse(chat);
+			return chat;
 		} catch (error) {
 			log.error('Error loading chat history:', error);
 			return [];

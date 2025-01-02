@@ -2,7 +2,7 @@ import { LogEntry } from '~/types/Logs'
 
 export default defineEventHandler(async (event) => {
 	const storage = useStorage()
-	const logs = await storage.getItem('server-logs') as LogEntry[] || []
+	const logs = await storage.getItem('server-logs:logs.json') as LogEntry[] || []
 
 	// Add query parameters for filtering
 	const query = getQuery(event)
