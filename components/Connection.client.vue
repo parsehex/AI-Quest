@@ -35,9 +35,9 @@ onBeforeUnmount(() => {
 </script>
 <template>
   <div class="ml-2">
-    <UTooltip class="relative" :text="`ClientID: ${myClientId}, Transport: ${transport}`">
+    <span :title="`${myClientId}, ${transport} transport`">
       <span v-if="isConnected" class="inline-block w-3 h-3 bg-green-500 rounded-full"></span>
       <span v-else class="inline-block w-3 h-3 bg-red-500 rounded-full"></span>
-    </UTooltip>
+    </span>
   </div>
 </template>
