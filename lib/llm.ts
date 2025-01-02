@@ -40,6 +40,7 @@ export class LLMManager {
 				messages,
 				model,
 				temperature: 0.25,
+				max_tokens: 768,
 			};
 
 			if (extraCtx) {

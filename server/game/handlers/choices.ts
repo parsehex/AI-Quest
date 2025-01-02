@@ -4,6 +4,8 @@ import { useLog } from '~/composables/useLog';
 import { LLMManager } from '~/lib/llm';
 import { Room } from '~/types/Game';
 import { useIO } from '~/server/plugins/socket.io';
+import GameMasterSystem from '~/lib/prompts/templates/GameMasterSystem';
+import GameMasterUser from '~/lib/prompts/templates/GameMasterUser';
 
 const log = useLog('handlers/choices');
 
@@ -34,21 +36,7 @@ const generateAIResponse = async (roomId: string, currentPlayer = '', isRetrying
 	const llm = LLMManager.getInstance();
 	const playerNames = history.map(event => event.match(/(.+) chose:/)?.[1]).filter(Boolean);
 	const isNewPlayer = playerNames.includes(currentPlayer);
-	const prompt = `Assistant is a creative game master crafting a multiplayer interactive story.
-Assistant's task is to create a response with the following format:
-<intro>
-A brief intro of the current situation
-</intro>
-<narrative>
-Detailed description of the events and actions that happen. Talk in the 3rd person to keep it clear who is doing what. Follow up with relevant context and cue ${currentPlayer} to make a decision.
-</narrative>
-<choices>
-- First choice ${currentPlayer} can make
-- Next choice
-- (Up to 5 total choices)
-</choices>
-Use the choice text without anything preceding. Create choices which make sense to push the events forward.
-Pay attention and react to the latest choice in a natural way.`;
+	const prompt = GameMasterSystem({ currentPlayer });
 
 	const latestEvent = history.slice(-1)[0] || '';
 	history = history.slice(0, -1);
@@ -56,9 +44,13 @@ Pay attention and react to the latest choice in a natural way.`;
 	let response = await llm.generateResponse([
 		{ role: "system", content: prompt },
 		{
-			role: "user", content: `Original premise: ${premise}
-${history.length ? 'Events:\n' + history.join('\n') : ''}
-${latestEvent ? 'Latest event:\n' + latestEvent : ''}${isNewPlayer ? `\n\nNew Player: ${currentPlayer}` : currentPlayer ? `\n\nCurrent Player: ${currentPlayer}` : ''}`
+			role: "user", content: GameMasterUser({
+				currentPlayer,
+				premise,
+				history,
+				latestEvent,
+				isNewPlayer
+			}),
 		}
 	], room.fastMode, { roomId, currentPlayer, isRetrying });
 
