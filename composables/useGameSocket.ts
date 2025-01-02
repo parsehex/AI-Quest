@@ -1,5 +1,5 @@
 'use client';
-import type { Message, Room } from '~/types/Game'
+import type { ChatMessage, Room } from '~/types/Game'
 import { socket } from '~/lib/socket'
 import { ref, computed } from 'vue'
 
@@ -24,7 +24,7 @@ class GameSocketManager {
 	public currentRoom = ref<string | null>(null);
 	public thisRoom = computed(() => this.rooms.value.find(room => room.id === this.currentRoom.value));
 	public error = ref(null);
-	public messages = ref<Message[]>([]);
+	public messages = ref<ChatMessage[]>([]);
 	public hasRooms = computed(() => this.rooms.value.length > 0);
 
 	private constructor() {
@@ -92,14 +92,14 @@ class GameSocketManager {
 		log.debug(`Player ${playerId} joined`);
 	}
 
-	private onChatHistory(history: Message[]): void {
+	private onChatHistory(history: ChatMessage[]): void {
 		log.debug('Received chat history:', history);
 		this.messages.value = [...history];
 	}
 
-	private onNewMessage(message: Message): void {
+	private onNewMessage(message: ChatMessage): void {
 		log.debug('Received new message:', message);
-		this.messages.value.push(message);
+		this.messages.value = [...this.messages.value, message];
 	}
 
 	private onKicked(): void {
@@ -156,9 +156,8 @@ class GameSocketManager {
 	}
 
 	public regenerateResponse(roomId: string): void {
-		const premise = this.thisRoom.value?.premise || '';
-		log.debug('Regenerating response for room:', roomId, 'with premise:', premise);
-		socket.emit('regenerateResponse', roomId, premise);
+		log.debug('Regenerating response for room:', roomId);
+		socket.emit('regenerateResponse', roomId);
 	}
 
 	public async waitConnected(): Promise<void> {

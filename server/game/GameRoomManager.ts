@@ -1,17 +1,20 @@
-import { Message, Room } from '~/types/Game';
+import { ChatMessage, Room } from '~/types/Game';
 import { writeFile, readFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
 import { useLog } from '~/composables/useLog';
+import { Server } from 'socket.io';
 
-const log = useLog('server/game/rooms');
+const log = useLog('server/game/GameRoomManager');
 
-export class RoomManager {
+export class GameRoomManager {
+	private io: Server;
 	private rooms: Map<string, Room> = new Map();
 	private readonly storageDir = 'data';
 	private readonly storageFile = path.join(this.storageDir, 'rooms.json');
 
-	constructor() {
+	constructor(io: Server) {
+		this.io = io;
 		this.loadRooms();
 	}
 
@@ -39,6 +42,12 @@ export class RoomManager {
 		} catch (error) {
 			log.error('Error saving rooms:', error);
 		}
+	}
+
+	public async saveRoom(room: Room): Promise<void> {
+		this.rooms.set(room.id, room);
+		this.io.to(room.id).emit('roomList', this.getRooms());
+		await this.saveRooms();
 	}
 
 	async createRoom(socketId: string, roomName: string, premise: string, fastMode: boolean, createdBy: string): Promise<Room> {
@@ -123,7 +132,9 @@ export class RoomManager {
 	}
 
 	async clearAllRooms(): Promise<void> {
+		const currentRoomIds = Array.from(this.rooms.keys());
 		this.rooms = new Map();
+		this.io.to(currentRoomIds).emit('kicked');
 		await this.saveRooms();
 	}
 
@@ -142,7 +153,7 @@ export class RoomManager {
 		}
 	}
 
-	async addMessage(roomId: string, message: Message): Promise<void> {
+	async addMessage(roomId: string, message: ChatMessage): Promise<void> {
 		try {
 			log.log('Adding message:', message);
 			const chatPath = this.getRoomChatPath(roomId)

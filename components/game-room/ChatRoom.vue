@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { Message } from '~/types/Game';
+import type { ChatMessage } from '~/types/Game';
 
 const log = useLog('ChatRoom')
 
 const props = defineProps<{
-  messages: Message[]
+  messages: ChatMessage[]
   roomId: string
   isOpen: boolean
 }>()

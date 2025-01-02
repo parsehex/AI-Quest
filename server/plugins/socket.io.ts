@@ -1,14 +1,15 @@
-// server/plugins/socket.io.ts
 import { Server as Engine } from "engine.io";
 import { Server } from "socket.io";
 import { defineEventHandler } from "h3";
 import type { NitroApp } from 'nitropack/types';
 import { mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
-import { RoomManager } from '../game/rooms';
-import { registerRoomHandlers } from '../game/socket-handlers';
 import { useLog } from '~/composables/useLog';
-import { registerAdminHandlers } from '../game/admin-handlers';
+import { GameRoomManager } from '../game/GameRoomManager';
+import { registerAdminHandlers } from '../game/handlers/admin';
+import { registerChatHandlers } from '../game/handlers/chat';
+import { registerChoiceHandlers } from '../game/handlers/choices';
+import { registerRoomHandlers } from '../game/handlers/rooms';
 
 const log = useLog('server/plugins/socket.io');
 
@@ -20,16 +21,18 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
 
 	const engine = new Engine();
 	const io = new Server();
-	const roomManager = new RoomManager();
+	const roomManager = new GameRoomManager(io);
 
 	io.bind(engine);
 
 	io.on("connection", (socket) => {
-		log.debug("A user connected", socket.id);
+		log.debug("A user connected. Socket id:", socket.id);
 
 		// Register all handlers
-		registerRoomHandlers(io, socket, roomManager);
 		registerAdminHandlers(io, socket, roomManager);
+		registerChatHandlers(io, socket, roomManager);
+		registerChoiceHandlers(io, socket, roomManager);
+		registerRoomHandlers(io, socket, roomManager);
 	});
 
 	nitroApp.router.use("/socket.io/", defineEventHandler({

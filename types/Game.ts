@@ -17,12 +17,12 @@ export interface Room {
 	};
 	currentTurn?: number;
 	currentPlayer?: string;
-	history?: string[];
+	history: string[];
 	fastMode?: boolean;
 	createdBy: string;
 }
 
-export interface Message {
+export interface ChatMessage {
 	sender: string
 	nickname: string
 	text: string
