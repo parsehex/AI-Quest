@@ -2,7 +2,7 @@ import { Server, Socket } from 'socket.io';
 import type { GameRoomManager } from '../GameRoomManager';
 import { useLog } from '~/composables/useLog';
 
-const log = useLog('game/handlers/admin');
+const log = useLog('handlers/admin');
 
 const validateAdminPassword = (password: string): boolean => {
 	return password === 'test';

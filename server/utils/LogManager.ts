@@ -17,7 +17,7 @@ export class LogManager {
 			} catch (e) {
 				console.error('Failed to save logs to disk:', e)
 			}
-		}, 1000) // 1 second debounce
+		}, 500) // 0.5 second debounce
 	}
 
 	private async loadLogs() {

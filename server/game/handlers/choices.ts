@@ -3,10 +3,10 @@ import type { GameRoomManager } from '../GameRoomManager';
 import { useLog } from '~/composables/useLog';
 import { LLMManager } from '~/lib/llm';
 
-const log = useLog('game/handlers/choices');
+const log = useLog('handlers/choices');
 
 /** Make any changes to `room.history` before calling this */
-const generateAIResponse = async (io: Server, roomManager: GameRoomManager, roomId: string, currentPlayer = '') => {
+const generateAIResponse = async (io: Server, roomManager: GameRoomManager, roomId: string, currentPlayer = '', isRetrying = false) => {
 	const room = roomManager.getRoom(roomId);
 	if (!room) return;
 
@@ -51,7 +51,7 @@ Pay attention and react to the latest choice in a natural way.`;
 ${history.length ? 'Events:\n' + history.join('\n') : ''}
 ${latestEvent ? 'Latest event:\n' + latestEvent : ''}${isNewPlayer ? `\n\nNew Player: ${currentPlayer}` : currentPlayer ? `\n\nCurrent Player: ${currentPlayer}` : ''}`
 		}
-	], fastMode, { roomId, currentPlayer });
+	], fastMode, { roomId, currentPlayer, isRetrying });
 
 	// console.log("AI Response:", response);
 
@@ -63,10 +63,9 @@ ${latestEvent ? 'Latest event:\n' + latestEvent : ''}${isNewPlayer ? `\n\nNew Pl
 	};
 	sections.choices = sections.choices.map(choice => choice.replace(/- /, ''));
 
-	// console.log(sections.choices);
-	if (sections.choices.length === 0) {
+	if (sections.choices.length === 0) {// why is this running
 		log.log("No choices found, regenerating response");
-		await generateAIResponse(io, roomManager, roomId, currentPlayer);
+		await generateAIResponse(io, roomManager, roomId, currentPlayer, true);
 	}
 
 	room.lastAiResponse = sections;

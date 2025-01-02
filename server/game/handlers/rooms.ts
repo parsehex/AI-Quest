@@ -3,7 +3,7 @@ import type { GameRoomManager } from '../GameRoomManager';
 import { useLog } from '~/composables/useLog';
 import { playChoice } from './choices';
 
-const log = useLog('game/handlers/rooms');
+const log = useLog('handlers/rooms');
 
 export const registerRoomHandlers = (io: Server, socket: Socket, roomManager: GameRoomManager) => {
 	socket.on("createRoom", async (roomName: string, premise: string, fastMode: boolean) => {

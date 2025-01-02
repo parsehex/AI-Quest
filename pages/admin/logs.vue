@@ -44,7 +44,7 @@
 			<div class="shadow rounded-lg overflow-hidden">
 				<div class="overflow-x-auto">
 					<UTable :rows="filteredLogs" :columns="tableColumns">
-						<template #timestamp-data="{ row }"> {{ formatDate(row.timestamp) }} </template>
+						<template #timestamp-data="{ row }"> {{ row.timestamp }} </template>
 						<template #level-data="{ row }">
 							<UBadge :label="row.level" :color="getLevelColor(row.level)" />
 						</template>

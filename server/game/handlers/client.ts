@@ -2,7 +2,7 @@ import { Server, Socket } from 'socket.io';
 import type { GameRoomManager } from '../GameRoomManager';
 import { useLog } from '~/composables/useLog';
 
-const log = useLog('game/handlers/client');
+const log = useLog('handlers/client');
 
 export const registerClientHandlers = (io: Server, socket: Socket, roomManager: GameRoomManager) => {
 	let clientIdMap = new Map<string, string>();

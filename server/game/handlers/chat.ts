@@ -3,7 +3,7 @@ import type { GameRoomManager } from '../GameRoomManager';
 import { useLog } from '~/composables/useLog';
 import { ChatMessage } from '~/types/Game';
 
-const log = useLog('game/handlers/chat');
+const log = useLog('handlers/chat');
 
 export const registerChatHandlers = (io: Server, socket: Socket, roomManager: GameRoomManager) => {
 	socket.on('message', async ({ roomId, text }) => {
@@ -20,7 +20,7 @@ export const registerChatHandlers = (io: Server, socket: Socket, roomManager: Ga
 	});
 
 	socket.on("getMessages", async (roomId: string) => {
-		log.debug("Socket", socket.id, "getting messages for room", roomId);
+		// log.debug("Socket", socket.id, "getting messages for room", roomId);
 		const messages = await roomManager.getChatHistory(roomId);
 		socket.to(roomId).emit("chatHistory", messages);
 	});

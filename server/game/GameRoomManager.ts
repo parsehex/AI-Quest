@@ -1,9 +1,8 @@
 import { ChatMessage, Room } from '~/types/Game';
-import path from 'path';
 import { useLog } from '~/composables/useLog';
 import { Server } from 'socket.io';
 
-const log = useLog('server/game/GameRoomManager');
+const log = useLog('GameRoomManager');
 
 export class GameRoomManager {
 	private io: Server;

@@ -26,6 +26,14 @@ interface LoggerOptions {
 	context?: Record<string, any> // Default context for all logs from this instance
 }
 
+const formatTimestamp = (date: Date): string => {
+	const pad = (n: number, width = 2) => String(n).padStart(width, '0')
+
+	return `${pad(date.getMonth() + 1)}/${pad(date.getDate())} ` +
+		`${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}.` +
+		`${pad(date.getMilliseconds(), 3)}`
+}
+
 export const useLog = (prefix = 'App', options: LoggerOptions = {}) => {
 	const currentLevel = options.level || 'info'
 	const isServer = import.meta.server
@@ -36,7 +44,7 @@ export const useLog = (prefix = 'App', options: LoggerOptions = {}) => {
 	}
 
 	const formatMessage = (message: any, level: string) => {
-		const timestamp = new Date().toISOString()
+		const timestamp = formatTimestamp(new Date())
 		const arr = [`[${timestamp}]`, `[${prefix}]`, `[${level}]`]
 		arr.push(...message)
 		return arr
@@ -46,6 +54,7 @@ export const useLog = (prefix = 'App', options: LoggerOptions = {}) => {
 		if (!isServer) return
 
 		try {
+			// TODO if not server, save in memory to view in client
 			const logManager = useLogManager()
 			await logManager.waitForInit()
 			logManager.addLog(entry)
@@ -79,7 +88,7 @@ export const useLog = (prefix = 'App', options: LoggerOptions = {}) => {
 		messages: any[],
 		context: Record<string, any>
 	): LogEntry => ({
-		timestamp: new Date().toISOString(),
+		timestamp: formatTimestamp(new Date()),
 		level,
 		prefix,
 		message: messages.map(arg =>
