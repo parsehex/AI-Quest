@@ -70,7 +70,7 @@ onUnmounted(() => {
 <template>
   <div v-if="sock.isConnected.value">
     <CreateCharacter @change="handleCharacterCreated" />
-    <hr class="my-4 border-t border-gray-700" />
+    <Divider />
     <!-- Room List -->
     <div v-if="!sock.currentRoom.value" class="room-list mt-4">
       <h2 class="text-xl mb-4">Active Games</h2>
@@ -84,6 +84,7 @@ onUnmounted(() => {
         <li v-if="!sock.rooms.value.length"> No rooms available </li>
       </ul>
     </div>
+    <Divider />
     <div v-if="!sock.currentRoom.value" class="create-room">
       <h2 class="text-xl mb-4">Create a Game</h2>
       <UInput v-model="newRoomName" placeholder="Room name" @keyup.enter="handleCreateRoom" :ui="{

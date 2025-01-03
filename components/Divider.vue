@@ -1,7 +1,6 @@
 <template>
   <div class="linebreak"></div>
 </template>
-
 <style scoped lang="scss">
 .linebreak {
   position: relative;
@@ -11,7 +10,7 @@
   bottom: auto;
   width: 100%;
   height: 1px;
-  margin: 0 auto;
-  background-image: linear-gradient(96.18deg, rgba(215, 196, 255, 0) 10%, rgba(200, 200, 200, 0.24) 50%, rgba(215, 196, 255, 0) 90%);
+  margin: 0.5rem auto;
+  @apply bg-gray-300;
 }
 </style>
