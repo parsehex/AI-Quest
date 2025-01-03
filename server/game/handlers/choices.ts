@@ -4,8 +4,7 @@ import { useLog } from '~/composables/useLog';
 import { LLMManager } from '~/lib/llm';
 import { Room } from '~/types/Game';
 import { useIO } from '~/server/plugins/socket.io';
-import GameMasterSystem from '~/lib/prompts/templates/GameMasterSystem';
-import GameMasterUser from '~/lib/prompts/templates/GameMasterUser';
+import { GameMasterSystem, GameMasterUser } from '~/lib/prompts/templates/GameMaster';
 
 const log = useLog('handlers/choices');
 
@@ -94,11 +93,13 @@ export const playChoice = (roomId: string, currentPlayer = '', choice = '') => {
 		if (currentPlayer && choice) {
 			// Player made a choice -- add to history and move to next turn
 			if (room.history.length > 3) room.history.push('--')
+			// TODO game history manager
 			room.history.push(room.lastAiResponse?.intro || '');
 			room.history.push(room.lastAiResponse?.narrative || '');
 			room.history.push(`${currentPlayer} chose: **${choice}**`);
 			room.currentTurn = ((room.currentTurn || 0) + 1) % room.players.length;
 		} else {
+			// TODO fix
 			// regenerate last turn
 			room.history = history.slice(0, -3);
 			if (room.history[room.history.length - 1] === '--') room.history.pop();
