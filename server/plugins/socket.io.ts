@@ -8,6 +8,7 @@ import { registerChatHandlers } from '../game/handlers/chat';
 import { registerChoiceHandlers } from '../game/handlers/choices';
 import { registerRoomHandlers } from '../game/handlers/room';
 import { registerClientHandlers } from '../game/handlers/client';
+import { useServerOptions } from '../game/ServerOptionsManager';
 
 const log = useLog('server/plugins/socket.io');
 
@@ -22,6 +23,7 @@ export const useIO = () => {
 export default defineNitroPlugin(async (nitroApp: NitroApp) => {
 	const engine = new Engine();
 	const io = new Server();
+	const serverOptions = useServerOptions();
 
 	ioInstance = io;
 
@@ -31,9 +33,13 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
 		const SocketId = socket.id;
 		log.debug({ _context: { SocketId } }, "Socket connected");
 
-		// Register all handlers
+		// Register handlers
 		registerAdminHandlers(socket);
 		registerClientHandlers(socket);
+		if (!serverOptions.isGameActive()) {
+			return;
+		}
+
 		registerChatHandlers(socket);
 		registerChoiceHandlers(socket);
 		registerRoomHandlers(socket);

@@ -89,6 +89,12 @@ class AdminSocketManager {
 		socket.off('admin:success');
 		socket.off('admin:error');
 	}
+
+	public setGameActive(active: boolean): void {
+		if (!this.isValidated.value) return;
+		log.debug('Setting game active:', active);
+		socket.emit('admin:setGameActive', this.password.value, active);
+	}
 }
 
 export function useAdminSocket() {
@@ -107,5 +113,6 @@ export function useAdminSocket() {
 		setCurrentPlayer: adminSocket.setCurrentPlayer.bind(adminSocket),
 		kickPlayer: adminSocket.kickPlayer.bind(adminSocket),
 		toggleFastMode: adminSocket.toggleFastMode.bind(adminSocket),
+		setGameActive: adminSocket.setGameActive.bind(adminSocket),
 	};
 }

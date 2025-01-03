@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import RoomLogsModal from '~/components/admin/RoomLogsModal.vue';
+import { useGameStatus } from '~/composables/useGameStatus';
 
 definePageMeta({
 	title: "Admin",
@@ -10,6 +11,7 @@ definePageMeta({
 const log = useLog('pages/admin');
 const sock = useGameSocket();
 const admin = useAdminSocket();
+const gameStatus = useGameStatus();
 
 // # of players across all rooms
 const totalPlayers = computed(() => {
@@ -33,6 +35,10 @@ onMounted(() => {
 	const savedPassword = localStorage.getItem('adminPassword');
 	if (savedPassword) {
 		admin.checkPassword(savedPassword);
+	}
+
+	if (isValidated.value) {
+		gameStatus.refreshGameActive();
 	}
 });
 
@@ -82,6 +88,11 @@ const handleShowRoomLogs = (roomId: string) => {
 	selectedRoomId.value = roomId;
 	showLogsModal.value = true;
 };
+
+
+const handleToggleGameActive = () => {
+	admin.setGameActive(!gameStatus.isActive.value);
+};
 </script>
 <template>
 	<div class="container mx-auto p-4">
@@ -111,6 +122,8 @@ const handleShowRoomLogs = (roomId: string) => {
 						Clear All Rooms </UButton>
 					<UButton @click="handleRemoveAllPlayers" color="red" :disabled="!isValidated || totalPlayers.valueOf() === 0">
 						Kick All Players </UButton>
+					<UButton @click="handleToggleGameActive" :color="gameStatus.isActive.value ? 'red' : 'green'"
+						:disabled="!isValidated"> {{ gameStatus.isActive.value ? 'Stop Game' : 'Start Game' }} </UButton>
 				</div>
 			</div>
 		</div>

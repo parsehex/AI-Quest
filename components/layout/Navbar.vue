@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 const navigation = getNavigation("home");
+const gameStatus = useGameStatus();
 </script>
 <template>
   <div class="flex items-center justify-center mx-auto w-full my-2 mb-4">
@@ -9,6 +10,7 @@ const navigation = getNavigation("home");
         <nav
           class="z-10 h-[50px] sm:h-[45px] flex items-center justify-around gap-2 sm:hover:gap-4 p-1 transition-all duration-300 ease-in-out">
           <Connection />
+          <span v-if="!gameStatus.isActive.value" class="text-red-500">Game inactive!</span>
           <NuxtLink v-for="item in navigation" :id="item.name.toLowerCase()" :key="item.name"
             :aria-label="item.name + ' navigation link'" :class="[
               item.name === $route.name

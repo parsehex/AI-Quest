@@ -1,5 +1,6 @@
 import { type Socket } from 'socket.io';
-import { useRoomManager, type GameRoomManager } from '../GameRoomManager';
+import { useRoomManager } from '../GameRoomManager';
+import { useServerOptions } from '../ServerOptionsManager';
 import { useLog } from '~/composables/useLog';
 import { useIO } from '~/server/plugins/socket.io';
 
@@ -118,6 +119,21 @@ export const registerAdminHandlers = (socket: Socket) => {
 			} else {
 				socket.emit('admin:error', { message: 'Room not found' });
 			}
+		});
+	});
+
+	socket.on('admin:setGameActive', (password: string, active: boolean) => {
+		adminGuard(password, () => {
+			const SocketId = socket.id;
+			log.info({ _context: { SocketId } }, `Setting game active: ${active}`);
+			const serverOptions = useServerOptions();
+			serverOptions.setGameActive(active);
+			io.emit('gameActiveStatus', active);
+			if (active) {
+				// kick everybody out to force reload, to get all socket handlers
+				io.emit('kicked');
+			}
+			socket.emit('admin:success', { message: `Game ${active ? 'activated' : 'deactivated'}` });
 		});
 	});
 };

@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { useGameStatus } from '~/composables/useGameStatus';
+
 definePageMeta({
   title: "Home",
   name: "Home",

@@ -2,6 +2,7 @@ import { type Socket } from 'socket.io';
 import { useRoomManager } from '../GameRoomManager';
 import { useLog } from '~/composables/useLog';
 import { useIO } from '~/server/plugins/socket.io';
+import { useServerOptions } from '../ServerOptionsManager';
 
 const log = useLog('handlers/client');
 
@@ -22,5 +23,10 @@ export const registerClientHandlers = (socket: Socket) => {
 		const SocketId = socket.id;
 		log.debug({ _context: { SocketId } }, 'Socket disconnected');
 		io.emit('roomList', roomManager.getRooms());
+	});
+
+	socket.on('getGameActive', () => {
+		const serverOptions = useServerOptions();
+		socket.emit('gameActiveStatus', serverOptions.isGameActive());
 	});
 };
