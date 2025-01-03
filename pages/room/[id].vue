@@ -4,11 +4,12 @@ import ChatRoom from '~/components/game-room/ChatRoom.vue'
 import Game from '~/components/game-room/Game.vue'
 
 const log = useLog('room-id')
+const device = useDevice()
 const route = useRoute()
 const roomId = route.params.id as string
 const sock = useGameSocket()
 const { messages } = sock
-const isChatOpen = useLocalStorage('game-chat-open', true)
+const isChatOpen = useLocalStorage('game-chat-open', device.isDesktopOrTablet)
 
 // Join room on page load
 onMounted(async () => {

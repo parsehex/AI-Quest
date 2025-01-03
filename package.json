@@ -20,6 +20,7 @@
     "@nuxt/devtools": "latest",
     "@nuxt/image": "1.0.0-rc.1",
     "@nuxthq/ui": "^2.4.0",
+    "@nuxtjs/device": "3.2.4",
     "@nuxtjs/eslint-config-typescript": "^12.0.0",
     "@nuxtjs/i18n": "next",
     "@nuxtjs/mdc": "0.12.0",

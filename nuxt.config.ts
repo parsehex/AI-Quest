@@ -41,7 +41,8 @@ export default defineNuxtConfig({
     "@nuxthq/ui",
     "nuxt-svgo",
     "@nuxt/image",
-    "@nuxtjs/mdc"
+    "@nuxtjs/mdc",
+    "@nuxtjs/device"
   ],
 
   colorMode: {
