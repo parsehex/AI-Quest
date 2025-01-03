@@ -35,7 +35,7 @@ export class TTSManager {
 			const cached = await this.storage.getItem<string>(hash);
 			if (cached) {
 				if (extraCtx) {
-					log.debug({ _context: { hash, ...extraCtx } }, 'Served cached TTS');
+					log.debug({ _ctx: { hash, ...extraCtx } }, 'Served cached TTS');
 				}
 				return {
 					status: 'cached',
@@ -46,12 +46,11 @@ export class TTSManager {
 				};
 			}
 
-			// Rest same as before...
 			this.isProcessing = true;
 			const config = useRuntimeConfig();
 
 			if (!config.private.alltalkTtsUrl) {
-				log.warn({ _context: { hash, ...extraCtx } }, 'TTS URL not set');
+				log.warn({ _ctx: { hash, ...extraCtx } }, 'TTS URL not set');
 				return null;
 			}
 
@@ -71,7 +70,7 @@ export class TTSManager {
 			result.hash = hash;
 
 			if (result.status !== 'generate-success') {
-				log.error({ _context: { hash, result, ...extraCtx } }, 'Error generating TTS');
+				log.error({ _ctx: { hash, result, ...extraCtx } }, 'Error generating TTS');
 				return null;
 			}
 
@@ -82,7 +81,7 @@ export class TTSManager {
 
 			return result;
 		} catch (e: any) {
-			log.error({ _context: { error: e.message, ...extraCtx } }, 'Error generating TTS');
+			log.error({ _ctx: { error: e.message, ...extraCtx } }, 'Error generating TTS');
 			return null;
 		} finally {
 			this.isProcessing = false;
