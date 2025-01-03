@@ -55,6 +55,12 @@ class AdminSocketManager {
 		socket.emit('admin:clearRooms', this.password.value);
 	}
 
+	public removeRoom(roomId: string): void {
+		if (!this.isValidated.value) return;
+		log.debug('Removing room');
+		socket.emit('admin:removeRoom', this.password.value, roomId);
+	}
+
 	public removeAllPlayers(): void {
 		if (!this.isValidated.value) return;
 		log.debug('Removing all players');
@@ -96,6 +102,7 @@ export function useAdminSocket() {
 		isValidated: adminSocket.isValidated,
 		checkPassword: adminSocket.checkPassword.bind(adminSocket),
 		clearRooms: adminSocket.clearRooms.bind(adminSocket),
+		removeRoom: adminSocket.removeRoom.bind(adminSocket),
 		removeAllPlayers: adminSocket.removeAllPlayers.bind(adminSocket),
 		setCurrentPlayer: adminSocket.setCurrentPlayer.bind(adminSocket),
 		kickPlayer: adminSocket.kickPlayer.bind(adminSocket),

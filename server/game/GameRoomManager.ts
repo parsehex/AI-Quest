@@ -137,6 +137,12 @@ export class GameRoomManager {
 		await this.saveRooms();
 	}
 
+	async removeRoom(roomId: string): Promise<void> {
+		this.rooms.delete(roomId);
+		this.io?.to(roomId).emit('kicked');
+		await this.saveRooms();
+	}
+
 	async getChatHistory(roomId: string): Promise<any[]> {
 		try {
 			let chat = await this.storage.getItem(`rooms:${roomId}:chat.json`) as any[];

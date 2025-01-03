@@ -70,6 +70,11 @@ const handleToggleFastMode = (roomId: string) => {
 	sock.refreshRooms();
 };
 
+const handleRemoveRoom = (roomId: string) => {
+	admin.removeRoom(roomId);
+	sock.refreshRooms();
+};
+
 const selectedRoomId = ref('');
 const showLogsModal = ref(false);
 
@@ -122,30 +127,32 @@ const handleShowRoomLogs = (roomId: string) => {
 				<table class="w-full">
 					<thead>
 						<tr class="border-b dark:border-neutral-700">
-							<th class="text-left p-2">Room ID</th>
+							<th class="text-left p-2">ID</th>
 							<th class="text-left p-2">Name</th>
 							<th class="text-left p-2">Players</th>
-							<th class="text-left p-2">Fast / Dev Mode</th>
+							<th class="text-left p-2">Fast Model</th>
 							<th class="text-left p-2">Current Turn</th>
+							<th class="text-left p-2"></th>
 						</tr>
 					</thead>
 					<tbody>
 						<tr v-for="room in sock.rooms.value" :key="room.id"
-							class="border-b dark:border-neutral-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-neutral-700"
-							@click="handleShowRoomLogs(room.id)">
+							class="border-b dark:border-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-700">
 							<td class="p-2">{{ room.id }}</td>
-							<td class="p-2">{{ room.name }}</td>
+							<td class="p-2">
+								<UButton @click="handleShowRoomLogs(room.id)" size="sm" variant="link"> {{ room.name }} </UButton>
+							</td>
 							<td class="p-2">
 								<div v-for="player in room.players" :key="player.id" class="flex items-center gap-2">
 									<UAvatar :src="`https://api.dicebear.com/7.x/identicon/svg?seed=${player.id}`" :alt="player.nickname"
-										size="xs" /> {{ player.nickname }} <UButton
-										@click.stop.prevent="handleKickPlayer(room.id, player.id)" color="red" size="xs" variant="outline">
+										size="xs" /> {{ player.nickname }} <UButton @click="handleKickPlayer(room.id, player.id)"
+										color="red" size="xs" variant="outline">
 										<i class="i-heroicons-x-mark w-4 h-4"></i>
 									</UButton>
 								</div>
 							</td>
 							<td class="p-2 pl-8">
-								<UButton @click.stop.prevent="handleToggleFastMode(room.id)" size="xs" variant="outline"
+								<UButton @click="handleToggleFastMode(room.id)" size="xs" variant="outline"
 									:color="room.fastMode ? 'yellow' : 'orange'"
 									:title="room.fastMode ? 'Fast Mode is enabled' : 'Fast Mode is disabled'">
 									<i :class="'w-5 h-5 ' + (room.fastMode ? 'i-heroicons-check' : 'i-heroicons-x-mark')"></i>
@@ -157,6 +164,18 @@ const handleShowRoomLogs = (roomId: string) => {
 									@update:modelValue="(value) => handleCurrentPlayerChange(room.id, value)">
 								</USelect>
 								<span v-else class="select-none text-muted" title="No players in this room"> -- </span>
+							</td>
+							<td class="p-2">
+								<UTooltip text="View room details">
+									<UButton @click="handleShowRoomLogs(room.id)" color="sky" size="xs" variant="outline">
+										<i class="i-heroicons-newspaper w-4 h-4"></i>
+									</UButton>
+								</UTooltip>
+								<UTooltip text="Remove room">
+									<UButton @click="handleRemoveRoom(room.id)" color="red" size="xs" variant="outline">
+										<i class="i-heroicons-trash w-4 h-4"></i>
+									</UButton>
+								</UTooltip>
 							</td>
 						</tr>
 					</tbody>

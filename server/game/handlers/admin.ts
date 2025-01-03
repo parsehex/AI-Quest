@@ -105,4 +105,19 @@ export const registerAdminHandlers = (socket: Socket) => {
 			}
 		});
 	});
+
+	socket.on('admin:removeRoom', (password: string, roomId: string) => {
+		adminGuard(password, () => {
+			const SocketId = socket.id;
+			log.info({ _context: { SocketId, roomId } }, 'Removing room');
+			const room = roomManager.getRoom(roomId);
+			if (room) {
+				roomManager.removeRoom(roomId);
+				io.emit('roomList', roomManager.getRooms());
+				socket.emit('admin:success', { message: 'Room removed' });
+			} else {
+				socket.emit('admin:error', { message: 'Room not found' });
+			}
+		});
+	});
 };
