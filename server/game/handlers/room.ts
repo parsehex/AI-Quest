@@ -39,18 +39,19 @@ export const registerRoomHandlers = (socket: Socket) => {
 			socket.data.nickname = nickname;
 			socket.data.playerCharacter = playerCharacter;
 
+			// TODO since player ids still get reset, this doesnt work well
 			// are there 1 players now and not loading? then set currentPlayer to that player and generate their turn
-			if (room.players.length === 1 && !room.aiLoading) {
-				const CurrentPlayer = room.players[0].id;
-				log.debug({ _context: { roomId, CurrentPlayer } }, "Setting current player");
-				// TODO maybe just expose this from choices.ts
-				updateRoom(roomId, room => {
-					room.currentPlayer = room.players[0].id;
-					room.history = room.history.slice(-4);
-					const playerName = socket.data.nickname || 'Anonymous';
-					playChoice(roomId, playerName);
-				});
-			}
+			// if (room.players.length === 1 && !room.aiLoading) {
+			// 	const CurrentPlayer = room.players[0].id;
+			// 	log.debug({ _context: { roomId, CurrentPlayer } }, "Setting current player");
+			// 	// TODO maybe just expose this from choices.ts
+			// 	updateRoom(roomId, room => {
+			// 		room.currentPlayer = room.players[0].id;
+			// 		room.history = room.history.slice(-4);
+			// 		const playerName = socket.data.nickname || 'Anonymous';
+			// 		playChoice(roomId, playerName);
+			// 	});
+			// }
 
 			io.to(roomId).emit('playerJoined', { roomId, nickname });
 

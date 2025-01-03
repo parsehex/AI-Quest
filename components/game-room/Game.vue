@@ -32,6 +32,7 @@ watch(() => sock.thisRoom.value?.lastAiResponse?.tts, (newTTS) => {
     // Auto-play new TTS after a short delay
     nextTick(() => {
       if (audioRef.value) {
+        audioRef.value.playbackRate = 1.1;
         audioRef.value.play();
       }
     });
@@ -44,7 +45,7 @@ watch(() => sock.thisRoom.value?.lastAiResponse?.tts, (newTTS) => {
     <div class="p-4 border-b dark:border-neutral-700">
       <h2 class="text-xl text-muted font-semibold"> Game <UTooltip class="float-right" text="Regenerate the last turn">
           <UButton @click="sock.regenerateResponse(props.roomId)" color="violet">
-            <i class="i-heroicons-arrow-path-16-solid w-5 h-5"></i>
+            <i class="i-heroicons-arrow-path-16-solid w-5 h-5"></i> Retry
           </UButton>
         </UTooltip>
       </h2>

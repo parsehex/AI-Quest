@@ -99,6 +99,10 @@ export default defineNuxtConfig({
         driver: 'fs',
         base: './data/tts',
       },
+      'server-options': {
+        driver: 'fs',
+        base: './data/options',
+      }
     },
   },
 

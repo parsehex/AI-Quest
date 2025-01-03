@@ -5,7 +5,9 @@
 			<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
 				<div>
 					<div class="text-sm text-muted">Room Name</div>
-					<div class="font-medium">{{ room.name }}</div>
+					<div class="font-medium"> {{ room.name }} <NuxtLink :to="`/room/${room.id}`"
+							class="ml-3 text-blue-500 hover:underline">Play</NuxtLink>
+					</div>
 				</div>
 				<div>
 					<div class="text-sm text-muted">Players</div>
