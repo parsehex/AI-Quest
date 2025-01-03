@@ -33,9 +33,9 @@ const generateAIResponse = async (roomId: string, currentPlayer = '', isRetrying
 	history = history.slice(0, -1);
 
 	let response = await llm.generateResponse([
-		{ role: "system", content: prompt },
+		{ role: 'system', content: prompt },
 		{
-			role: "user", content: GameMasterUser({
+			role: 'user', content: GameMasterUser({
 				currentPlayer,
 				premise,
 				history,
@@ -63,7 +63,7 @@ const generateAIResponse = async (roomId: string, currentPlayer = '', isRetrying
 	sections.choices = sections.choices.map(choice => choice.replace(/- /, '').trim());
 
 	if (sections.choices.length === 0) {
-		log.log("No choices found, regenerating response");
+		log.warn({ _ctx: { roomId } }, 'No choices found, regenerating response');
 		await generateAIResponse(roomId, currentPlayer, true);
 	}
 
@@ -86,9 +86,7 @@ const generateAIResponse = async (roomId: string, currentPlayer = '', isRetrying
 };
 
 export const playChoice = (roomId: string, currentPlayer = '', choice = '') => {
-	// if choice is '', regenerate last turn
 	updateRoom(roomId, room => {
-		console.log(room);
 		const { lastAiResponse } = room;
 
 		const history = room.history || [];
@@ -120,17 +118,19 @@ export const registerChoiceHandlers = (socket: Socket) => {
 
 	socket.on('makeChoice', ({ roomId, choice }) => {
 		const room = roomManager.getRoom(roomId);
-		if (!room || room.currentPlayer !== socket.id) return;
-		log.debug("Player", socket.id, "chose", choice, "in room", roomId);
+		const SocketId = socket.id;
+		if (!room || room.currentPlayer !== SocketId) return;
+		log.debug({ _ctx: { roomId, SocketId, choice } }, 'Player chose');
 
-		const playerName = room.players.find(player => player.id === socket.id)?.nickname || 'Anonymous';
+		const playerName = room.players.find(player => player.id === SocketId)?.nickname || 'Anonymous';
 		playChoice(roomId, playerName, choice);
 	});
 
 	socket.on('regenerateResponse', (roomId: string) => {
 		const room = roomManager.getRoom(roomId);
 		if (!room) return;
-		log.debug('Regenerating response for room', roomId, 'by', socket.id);
+		const SocketId = socket.id;
+		log.debug({ _ctx: { roomId, SocketId } }, 'Regenerating response');
 		const playerName = socket.data.nickname || 'Anonymous';
 		playChoice(roomId, playerName);
 	});

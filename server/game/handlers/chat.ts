@@ -11,7 +11,8 @@ export const registerChatHandlers = (socket: Socket) => {
 	const roomManager = useRoomManager();
 
 	socket.on('message', async ({ roomId, text }) => {
-		log.debug('Socket', socket.id, 'sent message', text, 'in room', roomId);
+		const SocketId = socket.id;
+		log.debug({ _ctx: { SocketId, roomId, text } }, 'Socket sent message');
 		const nickname = socket.data.nickname || 'Anonymous';
 		const message: ChatMessage = {
 			sender: socket.id,

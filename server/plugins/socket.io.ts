@@ -29,9 +29,9 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
 
 	io.bind(engine);
 
-	io.on("connection", (socket) => {
+	io.on('connection', (socket) => {
 		const SocketId = socket.id;
-		log.debug({ _context: { SocketId } }, "Socket connected");
+		log.debug({ _ctx: { SocketId } }, 'Socket connected');
 
 		// Register handlers
 		registerAdminHandlers(socket);
@@ -45,7 +45,7 @@ export default defineNitroPlugin(async (nitroApp: NitroApp) => {
 		registerRoomHandlers(socket);
 	});
 
-	nitroApp.router.use("/socket.io/", defineEventHandler({
+	nitroApp.router.use('/socket.io/', defineEventHandler({
 		handler(event) {
 			// @ts-expect-error
 			engine.handleRequest(event.node.req, event.node.res);

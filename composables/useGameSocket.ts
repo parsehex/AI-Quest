@@ -47,7 +47,7 @@ class GameSocketManager {
 		this.initializeSocketListeners();
 		if (socket.connected) {
 			this.onConnect();
-			log.debug('Already connected');
+			log.debug({ _ctx: { socketId: socket.id } }, 'Already connected');
 		}
 	}
 
@@ -100,21 +100,22 @@ class GameSocketManager {
 	}
 
 	private onRoomList(updatedRooms: Room[]): void {
-		log.debug('Received room list:', updatedRooms);
+		// log.debug('Received room list:', updatedRooms);
+		log.debug({ _ctx: { updatedRooms } }, 'Received room list');
 		this.rooms.value = [...updatedRooms];
 	}
 
 	private onPlayerJoined(playerId: string): void {
-		log.debug(`Player ${playerId} joined`);
+		log.debug({ _ctx: { playerId } }, 'Player joined');
 	}
 
 	private onChatHistory(history: ChatMessage[]): void {
-		log.debug('Received chat history:', history);
+		log.debug({ _ctx: { history } }, 'Received chat history');
 		this.messages.value = [...history];
 	}
 
 	private onNewMessage(message: ChatMessage): void {
-		log.debug('Received new message:', message);
+		log.debug({ _ctx: { message } }, 'Received new message');
 		this.messages.value = [...this.messages.value, message];
 	}
 
@@ -134,7 +135,7 @@ class GameSocketManager {
 
 	// Public methods
 	public createRoom(roomName: string, premise: string, fastMode = false): void {
-		log.debug('Creating room:', roomName, 'with premise:', premise);
+		log.debug({ _ctx: { roomName, premise, fastMode } }, 'Creating room');
 		socket.emit('createRoom', roomName, premise, fastMode);
 	}
 
@@ -142,25 +143,24 @@ class GameSocketManager {
 		const nickname = localStorage.getItem('nickname') || 'Anonymous';
 		const clientId = getClientId();
 		const playerCharacter = getPlayerCharacter();
-		log.debug({ _context: { roomId, clientId, nickname, playerCharacter } }, 'Joined room:');
+		log.debug({ _ctx: { roomId, clientId, nickname, playerCharacter } }, 'Joined room:');
 		socket.emit('joinRoom', { roomId, nickname, clientId, playerCharacter });
 		this.currentRoom.value = roomId;
 		this.refreshMessages(roomId);
 	}
 
 	public leaveRoom(): void {
-		log.debug('Leaving room:', this.currentRoom.value);
+		log.debug({ _ctx: { roomId: this.currentRoom.value } }, 'Leaving room');
 		socket.emit('leaveRoom', this.currentRoom.value);
 		this.currentRoom.value = null;
 	}
 
 	public sendMessage(roomId: string, text: string): void {
-		log.debug('Sending message:', text);
+		log.debug({ _ctx: { roomId, text } }, 'Sending message');
 		socket.emit('message', { roomId, text });
 	}
 
 	public refreshRooms(): void {
-		log.debug('Getting rooms');
 		socket.emit('getRooms');
 	}
 	public refreshMessages(roomId = ''): void {
@@ -168,12 +168,11 @@ class GameSocketManager {
 			roomId = this.currentRoom.value || '';
 		}
 		if (roomId === '') return;
-		log.debug('Getting messages for room:', roomId);
 		socket.emit('getMessages', roomId);
 	}
 
 	public regenerateResponse(roomId: string): void {
-		log.debug('Regenerating response for room:', roomId);
+		log.debug({ _ctx: { roomId } }, 'Regenerating response');
 		socket.emit('regenerateResponse', roomId);
 	}
 
@@ -192,7 +191,7 @@ class GameSocketManager {
 	}
 
 	public makeChoice(roomId: string, choice: string): void {
-		log.debug('Making choice:', choice);
+		log.debug({ _ctx: { roomId, choice } }, 'Making choice');
 		socket.emit('makeChoice', { roomId, choice });
 	}
 }

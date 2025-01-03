@@ -18,7 +18,7 @@ export const updateRoom = (roomId: string, updateFn: (room: Room) => void) => {
 	const roomManager = useRoomManager();
 	const io = useIO();
 	const room = roomManager.getRoom(roomId);
-	if (!room) return log.error('Room not found:', roomId);
+	if (!room) return log.error({ _ctx: { roomId } }, 'Room not found');
 	updateFn(room);
 	roomManager.saveRoom(room);
 	io.to(roomId).emit('roomList', roomManager.getRooms());
@@ -43,8 +43,8 @@ export class GameRoomManager {
 			if (!rooms) rooms = [];
 			else if (typeof rooms === 'string') rooms = JSON.parse(rooms);
 			this.rooms = new Map(rooms.map(room => [room.id, room]));
-		} catch (error) {
-			log.error('Error loading rooms:', error);
+		} catch (e: any) {
+			log.error({ _ctx: { error: e.message } }, 'Error loading rooms');
 		}
 	}
 
@@ -52,8 +52,8 @@ export class GameRoomManager {
 		try {
 			const roomsArray = Array.from(this.rooms.values());
 			await this.storage.setItem('rooms:list.json', roomsArray);
-		} catch (error) {
-			log.error('Error saving rooms:', error);
+		} catch (e: any) {
+			log.error({ _ctx: { error: e.message } }, 'Error saving rooms');
 		}
 	}
 
@@ -64,7 +64,7 @@ export class GameRoomManager {
 	}
 
 	async createRoom(socketId: string, roomName: string, premise: string, fastMode: boolean, createdBy: string): Promise<Room> {
-		log.debug('Creating room:', roomName, (fastMode ? '(fast)' : '') + ' - Premise:', premise);
+		log.debug({ _ctx: { socketId, roomName, premise, fastMode, createdBy } }, 'Creating room');
 		const roomId = Math.random().toString(36).substring(7);
 		const room: Room = {
 			id: roomId,
@@ -86,7 +86,7 @@ export class GameRoomManager {
 	}
 
 	async joinRoom(SocketId: string, roomId: string, nickname: string, clientId: string, character?: PlayerCharacter): Promise<Room | null> {
-		log.info({ _context: { SocketId, roomId, clientId, nickname, character } }, 'Joining room');
+		log.info({ _ctx: { SocketId, roomId, clientId, nickname, character } }, 'Joining room');
 		const room = this.rooms.get(roomId);
 		if (room) {
 			room.players.push({
@@ -102,7 +102,7 @@ export class GameRoomManager {
 	}
 
 	async leaveRoom(socketId: string, roomId: string): Promise<void> {
-		log.debug(socketId, 'leaving room:', roomId);
+		log.info({ _ctx: { socketId, roomId } }, 'Leaving room');
 		const room = this.rooms.get(roomId);
 		if (room) {
 			room.players = room.players.filter(player => player.id !== socketId);
@@ -160,23 +160,23 @@ export class GameRoomManager {
 			if (!chat) chat = [];
 			else if (typeof chat === 'string') chat = JSON.parse(chat);
 			return chat;
-		} catch (error) {
-			log.error('Error loading chat history:', error);
+		} catch (e: any) {
+			log.error({ _ctx: { error: e.message } }, 'Error loading chat history');
 			return [];
 		}
 	}
 
 	async addMessage(roomId: string, message: ChatMessage): Promise<void> {
 		try {
-			log.log('Adding message:', message);
+			log.debug({ _ctx: { roomId, message } }, 'Adding message');
 			const history = await this.getChatHistory(roomId);
 			history.push(message);
 			if (history.length > 1000) {
 				history.shift();
 			}
 			await this.storage.setItem(`rooms:${roomId}:chat.json`, history);
-		} catch (error) {
-			log.error('Error saving message:', error);
+		} catch (e: any) {
+			log.error({ _ctx: { error: e.message } }, 'Error saving message');
 		}
 	}
 }

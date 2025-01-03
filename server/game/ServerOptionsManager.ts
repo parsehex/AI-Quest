@@ -25,16 +25,16 @@ export class ServerOptionsManager {
       if (savedOptions) {
         this.options = savedOptions;
       }
-    } catch (error) {
-      log.error('Error loading server options:', error);
+    } catch (e: any) {
+      log.error({ _ctx: { error: e.message } }, 'Error loading server options');
     }
   }
 
   private async saveOptions() {
     try {
       await this.storage.setItem('options.json', this.options);
-    } catch (error) {
-      log.error('Error saving server options:', error);
+    } catch (e: any) {
+      log.error({ _ctx: { error: e.message } }, 'Error saving server options');
     }
   }
 

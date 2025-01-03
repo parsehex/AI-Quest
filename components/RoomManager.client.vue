@@ -29,7 +29,6 @@ const hasCharacter = ref(false);
 const playerCharacter = ref(null as PlayerCharacter | null);
 
 const handleCharacterCreated = (character: PlayerCharacter) => {
-  console.log('Character created:', character);
   playerCharacter.value = { ...character };
   hasCharacter.value = true;
   localStorage.setItem('playerCharacter', JSON.stringify(character));

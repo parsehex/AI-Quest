@@ -10,10 +10,10 @@ export const registerRoomHandlers = (socket: Socket) => {
 	const io = useIO();
 	const roomManager = useRoomManager();
 
-	socket.on("createRoom", async (roomName: string, premise: string, fastMode: boolean) => {
+	socket.on('createRoom', async (roomName: string, premise: string, fastMode: boolean) => {
 		const SocketId = socket.id;
 		const playerName = socket.data.nickname || 'Anonymous';
-		log.debug({ _context: { SocketId, roomName, playerName, premise, fastMode } }, "Creating room");
+		log.debug({ _ctx: { SocketId, roomName, playerName, premise, fastMode } }, 'Creating room');
 		const room = await roomManager.createRoom(socket.id, roomName, premise, fastMode, playerName);
 		socket.join(room.id);
 
@@ -25,7 +25,7 @@ export const registerRoomHandlers = (socket: Socket) => {
 		const room = roomManager.getRoom(roomId);
 		if (room) {
 			const SocketId = socket.id;
-			log.debug({ _context: { SocketId, roomId, nickname, clientId, playerCharacter } }, "Player joined room");
+			log.debug({ _ctx: { SocketId, roomId, nickname, clientId, playerCharacter } }, 'Player joined room');
 			socket.join(roomId);
 
 			const existingPlayer = room.players.find(p => p.clientId === clientId);
@@ -43,7 +43,7 @@ export const registerRoomHandlers = (socket: Socket) => {
 			// are there 1 players now and not loading? then set currentPlayer to that player and generate their turn
 			// if (room.players.length === 1 && !room.aiLoading) {
 			// 	const CurrentPlayer = room.players[0].id;
-			// 	log.debug({ _context: { roomId, CurrentPlayer } }, "Setting current player");
+			// 	log.debug({ _ctx: { roomId, CurrentPlayer } }, "Setting current player");
 			// 	// TODO maybe just expose this from choices.ts
 			// 	updateRoom(roomId, room => {
 			// 		room.currentPlayer = room.players[0].id;
@@ -61,16 +61,16 @@ export const registerRoomHandlers = (socket: Socket) => {
 		}
 	});
 
-	socket.on("leaveRoom", (roomId: string) => {
+	socket.on('leaveRoom', (roomId: string) => {
 		const SocketId = socket.id;
-		log.debug({ _context: { SocketId, roomId } }, "Player left room");
+		log.debug({ _ctx: { SocketId, roomId } }, 'Player left room');
 		roomManager.leaveRoom(socket.id, roomId);
 		socket.leave(roomId);
-		io.emit("roomList", roomManager.getRooms());
+		io.emit('roomList', roomManager.getRooms());
 	});
 
-	socket.on("getRooms", () => {
-		socket.emit("roomList", roomManager.getRooms());
+	socket.on('getRooms', () => {
+		socket.emit('roomList', roomManager.getRooms());
 	});
 
 	// Clear players

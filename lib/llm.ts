@@ -28,7 +28,8 @@ export class LLMManager {
 				? config.private.model_fast
 				: config.private.model;
 
-			log.debug('Using model:', model, 'and baseURL:', baseURL);
+			const fast = fastMode ? 'fast' : 'quality';
+			log.debug({ _ctx: { model, baseURL } }, `Using ${fast} model`);
 
 			// Create a new OpenAI instance with the appropriate baseURL
 			const openai = new OpenAI({
@@ -36,27 +37,23 @@ export class LLMManager {
 				apiKey: config.private.openrouterApiKey,
 			});
 
-			const req = {
+			const Request = {
 				messages,
 				model,
 				temperature: 0.25,
 				max_tokens: 768,
 			};
 
-			if (extraCtx) {
-				log.debug({ _context: { ...extraCtx, req } }, 'LLM call');
-			}
+			const completion = await openai.chat.completions.create(Request);
 
-			const completion = await openai.chat.completions.create(req);
-
-			const res = completion.choices[0]
-			const resStr = res.message.content || "No response generated";
+			const Response = completion.choices[0]
+			const resStr = Response.message.content || "No response generated";
 			if (extraCtx) {
-				log.debug({ _context: { ...extraCtx, res } }, 'LLM response');
+				log.debug({ _ctx: { Request, Response, ...extraCtx } }, 'LLM input / output');
 			}
 			return resStr;
-		} catch (error) {
-			log.error("Error generating response:", error);
+		} catch (e: any) {
+			log.error({ _ctx: { error: e.message } }, 'Error generating response');
 			return "Error generating AI response";
 		} finally {
 			this.isProcessing = false;
