@@ -42,40 +42,10 @@ watch(() => props.messages, () => {
 }, { deep: true })
 </script>
 <template>
-  <div
-    :class="`flex flex-col h-full rounded-lg border dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow fixed transition-all duration-300 top-0 bottom-0 ${isOpen ? 'right-2 w-1/3' : 'right-[-33%] w-1/3'}`">
-    <div v-if="!isOpen" class="absolute top-1/2 left-0 -translate-x-full flex flex-col items-center">
-      <span class="text-xs text-muted mb-1 select-none">Chat</span>
-      <button @click="toggleChat"
-        class="bg-white dark:bg-neutral-800 p-2 rounded-l-lg border dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-700">
-        <i :class="isOpen ? 'i-heroicons-chevron-right' : 'i-heroicons-chevron-left'" class="w-5 h-5"></i>
-      </button>
-    </div>
+  <div>
     <!-- Chat Header -->
     <div class="p-4 border-b dark:border-neutral-700 flex items-center gap-4">
-      <div class="flex flex-col items-center">
-        <span class="text-xs text-muted mb-1 select-none">Close</span>
-        <button @click="toggleChat"
-          class="bg-white dark:bg-neutral-800 p-2 rounded-lg border dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-700">
-          <i class="i-heroicons-chevron-right w-5 h-5"></i>
-        </button>
-      </div>
-      <div>
-        <h2 class="text-lg text-muted font-semibold">Chat Room</h2>
-        <p class="text-sm text-muted">{{ messages.length }} messages</p>
-      </div>
-    </div>
-    <!-- Players List -->
-    <div class="p-4 border-b dark:border-neutral-700 flex gap-4 overflow-x-auto">
-      <h3 class="text-md text-muted font-semibold">Players</h3>
-      <ul class="flex gap-4">
-        <li v-for="(player, index) in players" :key="index"
-          :class="'flex items-center gap-2' + (player.id === currentTurnPlayer?.id ? ' text-primary-500' : '')">
-          <UAvatar :src="`https://api.dicebear.com/7.x/identicon/svg?seed=${player.id}`" :alt="player.nickname"
-            size="sm" />
-          <span class="text-sm">{{ player.nickname }}</span>
-        </li>
-      </ul>
+      <p class="text-sm text-muted">{{ messages.length }} messages</p>
     </div>
     <!-- Messages Area -->
     <div ref="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-4">

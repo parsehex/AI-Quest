@@ -18,12 +18,12 @@ export function getPlayerCharacter(): PlayerCharacter {
 	let playerCharacter = localStorage.getItem('playerCharacter')
 	if (!playerCharacter) {
 		const obj: PlayerCharacter = {
-			class: 'Warrior',
-			race: 'Human',
-			background: 'Noble',
-			traits: ['Brave', 'Loyal'],
-			skills: ['Swordsmanship', 'Leadership'],
-			equipment: ['Sword', 'Shield']
+			class: '',
+			race: '',
+			background: '',
+			traits: [],
+			skills: [],
+			equipment: []
 		};
 		localStorage.setItem('playerCharacter', JSON.stringify(obj));
 	}
