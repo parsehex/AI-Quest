@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import type { PlayerCharacter } from '~/types/Game';
 
+// TODO make this into a collapsible card
+//   when collapsed, show character's name
+//   open to view/modify characters
+//   can manage multiple characters saved in local storage
+
 const character = ref({
 	class: 'Warrior',
 	race: 'Human',

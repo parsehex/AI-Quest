@@ -1,4 +1,4 @@
-import type { PlayerCharacter } from '~/types/Game'
+import type { GameHistoryItem, PlayerCharacter } from '~/types/Game'
 import { createPrompt } from '../builder'
 
 interface SystemProps {
@@ -7,7 +7,7 @@ interface SystemProps {
 
 interface UserProps extends SystemProps {
 	premise: string,
-	history: string[],
+	history: GameHistoryItem[],
 	latestEvent: string,
 	isNewPlayer: boolean,
 	playerCharacter?: PlayerCharacter
@@ -29,6 +29,7 @@ Detailed description of the events and actions that happen, in the 3rd person. F
 Use the choice text without anything preceding. Create choices which make sense to push the events forward.
 Pay attention and react to the latest choice in a natural way.`)
 
+// TODO convert history to messages
 export const GameMasterUser = createPrompt<UserProps>((input) => {
 	let prompt = `Original premise: ${input.premise}\n`;
 
@@ -44,7 +45,14 @@ export const GameMasterUser = createPrompt<UserProps>((input) => {
 	}
 
 	if (input.history.length) {
-		prompt += `Events:\n${input.history.join('\n')}\n`;
+		prompt += `Events:\n`;
+		input.history.forEach(event => {
+			if (event.type === 'narrative') {
+				prompt += `  ${event.text}\n`;
+			} else if (event.type === 'choice') {
+				prompt += `  Player \`${event.player}\` chose: ${event.text}\n`;
+			}
+		});
 	}
 	return prompt;
 });

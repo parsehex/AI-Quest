@@ -63,6 +63,7 @@ export class GameRoomManager {
 			history: [],
 			fastMode,
 			createdBy,
+			currentTurn: 0,
 		};
 
 		// Initialize empty chat history for the room

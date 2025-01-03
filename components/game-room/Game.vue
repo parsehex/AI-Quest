@@ -35,9 +35,14 @@ onBeforeUnmount(() => {
       </h2>
     </div>
     <div class="flex-1 overflow-y-auto p-4 space-y-4">
-      <!-- room.history -->
-      <div v-if="room" class="prose dark:prose-invert max-w-none">
-        <MDC v-for="(msg, i) in room?.history" :key="i" :value="msg" />
+      <div v-if="room?.history" class="prose dark:prose-invert max-w-none">
+        <div v-for="(msg, i) in room?.history" :key="i">
+          <span v-if="msg.type === 'intro' || msg.type === 'narrative'">{{ msg.text }}</span>
+          <span v-else-if="msg.type === 'choice'">
+            <span class="text-muted">{{ msg.player }} chose: </span>
+            <span class="font-bold">{{ msg.text }}</span>
+          </span>
+        </div>
       </div>
       <div v-if="isAiLoading" class="text-center flex flex-col items-center space-y-2">
         <Spinner :progress="isAiLoading.progress" />

@@ -22,23 +22,23 @@ export const updateRoom = (roomId: string, updateFn: (room: Room) => void) => {
 const generateAIResponse = async (roomId: string, currentPlayer = '', isRetrying = false) => {
 	const roomManager = useRoomManager();
 
-	const room = roomManager.getRoom(roomId);
-	if (!room) return;
-
-	const premise = room.premise || '';
-	let history = room.history;
-
 	updateRoom(roomId, room => {
 		room.aiLoading = { message: isRetrying ? 'Bad response from AI. Retrying...' : 'Generating next turn...' };
 	});
 
+	const room = roomManager.getRoom(roomId);
+	if (!room) return;
+	const premise = room.premise || '';
+	let history = room.history;
+
 	const llm = LLMManager.getInstance();
-	const playerNames = history.map(event => event.match(/(.+) chose:/)?.[1]).filter(Boolean);
+	const playerNames = history.filter(evt => evt.type === 'choice').map(evt => evt.player);
 	const isNewPlayer = playerNames.includes(currentPlayer);
 	const playerCharacter = room.players.find(player => player.nickname === currentPlayer)?.character;
 	const prompt = GameMasterSystem({ currentPlayer });
 
-	const latestEvent = history.slice(-1)[0] || '';
+	const latestEvent = history.slice(-1)[0];
+	const latestEventText = latestEvent?.type === 'choice' ? `Player \`${latestEvent.player}\` chose: ${latestEvent.text}` : latestEvent?.text;
 	history = history.slice(0, -1);
 
 	let response = await llm.generateResponse([
@@ -48,7 +48,7 @@ const generateAIResponse = async (roomId: string, currentPlayer = '', isRetrying
 				currentPlayer,
 				premise,
 				history,
-				latestEvent,
+				latestEvent: latestEventText,
 				isNewPlayer,
 				playerCharacter
 			}),
@@ -83,29 +83,29 @@ const generateAIResponse = async (roomId: string, currentPlayer = '', isRetrying
 };
 
 export const playChoice = (roomId: string, currentPlayer = '', choice = '') => {
-	const roomManager = useRoomManager();
-
 	// if choice is '', regenerate last turn
-	const room = roomManager.getRoom(roomId);
-	if (!room) return;
 	updateRoom(roomId, room => {
+		console.log(room);
+		const { lastAiResponse } = room;
+
 		const history = room.history || [];
 		if (currentPlayer && choice) {
+			if (!lastAiResponse) {
+				log.error({ _ctx: { roomId, currentPlayer } }, 'No last AI response found');
+				return;
+			}
 			// Player made a choice -- add to history and move to next turn
-			if (room.history.length > 3) room.history.push('--')
 			// TODO game history manager
-			room.history.push(room.lastAiResponse?.intro || '');
-			room.history.push(room.lastAiResponse?.narrative || '');
-			room.history.push(`${currentPlayer} chose: **${choice}**`);
+			room.history.push({ type: 'intro', text: lastAiResponse.intro });
+			room.history.push({ type: 'narrative', text: lastAiResponse.narrative });
+			room.history.push({ type: 'choice', text: choice, player: currentPlayer });
 			room.currentTurn = ((room.currentTurn || 0) + 1) % room.players.length;
 		} else {
 			// TODO fix
-			// regenerate last turn
+			// Regenerate last turn -- remove last turn and try again
 			room.history = history.slice(0, -3);
-			if (room.history[room.history.length - 1] === '--') room.history.pop();
-			room.currentTurn = ((room.currentTurn || 0) - 1) % room.players.length;
-			if (room.currentTurn < 0) room.currentTurn = room.players.length - 1;
-			if (room.currentTurn >= room.players.length) room.currentTurn = 0;
+			const curPlayerindex = room.players.findIndex(player => player.nickname === currentPlayer);
+			room.currentTurn = curPlayerindex;
 		}
 		const nextPlayer = room.players[room.currentTurn]?.nickname;
 		generateAIResponse(roomId, nextPlayer);

@@ -19,6 +19,19 @@ export interface LoadingState {
 	progress?: number;
 }
 
+export interface GameHistoryNarrative {
+	type: 'narrative' | 'intro';
+	text: string;
+}
+
+export interface GameHistoryChoice {
+	type: 'choice';
+	text: string;
+	player: string;
+}
+
+export type GameHistoryItem = GameHistoryNarrative | GameHistoryChoice;
+
 export interface Room {
 	id: string;
 	name: string;
@@ -30,9 +43,9 @@ export interface Room {
 		narrative: string;
 		choices: string[];
 	};
-	currentTurn?: number;
+	currentTurn: number;
 	currentPlayer?: string;
-	history: string[];
+	history: GameHistoryItem[];
 	fastMode?: boolean;
 	createdBy: string;
 }

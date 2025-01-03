@@ -50,7 +50,7 @@ export const registerAdminHandlers = (socket: Socket) => {
 			rooms.forEach(room => {
 				room.players = [];
 				room.currentPlayer = undefined;
-				room.currentTurn = 0;
+				room.currentTurn = -1;
 			});
 			io.emit('kicked');
 			io.emit('roomList', roomManager.getRooms());

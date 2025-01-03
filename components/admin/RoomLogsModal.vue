@@ -1,10 +1,31 @@
 <template>
 	<UModal v-model="isOpen" :ui="{ width: 'max-w-7xl' }">
-		<template #header>
-			<div class="flex justify-between items-center">
-				<h3>Room Logs - {{ roomId }}</h3>
+		<h4 class="text-lg font-semibold ml-8 my-4"> Room Details </h4>
+		<div v-if="room" class="mb-6 p-4 bg-gray-50 dark:bg-neutral-900 rounded-lg">
+			<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+				<div>
+					<div class="text-sm text-muted">Room Name</div>
+					<div class="font-medium">{{ room.name }}</div>
+				</div>
+				<div>
+					<div class="text-sm text-muted">Players</div>
+					<div class="font-medium">{{ room.players.length }}</div>
+				</div>
+				<div>
+					<div class="text-sm text-muted">Fast Mode</div>
+					<UBadge :color="room.fastMode ? 'yellow' : 'orange'" :label="room.fastMode ? 'Enabled' : 'Disabled'" />
+				</div>
+				<div>
+					<div class="text-sm text-muted">Created By</div>
+					<div class="font-medium">{{ room.createdBy }}</div>
+				</div>
+				<div class="col-span-2 md:col-span-4">
+					<div class="text-sm text-muted">Premise</div>
+					<div class="font-medium">{{ room.premise }}</div>
+				</div>
 			</div>
-		</template>
+		</div>
+		<h4 class="text-lg font-semibold ml-8 mb-4">Logs</h4>
 		<!-- Filters Panel -->
 		<div class="rounded-lg bg-gray-50 dark:bg-neutral-900 p-4 mb-6">
 			<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -50,6 +71,7 @@ const props = defineProps<{
 	roomId: string
 }>();
 
+const sock = useGameSocket();
 const emit = defineEmits(['update:modelValue']);
 
 const isOpen = computed({
@@ -65,6 +87,8 @@ const filters = ref({
 	level: '',
 	fromDate: '',
 });
+
+const room = computed(() => sock.rooms.value.find(r => r.id === props.roomId));
 
 const tableColumns = [
 	{ key: 'timestamp', label: 'Timestamp' },
