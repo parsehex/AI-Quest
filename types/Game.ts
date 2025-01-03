@@ -32,17 +32,21 @@ export interface GameHistoryChoice {
 
 export type GameHistoryItem = GameHistoryNarrative | GameHistoryChoice;
 
+export interface LastAIResponse {
+	intro: string;
+	narrative: string;
+	choices: string[];
+	/** If provided, is a path to audio file reading the current intro and narrative. */
+	tts?: string;
+}
+
 export interface Room {
 	id: string;
 	name: string;
 	players: Player[];
 	premise: string;
 	aiLoading?: LoadingState;
-	lastAiResponse?: {
-		intro: string;
-		narrative: string;
-		choices: string[];
-	};
+	lastAiResponse?: LastAIResponse;
 	currentTurn: number;
 	currentPlayer?: string;
 	history: GameHistoryItem[];

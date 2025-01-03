@@ -5,6 +5,7 @@ import { LLMManager } from '~/lib/llm';
 import { Room } from '~/types/Game';
 import { useIO } from '~/server/plugins/socket.io';
 import { GameMasterSystem, GameMasterUser } from '~/lib/prompts/templates/GameMaster';
+import { TTSManager } from '~/lib/tts';
 
 const log = useLog('handlers/choices');
 
@@ -17,6 +18,8 @@ export const updateRoom = (roomId: string, updateFn: (room: Room) => void) => {
 	roomManager.saveRoom(room);
 	io.to(roomId).emit('roomList', roomManager.getRooms());
 }
+
+// TODO need to handle requesting to generate multiple times
 
 /** Make any changes to `room.history` before calling this */
 const generateAIResponse = async (roomId: string, currentPlayer = '', isRetrying = false) => {
@@ -64,7 +67,8 @@ const generateAIResponse = async (roomId: string, currentPlayer = '', isRetrying
 	const sections = {
 		intro: response.match(/<intro>(.*?)<\/intro>/s)?.[1] || '',
 		narrative: response.match(/<narrative>(.*?)<\/narrative>/s)?.[1] || '',
-		choices: response.match(/<choices>(.*?)<\/choices>/s)?.[1].trim().split('\n') || []
+		choices: response.match(/<choices>(.*?)<\/choices>/s)?.[1].trim().split('\n') || [],
+		tts: undefined as string | undefined
 	};
 	sections.intro = sections.intro.trim();
 	sections.narrative = sections.narrative.trim();
@@ -73,6 +77,17 @@ const generateAIResponse = async (roomId: string, currentPlayer = '', isRetrying
 	if (sections.choices.length === 0) {
 		log.log("No choices found, regenerating response");
 		await generateAIResponse(roomId, currentPlayer, true);
+	}
+
+	if (sections.narrative) {
+		updateRoom(roomId, async room => {
+			const tts = TTSManager.getInstance();
+			const textToTTS = sections.intro + '\n' + sections.narrative;
+			const ttsResult = await tts.generateAudio(textToTTS, { roomId, currentPlayer: room.currentPlayer });
+			if (ttsResult?.hash && room.lastAiResponse) {
+				room.lastAiResponse.tts = `/api/tts/${ttsResult.hash}`;
+			}
+		});
 	}
 
 	updateRoom(roomId, room => {

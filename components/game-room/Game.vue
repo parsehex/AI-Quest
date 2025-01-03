@@ -22,6 +22,21 @@ onBeforeUnmount(() => {
   sock.leaveRoom();
   sock.refreshRooms();
 });
+
+const audioRef = ref<HTMLAudioElement>();
+const currentTTS = ref<string>();
+
+watch(() => sock.thisRoom.value?.lastAiResponse?.tts, (newTTS) => {
+  if (newTTS) {
+    currentTTS.value = newTTS;
+    // Auto-play new TTS after a short delay
+    nextTick(() => {
+      if (audioRef.value) {
+        audioRef.value.play();
+      }
+    });
+  }
+});
 </script>
 <template>
   <div class="flex flex-col h-full rounded-lg border dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow w-2/3"
@@ -50,6 +65,8 @@ onBeforeUnmount(() => {
       </div>
       <template v-else-if="sock.thisRoom.value?.lastAiResponse">
         <div class="prose dark:prose-invert max-w-none">
+          <audio v-if="sock.thisRoom.value.lastAiResponse.tts" ref="audioRef"
+            :src="sock.thisRoom.value.lastAiResponse.tts" controls class="w-full mt-2 mb-4" />
           <h3>{{ sock.thisRoom.value.lastAiResponse.intro }}</h3>
           <p>{{ sock.thisRoom.value.lastAiResponse.narrative }}</p>
           <div v-if="isMyTurn" class="mt-4">

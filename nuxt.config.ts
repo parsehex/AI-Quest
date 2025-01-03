@@ -30,6 +30,7 @@ export default defineNuxtConfig({
       model: process.env.MODEL,
       openaiBaseUrl_fast: process.env.DEV_OPENAI_BASE_URL,
       model_fast: process.env.DEV_MODEL,
+      alltalkTtsUrl: process.env.ALLTALK_TTS_URL,
     },
   },
 
@@ -93,6 +94,10 @@ export default defineNuxtConfig({
       'rooms': {
         driver: 'fs',
         base: './data/rooms',
+      },
+      'tts': {
+        driver: 'fs',
+        base: './data/tts',
       },
     },
   },
