@@ -1,11 +1,8 @@
 <script setup lang="ts">
 import type { PlayerCharacter } from '~/types/Game';
 
-// TODO make this into a collapsible card
-//   when collapsed, show character's name
-//   open to view/modify characters
-//   can manage multiple characters saved in local storage
-
+const isExpanded = ref(false);
+const displayName = ref('');
 const character = ref({
 	class: 'Warrior',
 	race: 'Human',
@@ -24,7 +21,6 @@ const characterOptions = {
 const emit = defineEmits(['change']);
 
 watch(() => character, () => {
-	// console.log('Character changed:', character.value);
 	emit('change', character.value);
 }, { deep: true });
 
@@ -33,24 +29,64 @@ onMounted(() => {
 	if (char) {
 		character.value = { ...char };
 	}
+
+	const savedName = localStorage.getItem('nickname') || '';
+	updateDisplayName(savedName);
+
+	// open card if no details are saved
+	let hasDetails = false;
+	if (savedName) hasDetails = true;
+	if (char) {
+		if (char.class || char.race || char.background) hasDetails = true;
+	}
+	if (!hasDetails) isExpanded.value = true;
 });
+
+const updateDisplayName = (name: string) => {
+	displayName.value = name || 'Anonymous';
+};
 </script>
 <template>
-	<div class="character-creation px-4">
-		<h2 class="text-xl mb-4">Your Character</h2>
-		<div class="space-y-2 flex flex-col items-center">
-			<UTooltip text="Name">
-				<NicknameInput />
-			</UTooltip>
-			<UTooltip text="Race">
-				<USelect v-model="character.race" :options="characterOptions.races" />
-			</UTooltip>
-			<UTooltip text="Class">
-				<USelect v-model="character.class" :options="characterOptions.classes" />
-			</UTooltip>
-			<UTooltip text="Background">
-				<USelect v-model="character.background" :options="characterOptions.backgrounds" />
-			</UTooltip>
-		</div>
-	</div>
+	<UCard :ui="{ header: { padding: 'p-0' }, body: { padding: !isExpanded ? 'p-0' : undefined } }"
+		:class="'create-character' + (isExpanded ? ' expanded' : '')">
+		<template #header>
+			<div class="flex items-center justify-between cursor-pointer px-2 py-3 sm:px-6" @click="isExpanded = !isExpanded">
+				<h2 class="text-xl">
+					<span v-if="!isExpanded" class="block text-xs text-muted">Character</span>
+					<span v-if="!isExpanded">{{ displayName || 'Anonymous' }}</span>
+					<span v-else>Customize Character</span>
+				</h2>
+				<UButton icon="i-heroicons-chevron-down" variant="ghost" :class="{ 'rotate-180': isExpanded }" />
+			</div>
+		</template>
+		<template #default>
+			<div v-if="isExpanded" class="space-y-2 flex flex-col justify-center">
+				<div class="form-group">
+					<label class="block text-sm font-medium mb-1">Name</label>
+					<NicknameInput @update:name="updateDisplayName" />
+				</div>
+				<div class="form-group">
+					<label class="block text-sm font-medium mb-1">Race</label>
+					<USelect v-model="character.race" :options="characterOptions.races" />
+				</div>
+				<div class="form-group">
+					<label class="block text-sm font-medium mb-1">Class</label>
+					<USelect v-model="character.class" :options="characterOptions.classes" />
+				</div>
+				<div class="form-group">
+					<label class="block text-sm font-medium mb-1">Background</label>
+					<USelect v-model="character.background" :options="characterOptions.backgrounds" />
+				</div>
+			</div>
+		</template>
+	</UCard>
 </template>
+<style scoped lang="scss">
+.form-group {
+	@apply flex gap-2 items-center justify-between;
+
+	&> :first-child {
+		@apply mr-6;
+	}
+}
+</style>

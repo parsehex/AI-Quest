@@ -165,7 +165,7 @@ const handleShowRoomLogs = (roomId: string) => {
 								</USelect>
 								<span v-else class="select-none text-muted" title="No players in this room"> -- </span>
 							</td>
-							<td class="p-2">
+							<td class="p-2 flex gap-1">
 								<UTooltip text="View room details">
 									<UButton @click="handleShowRoomLogs(room.id)" color="sky" size="xs" variant="outline">
 										<i class="i-heroicons-newspaper w-4 h-4"></i>

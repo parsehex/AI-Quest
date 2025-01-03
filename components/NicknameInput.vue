@@ -1,23 +1,45 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 
 const nickname = ref('');
+const isValid = ref(false);
 
-onMounted(() => {
-  nickname.value = localStorage.getItem('nickname') || '';
+const emit = defineEmits(['update:name']);
+
+const validateName = (name: string) => {
+  return name.trim().length >= 2;
+};
+
+watch(nickname, (newValue) => {
+  isValid.value = validateName(newValue);
+  if (isValid.value) {
+    emit('update:name', newValue);
+  }
 });
 
 const updateNickname = () => {
-  if (nickname.value.trim()) {
+  if (isValid.value) {
     localStorage.setItem('nickname', nickname.value);
+    emit('update:name', nickname.value);
   }
 }
+
+onMounted(() => {
+  const savedName = localStorage.getItem('nickname') || '';
+  nickname.value = savedName;
+  if (validateName(savedName)) {
+    emit('update:name', savedName);
+  }
+});
 </script>
 <template>
-  <div class="flex items-center gap-2 px-4">
-    <UInput v-model="nickname" placeholder="Enter nickname" @change="updateNickname" :ui="{
+  <div class="inline-flex items-center gap-2">
+    <UIcon v-if="nickname && isValid" name="i-heroicons-check-circle" class="text-green-500" />
+    <UInput v-model="nickname" placeholder="Enter character name" @change="updateNickname" :ui="{
       width: 'w-48',
-      input: 'text-sm'
+      input: 'text-sm',
+      base: `rounded-md border-0 shadow-sm ring-1 ${nickname && !isValid ? 'ring-red-500' : 'ring-gray-300'
+        }`
     }" />
   </div>
 </template>
