@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import type { PlayerCharacter } from '~/types/Game';
 
+const props = defineProps({
+	readOnly: {
+		type: Boolean,
+		default: false
+	}
+});
+
 const isExpanded = ref(false);
 const displayName = ref('');
 const character = ref({
@@ -48,13 +55,13 @@ const updateDisplayName = (name: string) => {
 </script>
 <template>
 	<UCard :ui="{ header: { padding: 'p-0' }, body: { padding: !isExpanded ? 'p-0' : undefined } }"
-		:class="'create-character' + (isExpanded ? ' expanded' : '')">
+		:class="'create-character' + (isExpanded ? ' expanded' : '') + (props.readOnly ? ' readonly' : '')">
 		<template #header>
 			<div class="flex items-center justify-between cursor-pointer px-2 py-3 sm:px-6" @click="isExpanded = !isExpanded">
 				<h2 class="text-xl">
-					<span v-if="!isExpanded" class="block text-xs text-muted">Character</span>
+					<span v-if="!isExpanded" class="block text-xs text-muted"> {{ readOnly ? 'You' : 'Character' }} </span>
 					<span v-if="!isExpanded">{{ displayName || 'Anonymous' }}</span>
-					<span v-else>Customize Character</span>
+					<span v-else> {{ readOnly ? 'Your Character' : 'Customize Character' }} </span>
 				</h2>
 				<UButton icon="i-heroicons-chevron-down" variant="ghost" :class="{ 'rotate-180': isExpanded }" />
 			</div>
@@ -63,19 +70,20 @@ const updateDisplayName = (name: string) => {
 			<div v-if="isExpanded" class="space-y-2 flex flex-col justify-center">
 				<div class="form-group">
 					<label class="block text-sm font-medium mb-1">Name</label>
-					<NicknameInput @update:name="updateDisplayName" />
+					<NicknameInput v-if="!readOnly" @update:name="updateDisplayName" />
+					<p v-else>{{ displayName }}</p>
 				</div>
-				<div class="form-group">
+				<div v-if="readOnly && character.race" class="form-group">
 					<label class="block text-sm font-medium mb-1">Race</label>
-					<USelect v-model="character.race" :options="characterOptions.races" />
+					<USelect v-model="character.race" :options="characterOptions.races" :disabled="readOnly" />
 				</div>
-				<div class="form-group">
+				<div v-if="readOnly && character.class" class="form-group">
 					<label class="block text-sm font-medium mb-1">Class</label>
-					<USelect v-model="character.class" :options="characterOptions.classes" />
+					<USelect v-model="character.class" :options="characterOptions.classes" :disabled="readOnly" />
 				</div>
-				<div class="form-group">
+				<div v-if="readOnly && character.background" class="form-group">
 					<label class="block text-sm font-medium mb-1">Background</label>
-					<USelect v-model="character.background" :options="characterOptions.backgrounds" />
+					<USelect v-model="character.background" :options="characterOptions.backgrounds" :disabled="readOnly" />
 				</div>
 			</div>
 		</template>

@@ -70,9 +70,9 @@ onUnmounted(() => {
 <template>
   <div v-if="sock.isConnected.value">
     <CreateCharacter @change="handleCharacterCreated" />
-    <Divider />
+    <Divider v-if="sock.rooms.value.length" />
     <!-- Room List -->
-    <div v-if="!sock.currentRoom.value" class="room-list mt-4">
+    <div v-if="sock.rooms.value.length" class="room-list mt-4">
       <h2 class="text-xl mb-4">Active Games</h2>
       <ul>
         <UTooltip class="list-item" v-for="room in sock.rooms.value" :key="room.id"

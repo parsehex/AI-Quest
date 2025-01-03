@@ -39,8 +39,8 @@ export const registerRoomHandlers = (socket: Socket) => {
 			socket.data.nickname = nickname;
 			socket.data.playerCharacter = playerCharacter;
 
-			// are there 1 players now? then set currentPlayer to that player and generate their turn
-			if (room.players.length === 1) {
+			// are there 1 players now and not loading? then set currentPlayer to that player and generate their turn
+			if (room.players.length === 1 && !room.aiLoading) {
 				const CurrentPlayer = room.players[0].id;
 				log.debug({ _context: { roomId, CurrentPlayer } }, "Setting current player");
 				// TODO maybe just expose this from choices.ts
