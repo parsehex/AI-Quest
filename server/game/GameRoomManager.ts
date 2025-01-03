@@ -1,6 +1,7 @@
 import { ChatMessage, PlayerCharacter, Room } from '~/types/Game';
 import { useLog } from '~/composables/useLog';
 import { Server } from 'socket.io';
+import { useIO } from '../plugins/socket.io';
 
 const log = useLog('GameRoomManager');
 
@@ -11,6 +12,16 @@ export function useRoomManager(): GameRoomManager {
 		roomManagerInstance = new GameRoomManager();
 	}
 	return roomManagerInstance;
+}
+
+export const updateRoom = (roomId: string, updateFn: (room: Room) => void) => {
+	const roomManager = useRoomManager();
+	const io = useIO();
+	const room = roomManager.getRoom(roomId);
+	if (!room) return log.error('Room not found:', roomId);
+	updateFn(room);
+	roomManager.saveRoom(room);
+	io.to(roomId).emit('roomList', roomManager.getRooms());
 }
 
 export class GameRoomManager {

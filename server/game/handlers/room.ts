@@ -1,7 +1,7 @@
 import { type Socket } from 'socket.io';
-import { useRoomManager } from '../GameRoomManager';
+import { useRoomManager, updateRoom } from '../GameRoomManager';
 import { useLog } from '~/composables/useLog';
-import { playChoice, updateRoom } from './choices';
+import { playChoice } from './choices';
 import { useIO } from '~/server/plugins/socket.io';
 
 const log = useLog('handlers/rooms');

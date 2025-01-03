@@ -1,23 +1,11 @@
 import { type Socket } from 'socket.io';
-import { useRoomManager } from '../GameRoomManager';
+import { updateRoom, useRoomManager } from '../GameRoomManager';
 import { useLog } from '~/composables/useLog';
 import { LLMManager } from '~/lib/llm';
-import { Room } from '~/types/Game';
-import { useIO } from '~/server/plugins/socket.io';
 import { GameMasterSystem, GameMasterUser } from '~/lib/prompts/templates/GameMaster';
 import { TTSManager } from '~/lib/tts';
 
 const log = useLog('handlers/choices');
-
-export const updateRoom = (roomId: string, updateFn: (room: Room) => void) => {
-	const roomManager = useRoomManager();
-	const io = useIO();
-	const room = roomManager.getRoom(roomId);
-	if (!room) return log.error('Room not found:', roomId);
-	updateFn(room);
-	roomManager.saveRoom(room);
-	io.to(roomId).emit('roomList', roomManager.getRooms());
-}
 
 // TODO need to handle requesting to generate multiple times
 
