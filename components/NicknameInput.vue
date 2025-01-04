@@ -7,7 +7,7 @@ const isValid = ref(false);
 const emit = defineEmits(['update:name']);
 
 const validateName = (name: string) => {
-  return name.trim().length >= 2;
+  return name.trim().length >= 3;
 };
 
 watch(nickname, (newValue) => {
@@ -34,12 +34,11 @@ onMounted(() => {
 </script>
 <template>
   <div class="inline-flex items-center gap-2">
-    <UIcon v-if="nickname && isValid" name="i-heroicons-check-circle" class="text-green-500" />
-    <UInput v-model="nickname" placeholder="Enter character name" @change="updateNickname" :ui="{
-      width: 'w-48',
-      input: 'text-sm',
-      base: `rounded-md border-0 shadow-sm ring-1 ${nickname && !isValid ? 'ring-red-500' : 'ring-gray-300'
-        }`
-    }" />
+    <UInput v-model="nickname" placeholder="Enter character name" @change="updateNickname"
+      :icon="nickname && isValid ? 'i-heroicons-check-circle' : ''" :color="nickname && isValid ? 'green' : ''" :ui="{
+        input: 'text-sm',
+        base: `rounded-md border-0 shadow-sm ring-1 ${nickname && !isValid ? 'ring-red-500' : 'ring-gray-300'
+          }`
+      }" />
   </div>
 </template>

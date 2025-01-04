@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { useGameStatus } from '~/composables/useGameStatus';
+import RoomManager from '~/components/home/RoomManager.vue';
 
 definePageMeta({
   title: "Home",

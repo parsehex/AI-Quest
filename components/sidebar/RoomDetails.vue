@@ -7,7 +7,7 @@ const room = computed(() => sock.thisRoom.value)
 const players = computed(() => room.value?.players || [])
 const currentTurnPlayer = computed(() => room.value?.players.find(p => p.id === room.value?.currentPlayer))
 const premise = computed(() => room.value?.premise)
-const myPlayer = computed(() => room.value?.players.find(p => p.id === sock.clientId.value))
+const myPlayer = computed(() => room.value?.players.find(p => p.clientId === sock.clientId.value))
 </script>
 <template>
 	<div class="p-4 border dark:border-neutral-700">
