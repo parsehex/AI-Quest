@@ -3,6 +3,8 @@ import { delay } from '~/lib/utils'
 import type { PlayerCharacter } from '~/types/Game'
 import type CreateCharacter from './CreateCharacter.vue'
 
+const user = useSupabaseUser()
+
 const ranNum = Math.floor(Math.random() * 1000)
 const isDev = import.meta.env.DEV
 const starters = [
@@ -68,8 +70,8 @@ onUnmounted(() => {
 </script>
 <template>
   <div v-if="sock.isConnected.value">
-    <CreateCharacter @change="handleCharacterCreated" />
-    <Divider v-if="sock.rooms.value.length" />
+    <CreateCharacter v-if="user?.confirmed_at" @change="handleCharacterCreated" />
+    <Divider v-if="user?.confirmed_at && sock.rooms.value.length" />
     <!-- Room List -->
     <div v-if="sock.rooms.value.length" class="room-list mt-4">
       <h2 class="text-xl mb-4">Active Games</h2>
@@ -86,8 +88,8 @@ onUnmounted(() => {
         <li v-if="!sock.rooms.value.length"> No rooms available </li>
       </ul>
     </div>
-    <Divider />
-    <div v-if="!sock.currentRoom.value" class="create-room">
+    <Divider v-if="user?.confirmed_at && sock.rooms.value.length" />
+    <div v-if="user?.confirmed_at" class="create-room">
       <h2 class="text-xl mb-4">Create a Game</h2>
       <UInput v-model="newRoomName" placeholder="Room name" @keyup.enter="handleCreateRoom" :ui="{
         width: 'w-48',
