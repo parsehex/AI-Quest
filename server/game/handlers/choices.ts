@@ -73,11 +73,17 @@ const generateAIResponse = async (roomId: string, currentPlayer = '', isRetrying
 
 	if (sections.narrative) {
 		updateRoom(roomId, async room => {
-			const tts = TTSManager.getInstance();
-			const textToTTS = sections.intro + '\n' + sections.narrative;
-			const ttsResult = await tts.generateAudio(textToTTS, { roomId, currentPlayer: room.currentPlayer });
-			if (ttsResult?.hash && room.lastAiResponse) {
-				room.lastAiResponse.tts = `/api/tts/${ttsResult.hash}`;
+			try {
+				// generate tts to be used when ready, failing silently
+				const tts = TTSManager.getInstance();
+				const textToTTS = sections.intro + '\n' + sections.narrative;
+				const ttsResult = await tts.generateAudio(textToTTS, { roomId, currentPlayer: room.currentPlayer });
+				// TODO generate previous choice TTS and add to a list of tts history
+				if (ttsResult?.hash && room.lastAiResponse) {
+					room.lastAiResponse.tts = `/api/tts/${ttsResult.hash}`;
+				}
+			} catch (error) {
+				log.error({ _ctx: { roomId, currentPlayer } }, 'Failed to generate TTS', error);
 			}
 		});
 	}
