@@ -106,7 +106,8 @@ const handleToggleGameActive = () => {
 			<div class="p-4 bg-white dark:bg-neutral-800 rounded-lg shadow">
 				<h2 class="text-xl font-semibold mb-2">Authentication</h2>
 				<div class="flex flex-col gap-4">
-					<UInput v-if="!isValidated" v-model="password" type="password" placeholder="Enter admin password" />
+					<UInput v-if="!isValidated" @keyup.enter="handlePasswordSubmit" v-model="password" type="password"
+						placeholder="Enter admin password" />
 					<UButton v-if="!isValidated" @click="handlePasswordSubmit" color="primary"> Validate </UButton>
 					<div v-else class="flex items-center gap-2">
 						<div class="w-3 h-3 rounded-full bg-green-500"></div>
