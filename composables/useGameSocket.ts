@@ -34,6 +34,7 @@ class GameSocketManager {
 	private static instance: GameSocketManager | null = null;
 	private refreshInterval: NodeJS.Timeout | null = null;
 
+	public toast = useToast();
 	public isConnected = ref(false);
 	public transport = ref('N/A');
 	public clientId = ref(undefined as string | undefined);
@@ -72,6 +73,7 @@ class GameSocketManager {
 		socket.on('chatHistory', this.onChatHistory.bind(this));
 		socket.on('newMessage', this.onNewMessage.bind(this));
 		socket.on('kicked', this.onKicked.bind(this));
+		socket.on('toast', this.onToast.bind(this));
 	}
 
 	private onConnect(): void {
@@ -120,6 +122,14 @@ class GameSocketManager {
 		this.messages.value = [...this.messages.value, message];
 	}
 
+	private onToast(message: string, color?: string): void {
+		this.toast.add({
+			description: message,
+			color,
+			timeout: 5000
+		});
+	}
+
 	private onKicked(): void {
 		// @ts-ignore
 		window.location.href = '/';
@@ -132,6 +142,8 @@ class GameSocketManager {
 		socket.off('playerJoined');
 		socket.off('chatHistory');
 		socket.off('newMessage');
+		socket.off('kicked');
+		socket.off('toast');
 	}
 
 	// Public methods
