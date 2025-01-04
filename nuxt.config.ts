@@ -31,6 +31,9 @@ export default defineNuxtConfig({
       openaiBaseUrl_fast: process.env.DEV_OPENAI_BASE_URL,
       model_fast: process.env.DEV_MODEL,
       alltalkTtsUrl: process.env.ALLTALK_TTS_URL,
+
+      discordBotToken: process.env.DISCORD_BOT_TOKEN,
+      discordGuildId: process.env.DISCORD_GUILD_ID,
     },
   },
 
@@ -127,7 +130,7 @@ export default defineNuxtConfig({
       login: '/login',
       callback: '/confirm',
       include: undefined,
-      exclude: ['/'],
+      exclude: ['/', '/room/*'],
       cookieRedirect: true,
     }
   }

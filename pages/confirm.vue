@@ -7,8 +7,6 @@ const redirectPath = useCookie(`${cookieName}-redirect-path`).value
 
 watch(user, () => {
 	if (user.value) {
-		console.log('user', user.value, 'redirectPath', redirectPath);
-
 		// Clear cookie
 		useCookie(`${cookieName}-redirect-path`).value = null
 		// Redirect to path
