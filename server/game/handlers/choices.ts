@@ -4,6 +4,7 @@ import { useLog } from '~/composables/useLog';
 import { LLMManager } from '~/lib/llm';
 import { GameMasterSystem, GameMasterUser } from '~/lib/prompts/templates/GameMaster';
 import { TTSManager } from '~/lib/tts';
+import { useIO } from '~/server/plugins/socket.io';
 
 const log = useLog('handlers/choices');
 
@@ -123,6 +124,7 @@ export const playChoice = (roomId: string, currentPlayer = '', choice = '') => {
 
 export const registerChoiceHandlers = (socket: Socket) => {
 	const roomManager = useRoomManager();
+	const io = useIO();
 
 	socket.on('makeChoice', ({ roomId, choice }) => {
 		const room = roomManager.getRoom(roomId);
@@ -143,6 +145,22 @@ export const registerChoiceHandlers = (socket: Socket) => {
 
 		if (!room || !player || player.isSpectator) return;
 		log.debug({ _ctx: { roomId, SocketId } }, 'Regenerating response');
+
+		const playerName = socket.data.nickname || 'Anonymous';
+		playChoice(roomId, playerName);
+	});
+
+	socket.on('requestTurn', (roomId: string) => {
+		const room = roomManager.getRoom(roomId);
+		const SocketId = socket.id;
+		const player = room?.players.find(p => p.id === SocketId);
+
+		if (!room || !player) return;
+
+		if (player.isSpectator) {
+			io.to(SocketId).emit('toast', { message: "You're not playing in this game" });
+		}
+		log.debug({ _ctx: { roomId, SocketId } }, 'Requesting turn');
 
 		const playerName = socket.data.nickname || 'Anonymous';
 		playChoice(roomId, playerName);

@@ -207,6 +207,11 @@ class GameSocketManager {
 		log.debug({ _ctx: { roomId, choice } }, 'Making choice');
 		socket.emit('makeChoice', { roomId, choice });
 	}
+
+	public requestTurn(roomId: string): void {
+		log.debug({ _ctx: { roomId } }, 'Requesting turn');
+		socket.emit('requestTurn', roomId);
+	}
 }
 
 // Composable
@@ -238,5 +243,6 @@ export function useGameSocket() {
 		sendMessage: gameSocket.sendMessage.bind(gameSocket),
 		waitConnected: gameSocket.waitConnected.bind(gameSocket),
 		makeChoice: gameSocket.makeChoice.bind(gameSocket),
+		requestTurn: gameSocket.requestTurn.bind(gameSocket),
 	}
 }

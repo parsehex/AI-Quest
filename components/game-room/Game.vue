@@ -51,11 +51,13 @@ watch(() => sock.thisRoom.value?.lastAiResponse?.tts, (newTTS) => {
     <div class="p-4 border-b dark:border-neutral-700">
       <h2 class="text-xl text-muted font-semibold"> Game <span v-if="isSpectator" class="text-sm text-muted">(Spectator
           Mode)</span>
-        <UTooltip class="float-right" text="Regenerate the last turn">
-          <UButton v-if="canRegenerate" @click="sock.regenerateResponse(props.roomId)" color="violet">
+        <UTooltip v-if="canRegenerate" class="float-right" text="Regenerate the last turn">
+          <UButton @click="sock.regenerateResponse(props.roomId)" color="violet">
             <i class="i-heroicons-arrow-path-16-solid w-5 h-5"></i> Retry
           </UButton>
         </UTooltip>
+        <UButton v-else class="float-right" @click="sock.requestTurn(props.roomId)" color="violet"> Request Turn
+        </UButton>
       </h2>
     </div>
     <div class="flex-1 overflow-y-auto p-4 space-y-4">
