@@ -43,7 +43,8 @@ export default defineNuxtConfig({
     "nuxt-svgo",
     "@nuxt/image",
     "@nuxtjs/mdc",
-    "@nuxtjs/device"
+    "@nuxtjs/device",
+    "@nuxtjs/supabase"
   ],
 
   colorMode: {
@@ -118,6 +119,16 @@ export default defineNuxtConfig({
       preprocessorOptions: {
         scss: { api: 'modern' }
       }
+    }
+  },
+
+  supabase: {
+    redirectOptions: {
+      login: '/login',
+      callback: '/confirm',
+      include: undefined,
+      exclude: ['/'],
+      cookieRedirect: true,
     }
   }
 });
