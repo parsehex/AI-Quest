@@ -23,6 +23,7 @@ const log = useLog('room-id')
 const device = useDevice()
 const route = useRoute()
 const roomId = route.params.id as string
+const spectate = route.query.spectate === '1'
 const sock = useGameSocket()
 const { messages } = sock
 const isChatOpen = useLocalStorage('game-chat-open', device.isDesktopOrTablet)
@@ -41,7 +42,7 @@ onMounted(async () => {
   }
 
   sock.reinitializeListeners()
-  sock.joinRoom(roomId)
+  sock.joinRoom(roomId, spectate)
   sock.refreshMessages(roomId)
 })
 

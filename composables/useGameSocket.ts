@@ -36,6 +36,7 @@ class GameSocketManager {
 
 	public isConnected = ref(false);
 	public transport = ref('N/A');
+	public clientId = ref(undefined as string | undefined);
 	public rooms = ref<Room[]>([]);
 	public currentRoom = ref<string | null>(null);
 	public thisRoom = computed(() => this.rooms.value.find(room => room.id === this.currentRoom.value));
@@ -77,8 +78,8 @@ class GameSocketManager {
 		this.isConnected.value = true;
 		this.transport.value = socket.io.engine.transport.name;
 
-		const clientId = getClientId();
-		socket.emit('identify', clientId);
+		this.clientId.value = getClientId();
+		socket.emit('identify', this.clientId.value);
 
 		socket.io.engine.on("upgrade", (rawTransport) => {
 			this.transport.value = rawTransport.name;
@@ -139,12 +140,12 @@ class GameSocketManager {
 		socket.emit('createRoom', roomName, premise, fastMode);
 	}
 
-	public joinRoom(roomId: string): void {
+	public joinRoom(roomId: string, isSpectator = false): void {
 		const nickname = localStorage.getItem('nickname') || 'Anonymous';
 		const clientId = getClientId();
 		const playerCharacter = getPlayerCharacter();
 		log.debug({ _ctx: { roomId, clientId, nickname, playerCharacter } }, 'Joined room:');
-		socket.emit('joinRoom', { roomId, nickname, clientId, playerCharacter });
+		socket.emit('joinRoom', { roomId, nickname, clientId, playerCharacter, isSpectator });
 		this.currentRoom.value = roomId;
 		this.refreshMessages(roomId);
 	}
@@ -205,6 +206,7 @@ export function useGameSocket() {
 	});
 
 	return {
+		clientId: gameSocket.clientId,
 		isConnected: gameSocket.isConnected,
 		transport: gameSocket.transport,
 		rooms: gameSocket.rooms,

@@ -22,6 +22,7 @@ export function getNavigation(where: Where): Navigation[] {
       ];
       if (user.value && isDev) {
         routes.push({ name: "Admin", to: "/admin", icon: CogIcon });
+        routes.push({ name: "Logout", to: "/logout", icon: UserIcon });
       } else {
         routes.push({ name: "Login", to: "/login", icon: UserIcon });
       }

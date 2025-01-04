@@ -76,8 +76,11 @@ onUnmounted(() => {
       <ul>
         <UTooltip class="list-item" v-for="room in sock.rooms.value" :key="room.id"
           :text="'Players: ' + players[room.id].map(p => p.nickname).join(', ')">
-          <li class="my-2 flex justify-between"> {{ room.name }} ({{ room.players.length }} players) <UButton
-              type="button" @click="$router.push(`/room/${room.id}`)" color="green" class="ml-4"> Join </UButton>
+          <li class="my-2 flex justify-between"> {{ room.name }} ({{ room.players.length }} players) <!-- TODO -->
+            <UButton type="button" @click="$router.push(`/room/${room.id}?spectate=1`)" color="sky" class="ml-4">
+              Spectate </UButton>
+            <UButton v-if="user?.confirmed_at" type="button" @click="$router.push(`/room/${room.id}`)" color="green"
+              class="ml-4"> Join </UButton>
           </li>
         </UTooltip>
         <li v-if="!sock.rooms.value.length"> No rooms available </li>

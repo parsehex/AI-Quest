@@ -11,6 +11,7 @@ export const registerRoomHandlers = (socket: Socket) => {
 	const roomManager = useRoomManager();
 
 	socket.on('createRoom', async (roomName: string, premise: string, fastMode: boolean) => {
+		// TODO only authed players should be able to create rooms
 		const SocketId = socket.id;
 		const playerName = socket.data.nickname || 'Anonymous';
 		log.debug({ _ctx: { SocketId, roomName, playerName, premise, fastMode } }, 'Creating room');
@@ -21,7 +22,7 @@ export const registerRoomHandlers = (socket: Socket) => {
 		playChoice(room.id, playerName);
 	});
 
-	socket.on('joinRoom', async ({ roomId, nickname, clientId, playerCharacter }) => {
+	socket.on('joinRoom', async ({ roomId, nickname, clientId, playerCharacter, isSpectator }) => {
 		const room = roomManager.getRoom(roomId);
 		if (room) {
 			const SocketId = socket.id;
@@ -32,12 +33,13 @@ export const registerRoomHandlers = (socket: Socket) => {
 			if (existingPlayer) {
 				existingPlayer.id = socket.id;
 			} else {
-				await roomManager.joinRoom(socket.id, roomId, nickname, clientId, playerCharacter);
+				await roomManager.joinRoom(socket.id, roomId, nickname, clientId, isSpectator, playerCharacter);
 			}
 
 			// this might cause issues playing multiple games at once
 			socket.data.nickname = nickname;
 			socket.data.playerCharacter = playerCharacter;
+			socket.data.isSpectator = isSpectator;
 
 			// TODO since player ids still get reset, this doesnt work well
 			// are there 1 players now and not loading? then set currentPlayer to that player and generate their turn
@@ -53,7 +55,7 @@ export const registerRoomHandlers = (socket: Socket) => {
 			// 	});
 			// }
 
-			io.to(roomId).emit('playerJoined', { roomId, nickname });
+			io.to(roomId).emit('playerJoined', { roomId, nickname, isSpectator });
 
 			// Send chat history to joining user
 			const history = await roomManager.getChatHistory(roomId);

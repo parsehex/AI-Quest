@@ -11,5 +11,6 @@ export interface Player {
 	id: string;
 	clientId: string;
 	nickname: string;
+	isSpectator: boolean;
 	character?: PlayerCharacter;
 }

@@ -85,7 +85,7 @@ export class GameRoomManager {
 		return room;
 	}
 
-	async joinRoom(SocketId: string, roomId: string, nickname: string, clientId: string, character?: PlayerCharacter): Promise<Room | null> {
+	async joinRoom(SocketId: string, roomId: string, nickname: string, clientId: string, isSpectator = false, character?: PlayerCharacter): Promise<Room | null> {
 		log.info({ _ctx: { SocketId, roomId, clientId, nickname, character } }, 'Joining room');
 		const room = this.rooms.get(roomId);
 		if (room) {
@@ -94,6 +94,7 @@ export class GameRoomManager {
 				clientId,
 				nickname,
 				character,
+				isSpectator,
 			});
 			await this.saveRooms();
 			return room;

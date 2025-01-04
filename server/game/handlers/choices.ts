@@ -23,7 +23,10 @@ const generateAIResponse = async (roomId: string, currentPlayer = '', isRetrying
 	let history = room.history;
 
 	const llm = LLMManager.getInstance();
-	const playerNames = history.filter(evt => evt.type === 'choice').map(evt => evt.player);
+	const playerNames = history
+		.filter(evt => evt.type === 'choice')
+		.filter(evt => !room.players.find(p => p.nickname === evt.player)?.isSpectator)
+		.map(evt => evt.player);
 	const isNewPlayer = playerNames.includes(currentPlayer);
 	const playerCharacter = room.players.find(player => player.nickname === currentPlayer)?.character;
 	const prompt = GameMasterSystem({ currentPlayer });
@@ -89,6 +92,9 @@ export const playChoice = (roomId: string, currentPlayer = '', choice = '') => {
 	updateRoom(roomId, room => {
 		const { lastAiResponse } = room;
 
+		const activePlayers = room.players.filter(p => !p.isSpectator);
+		if (activePlayers.length === 0) return;
+
 		const history = room.history || [];
 		if (currentPlayer && choice) {
 			if (!lastAiResponse) {
@@ -100,13 +106,15 @@ export const playChoice = (roomId: string, currentPlayer = '', choice = '') => {
 			room.history.push({ type: 'intro', text: lastAiResponse.intro });
 			room.history.push({ type: 'narrative', text: lastAiResponse.narrative });
 			room.history.push({ type: 'choice', text: choice, player: currentPlayer });
-			room.currentTurn = ((room.currentTurn || 0) + 1) % room.players.length;
+
+			// Find next active player's turn
+			const currentActivePlayerIndex = activePlayers.findIndex(p => p.nickname === currentPlayer);
+			room.currentTurn = ((currentActivePlayerIndex + 1) % activePlayers.length);
 		} else {
-			// TODO fix
 			// Regenerate last turn -- remove last turn and try again
 			room.history = history.slice(0, -3);
-			const curPlayerindex = room.players.findIndex(player => player.nickname === currentPlayer);
-			room.currentTurn = curPlayerindex;
+			const curPlayerIndex = activePlayers.findIndex(player => player.nickname === currentPlayer);
+			room.currentTurn = curPlayerIndex;
 		}
 		const nextPlayer = room.players[room.currentTurn]?.nickname;
 		generateAIResponse(roomId, nextPlayer);
@@ -119,18 +127,23 @@ export const registerChoiceHandlers = (socket: Socket) => {
 	socket.on('makeChoice', ({ roomId, choice }) => {
 		const room = roomManager.getRoom(roomId);
 		const SocketId = socket.id;
-		if (!room || room.currentPlayer !== SocketId) return;
+		const player = room?.players.find(p => p.id === SocketId);
+
+		if (!room || !player || room.currentPlayer !== SocketId || player.isSpectator) return;
 		log.debug({ _ctx: { roomId, SocketId, choice } }, 'Player chose');
 
-		const playerName = room.players.find(player => player.id === SocketId)?.nickname || 'Anonymous';
+		const playerName = player?.nickname || 'Anonymous';
 		playChoice(roomId, playerName, choice);
 	});
 
 	socket.on('regenerateResponse', (roomId: string) => {
 		const room = roomManager.getRoom(roomId);
-		if (!room) return;
 		const SocketId = socket.id;
+		const player = room?.players.find(p => p.id === SocketId);
+
+		if (!room || !player || player.isSpectator) return;
 		log.debug({ _ctx: { roomId, SocketId } }, 'Regenerating response');
+
 		const playerName = socket.data.nickname || 'Anonymous';
 		playChoice(roomId, playerName);
 	});

@@ -8,10 +8,16 @@ const props = defineProps<{
 
 const sock = useGameSocket();
 const isAiLoading = computed(() => sock.thisRoom.value?.aiLoading || undefined);
-const isMyTurn = computed(() => sock.thisRoom.value?.currentPlayer === socket?.id);
+const isSpectator = computed(() => sock.thisRoom.value?.players.find(p => p.id === socket?.id)?.isSpectator);
+const isMyTurn = computed(() => !isSpectator.value && sock.thisRoom.value?.currentPlayer === socket?.id);
+const canRegenerate = computed(() => isMyTurn.value && sock.thisRoom.value?.aiLoading);
 const choice = ref('');
 
 const room = computed(() => sock.thisRoom.value);
+
+const currentPlayerName = computed(() => {
+  return room.value?.players.find(p => p.id === room.value?.currentPlayer)?.nickname;
+});
 
 const makeChoice = (choice: string) => {
   if (!isMyTurn.value) return;
@@ -43,8 +49,10 @@ watch(() => sock.thisRoom.value?.lastAiResponse?.tts, (newTTS) => {
   <div class="flex flex-col h-full rounded-lg border dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow w-2/3"
     :class="isFullWidth ? 'w-full' : ''">
     <div class="p-4 border-b dark:border-neutral-700">
-      <h2 class="text-xl text-muted font-semibold"> Game <UTooltip class="float-right" text="Regenerate the last turn">
-          <UButton @click="sock.regenerateResponse(props.roomId)" color="violet">
+      <h2 class="text-xl text-muted font-semibold"> Game <span v-if="isSpectator" class="text-sm text-muted">(Spectator
+          Mode)</span>
+        <UTooltip class="float-right" text="Regenerate the last turn">
+          <UButton v-if="canRegenerate" @click="sock.regenerateResponse(props.roomId)" color="violet">
             <i class="i-heroicons-arrow-path-16-solid w-5 h-5"></i> Retry
           </UButton>
         </UTooltip>
@@ -70,17 +78,19 @@ watch(() => sock.thisRoom.value?.lastAiResponse?.tts, (newTTS) => {
             :src="sock.thisRoom.value.lastAiResponse.tts" controls class="w-full mt-2 mb-4" />
           <h3>{{ sock.thisRoom.value.lastAiResponse.intro }}</h3>
           <p>{{ sock.thisRoom.value.lastAiResponse.narrative }}</p>
-          <div v-if="isMyTurn" class="mt-4">
-            <h4>Your turn - Choose your action:</h4>
+          <div class="mt-4">
+            <h4>
+              <template v-if="isMyTurn">Your turn - Make your choice:</template>
+              <template v-else>Waiting for {{ currentPlayerName }} to choose:</template>
+            </h4>
             <div class="space-y-2">
               <UButton v-for="(choice, i) in sock.thisRoom.value.lastAiResponse.choices" :key="i" block
-                @click="makeChoice(choice)"> {{ choice }} </UButton>
-              <UInput v-model="choice" placeholder="Enter your own choice"
+                :disabled="!isMyTurn" :color="isMyTurn ? 'primary' : 'gray'" @click="makeChoice(choice)"> {{ choice }}
+              </UButton>
+              <UInput v-if="isMyTurn" v-model="choice" placeholder="Enter your own choice"
                 @keyup.enter="makeChoice(choice); choice = ''" />
             </div>
           </div>
-          <div v-else class="mt-4 text-muted"> Waiting for {{ sock.thisRoom.value.players.find(p => p.id ===
-            sock.thisRoom.value?.currentPlayer)?.nickname }} to make a choice... </div>
         </div>
       </template>
     </div>
