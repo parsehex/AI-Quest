@@ -12,11 +12,11 @@ const myPlayer = computed(() => room.value?.players.find(p => p.clientId === soc
 <template>
 	<div class="p-4 border dark:border-neutral-700">
 		<p>Room ID: {{ roomId }}</p>
-		<p>My ID: {{ sock.clientId.value }}</p>
-		<p>Me: {{ myPlayer }}</p>
-		<p>Spectating: {{ myPlayer?.isSpectator }}</p>
 		<p>Players: {{ players.length }}</p>
 		<p>Current player: {{ currentTurnPlayer }}</p>
 		<p>Premise: {{ premise }}</p>
+		<p>My ID: {{ sock.clientId.value }}</p>
+		<p>Me: {{ myPlayer }}</p>
+		<p>Spectating: {{ myPlayer?.isSpectator }}</p>
 	</div>
 </template>

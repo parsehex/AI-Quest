@@ -10,7 +10,7 @@ const sock = useGameSocket();
 const isAiLoading = computed(() => sock.thisRoom.value?.aiLoading || undefined);
 const isSpectator = computed(() => sock.thisRoom.value?.players.find(p => p.id === socket?.id)?.isSpectator);
 const isMyTurn = computed(() => !isSpectator.value && sock.thisRoom.value?.currentPlayer === socket?.id);
-const canRegenerate = computed(() => isMyTurn.value && sock.thisRoom.value?.aiLoading);
+const canRegenerate = computed(() => (isMyTurn.value || !sock.thisRoom.value?.players.length) && !sock.thisRoom.value?.aiLoading);
 const choice = ref('');
 
 const room = computed(() => sock.thisRoom.value);

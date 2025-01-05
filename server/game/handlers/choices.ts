@@ -5,6 +5,7 @@ import { LLMManager } from '~/lib/llm';
 import { GameMasterSystem, GameMasterUser } from '~/lib/prompts/templates/GameMaster';
 import { TTSManager } from '~/lib/tts';
 import { useIO } from '~/server/plugins/socket.io';
+import { delay } from '~/lib/utils';
 
 const log = useLog('handlers/choices');
 
@@ -156,15 +157,25 @@ export const registerChoiceHandlers = (socket: Socket) => {
 		playChoice(roomId, playerName);
 	});
 
-	socket.on('requestTurn', (roomId: string) => {
+	socket.on('requestTurn', async (roomId: string) => {
 		const room = roomManager.getRoom(roomId);
 		const SocketId = socket.id;
 		const player = room?.players.find(p => p.id === SocketId);
 
 		if (!room || !player) return;
 
+		const currentPlayer = room.players[room.currentTurn || 0]?.nickname;
+		if (currentPlayer && currentPlayer !== player.nickname) {
+			log.warn({ _ctx: { roomId, SocketId } }, 'Not player\'s turn');
+			return;
+		}
+
 		if (player.isSpectator) {
-			io.to(SocketId).emit('toast', { message: "You're not playing in this game" });
+			player.isSpectator = false;
+			roomManager.saveRoom(room);
+			// must wait for next turn
+			if (room.players.length > 1) return;
+			else await delay(25);
 		}
 		log.debug({ _ctx: { roomId, SocketId } }, 'Requesting turn');
 
