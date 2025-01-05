@@ -90,7 +90,7 @@ onUnmounted(() => {
 </script>
 <template>
   <div class="relative h-full flex flex-col items-center gap-4 mx-auto max-w-7xl">
-    <div v-if="sock.isConnected.value" class="flex flex-col lg:flex-row max-w-6xl mx-auto px-4 py-6 gap-4">
+    <div class="flex flex-col lg:flex-row max-w-6xl mx-auto px-4 py-6 gap-4">
       <!-- Active Games -->
       <GamesList />
       <!-- Character Creation -->
