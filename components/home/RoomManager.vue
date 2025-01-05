@@ -78,11 +78,11 @@ onUnmounted(() => {
 })
 </script>
 <template>
-  <div v-if="sock.isConnected.value" class="flex max-w-6xl mx-auto px-4 py-6 space-x-4">
+  <div v-if="sock.isConnected.value" class="flex flex-col lg:flex-row max-w-6xl mx-auto px-4 py-6 gap-4">
     <!-- Active Games -->
     <GamesList />
     <!-- Character Creation -->
-    <section v-if="user?.confirmed_at" class="bg-gray-800 rounded-lg p-6">
+    <section v-if="user?.confirmed_at" class="bg-gray-800 rounded-lg p-6 order-first lg:order-none">
       <CreateCharacter @change="handleCharacterCreated" />
     </section>
     <!-- Create Game -->

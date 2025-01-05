@@ -20,7 +20,7 @@ onMounted(async () => {
 
 const navigateToRoom = (roomId: string, isSpectator = false) => {
 	if (isSpectator) {
-		useRouter().push(`/room/${roomId}/spectate`);
+		useRouter().push(`/room/${roomId}?spectate=1`);
 	} else {
 		useRouter().push(`/room/${roomId}`);
 	}

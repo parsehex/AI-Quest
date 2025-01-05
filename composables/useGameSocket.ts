@@ -122,7 +122,7 @@ class GameSocketManager {
 		this.messages.value = [...this.messages.value, message];
 	}
 
-	private onToast(message: string, color?: string): void {
+	private onToast({ message, color }: { message: string, color?: string }): void {
 		this.toast.add({
 			description: message,
 			color,
