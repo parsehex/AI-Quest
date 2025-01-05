@@ -13,8 +13,8 @@ const activeGames = computed(() => {
 	}))
 })
 
-onMounted(async () => {
-	await sock.refreshRooms();
+onMounted(() => {
+	sock.refreshRooms();
 	isLoading.value = false;
 });
 
@@ -28,15 +28,15 @@ const navigateToRoom = (roomId: string, isSpectator = false) => {
 </script>
 <template>
 	<section class="bg-gray-800 rounded-lg p-6 transition-all duration-300 max-w-2xl mx-auto">
-		<header class="flex items-center justify-between mb-6">
+		<header class="flex items-center justify-between mb-4 gap-4">
 			<h2 class="text-2xl font-bold flex items-center">
 				<i class="i-heroicons-play-circle mr-2" /> Active Games
 			</h2>
-			<UBadge v-if="activeGames.length" :color="activeGames.length ? 'green' : 'gray'" size="sm"> {{ activeGames.length
+			<UBadge v-if="activeGames.length" :color="activeGames.length ? 'green' : 'gray'" size="xs"> {{ activeGames.length
 				}} Active </UBadge>
 		</header>
 		<div v-if="isLoading" class="flex justify-center py-8">
-			<USpinner />
+			<Spinner />
 		</div>
 		<div v-else-if="!activeGames.length" class="text-center py-8 text-gray-400">
 			<i class="i-heroicons-face-frown text-4xl mb-2" />
