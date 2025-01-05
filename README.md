@@ -71,4 +71,4 @@ Now you can open the app in your browser at http://localhost:3000 if you do not 
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details
+This project is licensed under the AGPL License - see the [LICENSE](./LICENSE) file for details
