@@ -38,16 +38,15 @@ export default defineNuxtConfig({
   },
 
   modules: [
-    "nuxt-headlessui",
+    '@nuxt/ui',
     "@vueuse/nuxt",
     "@nuxtjs/i18n",
     "@pinia/nuxt",
-    "@nuxthq/ui",
     "nuxt-svgo",
     "@nuxt/image",
     "@nuxtjs/mdc",
     "@nuxtjs/device",
-    "@nuxtjs/supabase"
+    "@nuxtjs/supabase",
   ],
 
   colorMode: {
