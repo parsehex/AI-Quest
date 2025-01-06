@@ -7,6 +7,7 @@ const error = ref('')
 const success = ref('')
 const isSignUp = ref(false)
 const usePassword = ref(false)
+const isDev = import.meta.dev
 
 const handleAuthSubmit = async () => {
 	if (!email.value) {
@@ -30,7 +31,7 @@ const handleAuthSubmit = async () => {
 					email: email.value,
 					password: password.value,
 					options: {
-						emailRedirectTo: 'http://localhost:3000/confirm',
+						emailRedirectTo: isDev ? 'http://localhost:3000/confirm' : 'https://ai-quest.clickagain.xyz/confirm',
 					}
 				})
 				if (authError) throw authError
@@ -49,7 +50,7 @@ const handleAuthSubmit = async () => {
 			const { error: authError } = await supabase.auth.signInWithOtp({
 				email: email.value,
 				options: {
-					emailRedirectTo: 'http://localhost:3000/confirm',
+					emailRedirectTo: isDev ? 'http://localhost:3000/confirm' : 'https://ai-quest.clickagain.xyz/confirm',
 				}
 			})
 			if (authError) throw authError
@@ -70,7 +71,7 @@ const signInWithDiscord = async () => {
 		const { error: authError } = await supabase.auth.signInWithOAuth({
 			provider: 'discord',
 			options: {
-				redirectTo: '/confirm',
+				redirectTo: isDev ? 'http://localhost:3000/confirm' : 'https://ai-quest.clickagain.xyz/confirm',
 				scopes: 'identify email',
 			}
 		})
