@@ -70,7 +70,7 @@ export const useLog = (prefix = 'App', options: LoggerOptions = {}) => {
 	} => {
 		// If first arg is an object and has a special _context or _ctx property, use it as context
 		const firstArg = args[0]
-		if (firstArg && typeof firstArg === 'object' && ('_context' in firstArg || '_ctx' in firstArg)) {
+		if (firstArg && typeof firstArg === 'object' && ('_context' in firstArg || 'ctx' || '_ctx' in firstArg)) {
 			const context = firstArg._context || firstArg._ctx
 			return {
 				messages: args.slice(1),
