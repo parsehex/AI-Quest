@@ -1,15 +1,15 @@
 'use client';
-import type { ChatMessage, PlayerCharacter, Room } from '~/types/Game'
+import type { AILoadingState, ChatMessage, PlayerCharacter, Room } from '~/types/Game'
 import { socket } from '~/lib/socket'
 import { ref, computed } from 'vue'
 
 const log = useLog('useGameSocket');
 
 export function getClientId(): string {
-	let clientId = localStorage.getItem('clientId')
+	const user = useSupabaseUser();
+	let clientId: string | undefined = user.value?.id;
 	if (!clientId) {
-		clientId = `client_${Math.random().toString(36).substring(2)}`
-		localStorage.setItem('clientId', clientId)
+		return '';
 	}
 	return clientId
 }
@@ -33,6 +33,8 @@ export function getPlayerCharacter(): PlayerCharacter {
 class GameSocketManager {
 	private static instance: GameSocketManager | null = null;
 	private refreshInterval: NodeJS.Timeout | null = null;
+
+	public aiLoading = ref(undefined as AILoadingState | undefined);
 
 	public toast = useToast();
 	public isConnected = ref(false);
@@ -74,6 +76,7 @@ class GameSocketManager {
 		socket.on('newMessage', this.onNewMessage.bind(this));
 		socket.on('kicked', this.onKicked.bind(this));
 		socket.on('toast', this.onToast.bind(this));
+		socket.on('aiLoadingState', this.onAIStateChange.bind(this));
 	}
 
 	private onConnect(): void {
@@ -86,15 +89,6 @@ class GameSocketManager {
 		socket.io.engine.on("upgrade", (rawTransport) => {
 			this.transport.value = rawTransport.name;
 		});
-
-		socket.emit('getRooms');
-
-		this.refreshInterval = setInterval(() => {
-			this.refreshRooms();
-			if (this.currentRoom.value) {
-				this.refreshMessages();
-			}
-		}, 5000);
 	}
 
 	private onDisconnect(): void {
@@ -135,6 +129,11 @@ class GameSocketManager {
 		window.location.href = '/';
 	}
 
+	// on aiLoadingState
+	private onAIStateChange(newState: AILoadingState): void {
+		this.aiLoading.value = newState;
+	}
+
 	public cleanup(): void {
 		socket.off('connect');
 		socket.off('disconnect');
@@ -144,6 +143,7 @@ class GameSocketManager {
 		socket.off('newMessage');
 		socket.off('kicked');
 		socket.off('toast');
+		socket.off('aiLoadingState');
 	}
 
 	// Public methods
@@ -223,6 +223,8 @@ export function useGameSocket() {
 	});
 
 	return {
+		aiLoading: gameSocket.aiLoading,
+
 		clientId: gameSocket.clientId,
 		isConnected: gameSocket.isConnected,
 		transport: gameSocket.transport,

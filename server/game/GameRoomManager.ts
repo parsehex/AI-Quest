@@ -1,5 +1,5 @@
 import { v4 as uuidv4, validate as validateUUID } from 'uuid';
-import { ChatMessage, PlayerCharacter, Room } from '~/types/Game';
+import { ChatMessage, GameHistoryItem, LastAIResponse, PlayerCharacter, Room } from '~/types/Game';
 import { useLog } from '~/composables/useLog';
 import { getServiceClient } from '../utils/supabase'
 import { Tables } from '~/types/database.types';
@@ -24,6 +24,16 @@ export interface GameRoom extends Tables<'rooms'> {
 	current_player: string | null
 	fast_mode: boolean
 	created_by: string
+	history: GameHistoryItem[]
+	last_ai_response?: LastAIResponse
+}
+
+interface RoomUpdate {
+	last_ai_response?: LastAIResponse;
+	current_player?: string | null;
+	current_turn?: number;
+	players?: Player[];
+	history?: GameHistoryItem[];
 }
 
 export function useRoomManager(): GameRoomManager {
@@ -33,7 +43,7 @@ export function useRoomManager(): GameRoomManager {
 	return roomManagerInstance;
 }
 
-export const updateRoom = (roomId: string, updateFn: (room: Tables<'rooms'>) => void) => {
+export const updateRoom = (roomId: string, updateFn: (room: GameRoom) => void) => {
 	const roomManager = useRoomManager();
 	const room = roomManager.getRoom(roomId);
 	if (!room) return log.error({ _ctx: { roomId } }, 'Room not found');
@@ -75,7 +85,6 @@ export class GameRoomManager {
 			const { data: created, error: createError } = await this.supabase
 				.from('player_characters')
 				.insert({
-					id: uuidv4(),
 					user_id: userId,
 					nickname: nickname,
 					created_at: new Date().toISOString()
@@ -101,15 +110,24 @@ export class GameRoomManager {
 			const { data: rooms, error } = await this.supabase
 				.from('rooms')
 				.select(`
-          *,
-          room_players (
-            user_id,
-            client_id,
-            is_spectator,
-            character_id,
-            player_characters (*)
-          )
-        `);
+					*,
+					room_players (
+						user_id,
+						client_id,
+						is_spectator,
+						character_id,
+						player_characters (*)
+					),
+					game_history (
+						id,
+						type,
+						text,
+						player_id,
+						created_at
+					)
+				`);
+
+			// console.log(rooms);
 
 			if (error) throw error;
 
@@ -121,6 +139,11 @@ export class GameRoomManager {
 					nickname: rp.player_characters?.nickname || 'Anonymous',
 					character: rp.player_characters,
 					isSpectator: rp.is_spectator || false
+				})) || [],
+				history: room.game_history?.map((gh: any) => ({
+					type: gh.type,
+					text: gh.text,
+					player: gh.player_id
 				})) || []
 			}]));
 		} catch (e: any) {
@@ -132,46 +155,88 @@ export class GameRoomManager {
 		}
 	}
 
-	private async saveRooms(ctx?: Record<string, any>) {
+	async saveRooms(ctx?: Record<string, any>) {
 		try {
 			const roomsArray = Array.from(this.rooms.values());
 
-			// Update rooms table
-			console.log(JSON.stringify(roomsArray, null, 2));
-			const { error: roomsError } = await this.supabase
-				.from('rooms')
-				.upsert(roomsArray.map(room => ({
-					id: room.id,
-					name: room.name,
-					premise: room.premise,
-					current_turn: room.current_turn,
-					current_player: room.current_player,
-					fast_mode: room.fast_mode,
-					created_by: room.created_by
+			await Promise.all(roomsArray.map(async room => {
+				// Save room base data
+				await this.saveRoom(room);
+
+				// Save room players
+				await this.savePlayers(room.id, room.players);
+
+				// Save room history
+				if (room.history?.length) {
+					await this.saveHistory(room.id, room.history);
+				}
+			}));
+
+		} catch (e: any) {
+			log.error({
+				_ctx: {
+					error: e.message,
+					...ctx
+				}
+			}, 'Error saving rooms');
+			throw e;
+		}
+	}
+
+	private async saveHistory(roomId: string, history: GameHistoryItem[]) {
+		try {
+			const { error } = await this.supabase
+				.from('game_history')
+				.insert(history.map(item => ({
+					room_id: roomId,
+					type: item.type,
+					text: item.text,
+					player_id: item.type === 'choice' ? item.player : null,
 				})));
 
-			if (roomsError) throw roomsError;
+			if (error) throw error;
+		} catch (e: any) {
+			log.error({ ctx: 'saveHistory', error: e.message }, 'Error saving history');
+			throw e;
+		}
+	}
 
-			// Update room_players table
-			const roomPlayers = roomsArray.flatMap(room =>
-				room.players.map(player => ({
-					room_id: room.id,
+	private async savePlayers(roomId: string, players: Player[]) {
+		try {
+			// console.log(players);
+			const { error } = await this.supabase
+				.from('room_players')
+				.upsert(players.map(player => ({
+					room_id: roomId,
 					user_id: player.id,
 					client_id: player.clientId,
 					is_spectator: player.isSpectator,
 					character_id: player.character?.id
-				}))
-			);
+				})));
 
-			const { error: playersError } = await this.supabase
-				.from('room_players')
-				.upsert(roomPlayers);
-
-			if (playersError) throw playersError;
-
+			if (error) throw error;
 		} catch (e: any) {
-			log.error({ _ctx: { error: e.message, ...ctx } }, 'Error saving rooms');
+			log.error({ ctx: 'savePlayers', error: e.message }, 'Error saving players');
+			throw e;
 		}
+	}
+
+	async updateRoom(roomId: string, update: RoomUpdate): Promise<void> {
+		const room = this.getRoom(roomId);
+		if (!room) return;
+
+		// Apply updates
+		Object.assign(room, update);
+
+		if (update.history) {
+			await this.saveHistory(roomId, update.history);
+		}
+
+		if (update.players) {
+			await this.savePlayers(roomId, update.players);
+		}
+
+		await this.saveRoom(room);
 	}
 
 	public async saveRoom(room: GameRoom): Promise<void> {
@@ -185,7 +250,34 @@ export class GameRoomManager {
 			}, 'Saving room');
 
 			this.rooms.set(room.id, room);
-			await this.saveRooms({ roomId: room.id });
+
+			console.log(room);
+			const roomData = {
+				id: room.id,
+				name: room.name,
+				premise: room.premise,
+				current_turn: room.current_turn,
+				current_player: room.current_player,
+				last_ai_response: room.last_ai_response,
+				fast_mode: room.fast_mode,
+				created_by: room.created_by,
+				created_at: room.created_at,
+				updated_at: new Date().toISOString()
+			};
+
+			const { error } = await this.supabase
+				.from('rooms')
+				.upsert([roomData]);
+
+			if (error) {
+				log.error({
+					ctx: 'saveRoom',
+					error: error.message,
+					details: error.details,
+					hint: error.hint
+				}, 'Database error saving room');
+				throw error
+			}
 		} catch (e: any) {
 			log.error({
 				ctx: 'saveRoom',
@@ -272,7 +364,7 @@ export class GameRoomManager {
 			// Find or create character if not spectator
 			let character = undefined;
 			if (!isSpectator) {
-				character = await this.findOrCreateCharacter(socketId, nickname);
+				character = await this.findOrCreateCharacter(clientId, nickname);
 			}
 
 			const player: Player = {
@@ -284,7 +376,7 @@ export class GameRoomManager {
 			};
 
 			room.players.push(player);
-			await this.saveRooms();
+			await this.updateRoom(roomId, { players: room.players });
 			return room;
 		} catch (e: any) {
 			log.error({
@@ -306,7 +398,7 @@ export class GameRoomManager {
 			if (room.players.length === 0) {
 				// this.rooms.delete(roomId);
 			}
-			await this.saveRooms();
+			await this.saveRoom(room);
 		}
 	}
 

@@ -24,37 +24,32 @@ const device = useDevice()
 const route = useRoute()
 const roomId = route.params.id as string
 const spectate = route.query.spectate === '1'
+const { rooms } = useRooms()
+const roomIds = computed(() => rooms.value.map((r: any) => r.id))
+const { messages } = useRoomMessages()
 const sock = useGameSocket()
-const { messages } = sock
 const isChatOpen = useLocalStorage('game-chat-open', device.isDesktopOrTablet)
 
 // Join room on page load
 onMounted(async () => {
   await sock.waitConnected()
   await delay(500)
-  const roomIds = sock.rooms.value.map((room) => room.id)
-  log.debug('mounted - roomIds', roomIds, 'this:', roomId)
+  log.debug('mounted - rooms', rooms, 'this:', roomId)
 
-  if (!roomIds.includes(roomId)) {
-    // @ts-ignore
-    window.location.href = '/'
-    return
-  }
+  // TODO not working
+  // if (!roomIds.value.includes(roomId)) {
+  //   // @ts-ignore
+  //   window.location.href = '/'
+  //   return
+  // }
 
   sock.reinitializeListeners()
   sock.joinRoom(roomId, spectate)
-  sock.refreshMessages(roomId)
 })
 
 // Leave room when navigating away
-onBeforeUnmount(() => {
-  sock.leaveRoom()
-})
-
 onBeforeRouteLeave((to, from) => {
-  if (from.name === 'room-id') {
-    sock.leaveRoom()
-  }
+  sock.leaveRoom()
 })
 </script>
 <template>
@@ -75,8 +70,7 @@ onBeforeRouteLeave((to, from) => {
         <template #item="{ item, selected }">
           <UButton @click="isChatOpen = !isChatOpen" class="ml-4 p-2 rounded-l-lg border dark:border-neutral-700"
             color="red" variant="outline"> Close </UButton>
-          <ChatRoom v-if="selected && item.content === 'chat'" :messages="messages" :room-id="roomId"
-            v-model:is-open="isChatOpen" />
+          <ChatRoom v-if="selected && item.content === 'chat'" :room-id="roomId" v-model:is-open="isChatOpen" />
           <RoomDetails v-else-if="selected && item.content === 'room-details'" />
           <Players v-else-if="selected && item.content === 'players'" />
         </template>

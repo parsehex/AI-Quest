@@ -1,10 +1,7 @@
 <script setup lang="ts">
-import type { ChatMessage } from '~/types/Game';
-
 const log = useLog('ChatRoom')
 
 const props = defineProps<{
-  messages: ChatMessage[]
   roomId: string
   isOpen: boolean
 }>()
@@ -15,25 +12,19 @@ const emit = defineEmits<{
 
 const message = ref('')
 const chatContainer = ref<HTMLElement | null>(null)
-const sock = useGameSocket()
-const room = computed(() => sock.thisRoom.value)
-const players = computed(() => room.value?.players || [])
-const currentTurnPlayer = computed(() => room.value?.players.find(p => p.id === room.value?.currentPlayer))
+const { room } = useThisRoom()
+const { messages, sendMessage } = useRoomMessages()
 
-const toggleChat = () => {
-  emit('update:isOpen', !props.isOpen)
-}
-
-const sendMessage = () => {
+const handleSendMessage = () => {
   if (message.value.trim()) {
     log.debug('Sending message:', message.value)
-    sock.sendMessage(props.roomId, message.value)
+    sendMessage(message.value)
     message.value = ''
   }
 }
 
 // Auto-scroll to bottom when new messages arrive
-watch(() => props.messages, () => {
+watch(() => messages.value, () => {
   nextTick(() => {
     if (chatContainer.value) {
       chatContainer.value.scrollTop = chatContainer.value.scrollHeight
@@ -66,7 +57,7 @@ watch(() => props.messages, () => {
     </div>
     <!-- Message Input -->
     <div class="p-4 border-t dark:border-neutral-700">
-      <form @submit.prevent="sendMessage" class="flex gap-2">
+      <form @submit.prevent="handleSendMessage" class="flex gap-2">
         <UInput v-model="message" placeholder="Type a message..." :ui="{
           width: 'w-full',
           wrapper: 'grow',

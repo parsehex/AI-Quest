@@ -49,7 +49,8 @@ function createProfileStore() {
 	}
 
 	// Refresh profile occasionally
-	setInterval(fetchProfile, 1000 * 60)
+	if (!import.meta.server)
+		setInterval(fetchProfile, 1000 * 60)
 
 	return {
 		profile: readonly(profile),

@@ -1,26 +1,38 @@
 import { type Socket } from 'socket.io';
-import { updateRoom, useRoomManager } from '../GameRoomManager';
+import { useRoomManager } from '../GameRoomManager';
 import { useLog } from '~/composables/useLog';
 import { LLMManager } from '~/lib/llm';
 import { GameMasterSystem, GameMasterUser } from '~/lib/prompts/templates/GameMaster';
 import { TTSManager } from '~/lib/tts';
 import { useIO } from '~/server/plugins/socket.io';
 import { delay } from '~/lib/utils';
+import { AILoadingState } from '~/types/Game';
 
 const log = useLog('handlers/choices');
 
-// TODO need to handle requesting to generate multiple times
+// In-memory loading state tracking
+const roomLoadingStates = new Map<string, AILoadingState>();
 
-/** Make any changes to `room.history` before calling this */
+const updateLoadingState = (roomId: string, io: ReturnType<typeof useIO>, loadingState: AILoadingState | null) => {
+	if (loadingState) {
+		roomLoadingStates.set(roomId, loadingState);
+	} else {
+		roomLoadingStates.delete(roomId);
+	}
+	io.to(roomId).emit('aiLoadingState', { roomId, loadingState });
+};
+
 const generateAIResponse = async (roomId: string, currentPlayer = '', isRetrying = false) => {
 	const roomManager = useRoomManager();
+	const io = useIO();
+	const room = roomManager.getRoom(roomId);
 
-	updateRoom(roomId, room => {
-		room.aiLoading = { message: isRetrying ? 'Bad response from AI. Retrying...' : 'Generating next turn...' };
+	if (!room) return;
+
+	updateLoadingState(roomId, io, {
+		message: isRetrying ? 'Bad response from AI. Retrying...' : 'Generating next turn...'
 	});
 
-	const room = roomManager.getRoom(roomId);
-	if (!room) return;
 	const premise = room.premise || '';
 	let history = room.history;
 
@@ -34,7 +46,9 @@ const generateAIResponse = async (roomId: string, currentPlayer = '', isRetrying
 	const prompt = GameMasterSystem({ currentPlayer });
 
 	const latestEvent = history.slice(-1)[0];
-	const latestEventText = latestEvent?.type === 'choice' ? `Player \`${latestEvent.player}\` chose: ${latestEvent.text}` : latestEvent?.text;
+	const latestEventText = latestEvent?.type === 'choice' ?
+		`Player \`${latestEvent.player}\` chose: ${latestEvent.text}` :
+		latestEvent?.text;
 	history = history.slice(0, -1);
 
 	let response = await llm.generateResponse([
@@ -49,84 +63,91 @@ const generateAIResponse = async (roomId: string, currentPlayer = '', isRetrying
 				playerCharacter
 			}),
 		}
-	], room.fastMode, { roomId, currentPlayer, isRetrying, playerCharacter, history });
+	], room.fast_mode, { roomId, currentPlayer, isRetrying, playerCharacter, history });
 
-	// The last closing tag is often cut off in LLM responses
 	if (!response.includes('</choices>') && response.includes('<choices>')) {
 		response += '</choices>';
 	}
 
-	// Parse sections
 	const sections = {
-		intro: response.match(/<intro>(.*?)<\/intro>/s)?.[1] || '',
-		narrative: response.match(/<narrative>(.*?)<\/narrative>/s)?.[1] || '',
-		choices: response.match(/<choices>(.*?)<\/choices>/s)?.[1].trim().split('\n') || [],
+		intro: response.match(/<intro>(.*?)<\/intro>/s)?.[1]?.trim() || '',
+		narrative: response.match(/<narrative>(.*?)<\/narrative>/s)?.[1]?.trim() || '',
+		choices: response.match(/<choices>(.*?)<\/choices>/s)?.[1]?.trim().split('\n')
+			.map(choice => choice.replace(/- /, '').trim()) || [],
 		tts: undefined as string | undefined
 	};
-	sections.intro = sections.intro.trim();
-	sections.narrative = sections.narrative.trim();
-	sections.choices = sections.choices.map(choice => choice.replace(/- /, '').trim());
 
 	if (sections.choices.length === 0) {
 		log.warn({ _ctx: { roomId } }, 'No choices found, regenerating response');
 		await generateAIResponse(roomId, currentPlayer, true);
+		return;
 	}
 
 	if (sections.narrative) {
-		updateRoom(roomId, async room => {
-			try {
-				// generate tts to be used when ready, failing silently
-				const tts = TTSManager.getInstance();
-				const textToTTS = sections.intro + '\n' + sections.narrative;
-				const ttsResult = await tts.generateAudio(textToTTS, { roomId, currentPlayer: room.currentPlayer });
-				// TODO generate previous choice TTS and add to a list of tts history
-				if (ttsResult?.hash && room.lastAiResponse) {
-					room.lastAiResponse.tts = `/api/tts/${ttsResult.hash}`;
-				}
-			} catch (error) {
-				log.error({ _ctx: { roomId, currentPlayer } }, 'Failed to generate TTS', error);
+		try {
+			const tts = TTSManager.getInstance();
+			const textToTTS = sections.intro + '\n' + sections.narrative;
+			const ttsResult = await tts.generateAudio(textToTTS, {
+				roomId,
+				currentPlayer: room.current_player
+			});
+			if (ttsResult?.hash) {
+				sections.tts = `/api/tts/${ttsResult.hash}`;
 			}
-		});
+		} catch (error) {
+			log.error({ _ctx: { roomId, currentPlayer } }, 'Failed to generate TTS', error);
+		}
 	}
 
-	updateRoom(roomId, room => {
-		room.lastAiResponse = sections;
-		room.currentPlayer = room.players[room.currentTurn || 0]?.id;
-		room.aiLoading = undefined;
+	updateLoadingState(roomId, io, null);
+
+	await roomManager.updateRoom(roomId, {
+		last_ai_response: sections,
+		current_player: room.players[room.current_turn || 0]?.clientId
 	});
 };
 
-export const playChoice = (roomId: string, currentPlayer = '', choice = '') => {
-	updateRoom(roomId, room => {
-		const { lastAiResponse } = room;
+export const playChoice = async (roomId: string, currentPlayer = '', choice = '') => {
+	const roomManager = useRoomManager();
+	const room = roomManager.getRoom(roomId);
+	if (!room) return;
 
-		const activePlayers = room.players.filter(p => !p.isSpectator);
-		if (activePlayers.length === 0) return;
+	const activePlayers = room.players.filter(p => !p.isSpectator);
+	if (activePlayers.length === 0) return;
 
-		const history = room.history || [];
-		if (currentPlayer && choice) {
-			if (!lastAiResponse) {
-				log.error({ _ctx: { roomId, currentPlayer } }, 'No last AI response found');
-				return;
-			}
-			// Player made a choice -- add to history and move to next turn
-			// TODO game history manager
-			room.history.push({ type: 'intro', text: lastAiResponse.intro });
-			room.history.push({ type: 'narrative', text: lastAiResponse.narrative });
-			room.history.push({ type: 'choice', text: choice, player: currentPlayer });
+	let history = room.history || [];
+	let currentTurn = room.current_turn || 0;
 
-			// Find next active player's turn
-			const currentActivePlayerIndex = activePlayers.findIndex(p => p.nickname === currentPlayer);
-			room.currentTurn = ((currentActivePlayerIndex + 1) % activePlayers.length);
-		} else {
-			// Regenerate last turn -- remove last turn and try again
-			room.history = history.slice(0, -3);
-			const curPlayerIndex = activePlayers.findIndex(player => player.nickname === currentPlayer);
-			room.currentTurn = curPlayerIndex;
+	if (currentPlayer && choice) {
+		if (!room.last_ai_response) {
+			log.error({ _ctx: { roomId, currentPlayer } }, 'No last AI response found');
+			return;
 		}
-		const nextPlayer = room.players[room.currentTurn]?.nickname;
-		generateAIResponse(roomId, nextPlayer);
+
+		history = [
+			...history,
+			{ type: 'intro', text: room.last_ai_response.intro },
+			{ type: 'narrative', text: room.last_ai_response.narrative },
+			{ type: 'choice', text: choice, player: currentPlayer }
+		];
+
+		const currentActivePlayerIndex = activePlayers.findIndex(p => p.nickname === currentPlayer);
+		currentTurn = ((currentActivePlayerIndex + 1) % activePlayers.length);
+	} else {
+		// Regenerating last turn
+		history = history.slice(0, -3);
+		currentTurn = activePlayers.findIndex(player => player.nickname === currentPlayer);
+	}
+
+	console.log('new history', history);
+
+	await roomManager.updateRoom(roomId, {
+		history,
+		current_turn: currentTurn
 	});
+
+	const nextPlayer = room.players[currentTurn]?.nickname;
+	await generateAIResponse(roomId, nextPlayer);
 };
 
 export const registerChoiceHandlers = (socket: Socket) => {
@@ -135,11 +156,11 @@ export const registerChoiceHandlers = (socket: Socket) => {
 
 	socket.on('makeChoice', ({ roomId, choice }) => {
 		const room = roomManager.getRoom(roomId);
-		const SocketId = socket.id;
-		const player = room?.players.find(p => p.id === SocketId);
+		const socketId = socket.id;
+		const player = room?.players.find(p => p.id === socketId);
 
-		if (!room || !player || room.currentPlayer !== SocketId || player.isSpectator) return;
-		log.debug({ _ctx: { roomId, SocketId, choice } }, 'Player chose');
+		if (!room || !player || room.current_player !== socketId || player.isSpectator) return;
+		log.debug({ _ctx: { roomId, socketId, choice } }, 'Player chose');
 
 		const playerName = player?.nickname || 'Anonymous';
 		playChoice(roomId, playerName, choice);
@@ -147,39 +168,41 @@ export const registerChoiceHandlers = (socket: Socket) => {
 
 	socket.on('regenerateResponse', (roomId: string) => {
 		const room = roomManager.getRoom(roomId);
-		const SocketId = socket.id;
-		const player = room?.players.find(p => p.id === SocketId);
+		const socketId = socket.id;
+		const player = room?.players.find(p => p.id === socketId);
 
 		if (!room || !player || player.isSpectator) return;
-		log.debug({ _ctx: { roomId, SocketId } }, 'Regenerating response');
+		log.debug({ _ctx: { roomId, socketId } }, 'Regenerating response');
 
-		const playerName = socket.data.nickname || 'Anonymous';
+		const playerName = player.nickname || 'Anonymous';
 		playChoice(roomId, playerName);
 	});
 
 	socket.on('requestTurn', async (roomId: string) => {
 		const room = roomManager.getRoom(roomId);
-		const SocketId = socket.id;
-		const player = room?.players.find(p => p.id === SocketId);
+		const socketId = socket.id;
+		const player = room?.players.find(p => p.id === socketId);
 
 		if (!room || !player) return;
 
-		const currentPlayer = room.players[room.currentTurn || 0]?.nickname;
+		const currentPlayer = room.players[room.current_turn || 0]?.nickname;
 		if (currentPlayer && currentPlayer !== player.nickname) {
-			log.warn({ _ctx: { roomId, SocketId } }, 'Not player\'s turn');
+			log.warn({ _ctx: { roomId, socketId } }, 'Not player\'s turn');
 			return;
 		}
 
 		if (player.isSpectator) {
-			player.isSpectator = false;
-			roomManager.saveRoom(room);
-			// must wait for next turn
-			if (room.players.length > 1) return;
-			else await delay(25);
-		}
-		log.debug({ _ctx: { roomId, SocketId } }, 'Requesting turn');
+			await roomManager.updateRoom(roomId, {
+				players: room.players.map(p =>
+					p.id === socketId ? { ...p, isSpectator: false } : p
+				),
+			});
 
-		const playerName = socket.data.nickname || 'Anonymous';
-		playChoice(roomId, playerName);
+			if (room.players.length > 1) return;
+			await delay(25);
+		}
+
+		log.debug({ _ctx: { roomId, socketId } }, 'Requesting turn');
+		await playChoice(roomId, player.nickname);
 	});
 };

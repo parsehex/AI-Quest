@@ -1,22 +1,20 @@
 <script setup lang="ts">
-import { socket } from '~/lib/socket';
-
 const props = defineProps<{
   roomId: string,
   isFullWidth: boolean,
 }>();
 
 const sock = useGameSocket();
-const isAiLoading = computed(() => sock.thisRoom.value?.aiLoading || undefined);
-const isSpectator = computed(() => sock.thisRoom.value?.players.find(p => p.id === socket?.id)?.isSpectator);
-const isMyTurn = computed(() => !isSpectator.value && sock.thisRoom.value?.currentPlayer === socket?.id);
-const canRegenerate = computed(() => (isMyTurn.value || !sock.thisRoom.value?.players.length) && !sock.thisRoom.value?.aiLoading);
+const { room } = useThisRoom();
+const { me, players } = useRoomPlayers();
+const aiLoading = computed(() => sock.aiLoading.value || undefined);
+const isSpectator = computed(() => me.value?.is_spectator);
+const isMyTurn = computed(() => !isSpectator.value && room.value?.current_player === me.value?.user.id);
+const canRegenerate = computed(() => (isMyTurn.value || !players.value.length) && !aiLoading);
 const choice = ref('');
 
-const room = computed(() => sock.thisRoom.value);
-
 const currentPlayerName = computed(() => {
-  return room.value?.players.find(p => p.id === room.value?.currentPlayer)?.nickname;
+  return players.value.find(p => p.user.id === room.value?.current_player)?.character.nickname;
 });
 
 const makeChoice = (choice: string) => {
@@ -69,25 +67,24 @@ watch(() => sock.thisRoom.value?.lastAiResponse?.tts, (newTTS) => {
           </span>
         </div>
       </div>
-      <div v-if="isAiLoading" class="text-center flex flex-col items-center space-y-2">
-        <Spinner :progress="isAiLoading.progress" />
-        <span class="text-muted">{{ isAiLoading.message }}</span>
+      <div v-if="aiLoading" class="text-center flex flex-col items-center space-y-2">
+        <Spinner :progress="aiLoading.progress" />
+        <span class="text-muted">{{ aiLoading.message }}</span>
       </div>
-      <template v-else-if="sock.thisRoom.value?.lastAiResponse">
+      <template v-else-if="room?.last_ai_response">
         <div class="prose dark:prose-invert max-w-none">
-          <audio v-if="sock.thisRoom.value.lastAiResponse.tts" ref="audioRef"
-            :src="sock.thisRoom.value.lastAiResponse.tts" controls class="w-full mt-2 mb-4" />
-          <h3>{{ sock.thisRoom.value.lastAiResponse.intro }}</h3>
-          <p>{{ sock.thisRoom.value.lastAiResponse.narrative }}</p>
+          <audio v-if="room.last_ai_response.tts" ref="audioRef" :src="room.last_ai_response.tts" controls
+            class="w-full mt-2 mb-4" />
+          <h3>{{ room.last_ai_response.intro }}</h3>
+          <p>{{ room.last_ai_response.narrative }}</p>
           <div class="mt-4">
             <h4>
               <template v-if="isMyTurn">Your turn - Make your choice:</template>
               <template v-else>Waiting for {{ currentPlayerName }} to choose:</template>
             </h4>
             <div class="space-y-2">
-              <UButton v-for="(choice, i) in sock.thisRoom.value.lastAiResponse.choices" :key="i" block
-                :disabled="!isMyTurn" :color="isMyTurn ? 'primary' : 'gray'" @click="makeChoice(choice)"> {{ choice }}
-              </UButton>
+              <UButton v-for="(choice, i) in room.last_ai_response.choices" :key="i" block :disabled="!isMyTurn"
+                :color="isMyTurn ? 'primary' : 'gray'" @click="makeChoice(choice)"> {{ choice }} </UButton>
               <UInput v-if="isMyTurn" v-model="choice" placeholder="Enter your own choice"
                 @keyup.enter="makeChoice(choice); choice = ''" />
             </div>

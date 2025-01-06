@@ -79,7 +79,7 @@ const isModalOpen = ref(false)
 const selectedLog = ref(null)
 
 const filters = ref({
-	level: '',
+	level: 'error',
 	fromDate: '',
 	search: '',
 })

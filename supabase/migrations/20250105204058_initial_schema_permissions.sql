@@ -24,6 +24,16 @@ CREATE POLICY "Users can manage their own characters"
     ON player_characters FOR ALL
     USING (auth.uid() = user_id);
 
+CREATE POLICY "Players can view characters in same room"
+    ON player_characters FOR SELECT
+    USING (EXISTS (
+        SELECT 1 FROM room_players viewer
+        INNER JOIN room_players character_player
+        ON viewer.room_id = character_player.room_id
+        WHERE viewer.user_id = auth.uid()
+        AND character_player.user_id = player_characters.user_id
+    ));
+
 -- Rooms policies
 CREATE POLICY "Anyone can view rooms"
     ON rooms FOR SELECT

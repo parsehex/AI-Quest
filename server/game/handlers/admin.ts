@@ -38,23 +38,22 @@ export const registerAdminHandlers = (socket: Socket) => {
 			const SocketId = socket.id;
 			log.info({ _ctx: { SocketId } }, 'Clearing all rooms');
 			roomManager.clearAllRooms();
-			io.emit('roomList', roomManager.getRooms());
 			socket.emit('admin:success', { message: 'All rooms cleared' });
 		});
 	});
 
 	socket.on('admin:removeAllPlayers', (password: string) => {
-		adminGuard(password, () => {
+		adminGuard(password, async () => {
 			const SocketId = socket.id;
 			log.info({ _ctx: { SocketId } }, 'Removing all players');
 			const rooms = roomManager.getRooms();
 			rooms.forEach(room => {
 				room.players = [];
-				room.currentPlayer = undefined;
-				room.currentTurn = -1;
+				room.current_player = null;
+				room.current_turn = -1;
 			});
+			await roomManager.saveRooms();
 			io.emit('kicked');
-			io.emit('roomList', roomManager.getRooms());
 			socket.emit('admin:success', { message: 'All players removed' });
 		});
 	});
@@ -66,8 +65,8 @@ export const registerAdminHandlers = (socket: Socket) => {
 			log.info({ _ctx: { SocketId, roomId, TargetPlayer } }, 'Setting current player');
 			const room = roomManager.getRoom(roomId);
 			if (room) {
-				room.currentPlayer = playerId;
-				io.to(roomId).emit('roomList', roomManager.getRooms());
+				room.current_player = playerId;
+				roomManager.saveRoom(room);
 				socket.emit('admin:success', { message: 'Current player set' });
 			} else {
 				socket.emit('admin:error', { message: 'Room not found' });
@@ -83,8 +82,8 @@ export const registerAdminHandlers = (socket: Socket) => {
 			const room = roomManager.getRoom(roomId);
 			if (room) {
 				room.players = room.players.filter(player => player.id !== playerId);
+				roomManager.saveRoom(room);
 				io.to(playerId).emit('kicked');
-				io.to(roomId).emit('roomList', roomManager.getRooms());
 				socket.emit('admin:success', { message: 'Player kicked' });
 			} else {
 				socket.emit('admin:error', { message: 'Room not found' });
@@ -98,8 +97,8 @@ export const registerAdminHandlers = (socket: Socket) => {
 			log.info({ _ctx: { SocketId, roomId } }, 'Toggling fast mode');
 			const room = roomManager.getRoom(roomId);
 			if (room) {
-				room.fastMode = !room.fastMode;
-				io.to(roomId).emit('roomList', roomManager.getRooms());
+				room.fast_mode = !room.fast_mode;
+				roomManager.saveRoom(room);
 				socket.emit('admin:success', { message: 'Fast mode toggled' });
 			} else {
 				socket.emit('admin:error', { message: 'Room not found' });
@@ -114,7 +113,6 @@ export const registerAdminHandlers = (socket: Socket) => {
 			const room = roomManager.getRoom(roomId);
 			if (room) {
 				roomManager.removeRoom(roomId);
-				io.emit('roomList', roomManager.getRooms());
 				socket.emit('admin:success', { message: 'Room removed' });
 			} else {
 				socket.emit('admin:error', { message: 'Room not found' });

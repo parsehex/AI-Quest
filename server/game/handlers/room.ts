@@ -29,11 +29,13 @@ export const registerRoomHandlers = (socket: Socket) => {
 			log.debug({ _ctx: { SocketId, roomId, nickname, clientId, playerCharacter } }, 'Player joined room');
 			socket.join(roomId);
 
+			// TODO i think we habndle creating character here
+
 			const existingPlayer = room.players.find(p => p.clientId === clientId);
 			if (existingPlayer) {
 				existingPlayer.id = socket.id;
 			} else {
-				await roomManager.joinRoom(socket.id, roomId, nickname, clientId, isSpectator, playerCharacter);
+				await roomManager.joinRoom(clientId, roomId, nickname, clientId, isSpectator);
 			}
 
 			// this might cause issues playing multiple games at once
