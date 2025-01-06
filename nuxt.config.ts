@@ -23,7 +23,11 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
 
   runtimeConfig: {
+    public: {
+      supabaseUrl: process.env.SUPABASE_URL
+    },
     private: {
+      supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY,
       resendApiKey: process.env.RESEND_API_KEY,
       openrouterApiKey: process.env.OPENROUTER_API_KEY,
       openaiBaseUrl: process.env.OPENAI_BASE_URL,
@@ -117,6 +121,9 @@ export default defineNuxtConfig({
   compatibilityDate: "2024-12-30",
 
   vite: {
+    optimizeDeps: {
+      include: ['vue', 'lodash', '@heroicons/vue'],
+    },
     css: {
       preprocessorOptions: {
         scss: { api: 'modern' }

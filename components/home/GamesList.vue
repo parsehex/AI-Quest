@@ -1,21 +1,18 @@
 <script setup lang="ts">
-import { useGameSocket } from '~/composables/useGameSocket';
-
 const user = useSupabaseUser()
-const sock = useGameSocket();
-const isLoading = ref(true);
+const { profile } = useProfile()
+const { rooms, loading: isLoading, refresh } = useRooms()
 
 // Computed
 const activeGames = computed(() => {
-	return sock.rooms.value.map(room => ({
+	return rooms.value.map((room: any) => ({
 		...room,
-		playerCount: room.players.length
+		playerCount: room.room_players.length
 	}))
 })
 
 onMounted(() => {
-	sock.refreshRooms();
-	isLoading.value = false;
+	refresh();
 });
 
 const navigateToRoom = (roomId: string, isSpectator = false) => {
@@ -35,7 +32,7 @@ const navigateToRoom = (roomId: string, isSpectator = false) => {
 			<UBadge v-if="activeGames.length" :color="activeGames.length ? 'green' : 'gray'" size="xs"> {{ activeGames.length
 				}} Active </UBadge>
 		</header>
-		<div v-if="isLoading" class="flex justify-center py-8">
+		<div v-if="isLoading && !activeGames.length" class="flex justify-center py-8">
 			<Spinner />
 		</div>
 		<div v-else-if="!activeGames.length" class="text-center py-8 text-gray-400">
@@ -53,7 +50,7 @@ const navigateToRoom = (roomId: string, isSpectator = false) => {
 						's' : '' }} </UBadge>
 					<UButton icon="i-heroicons-eye" color="sky" variant="soft" size="sm" @click="navigateToRoom(game.id, true)">
 						Spectate </UButton>
-					<UButton v-if="user?.confirmed_at" icon="i-heroicons-play" color="green" size="sm"
+					<UButton v-if="user?.confirmed_at && profile.approved" icon="i-heroicons-play" color="green" size="sm"
 						@click="navigateToRoom(game.id)"> Join </UButton>
 				</div>
 			</li>

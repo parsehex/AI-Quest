@@ -1,13 +1,10 @@
-<!-- <template>
-  <div class="relative h-full flex flex-col items-center gap-4 mx-auto max-w-7xl">
-    <RoomManager />
-  </div>
-</template> -->
 <script setup lang="ts">
 import { delay } from '~/lib/utils'
 import type { PlayerCharacter } from '~/types/Game'
+import ApprovalMessage from '@/components/home/ApprovalMessage.vue'
 import CreateCharacter from '@/components/home/CreateCharacter.vue'
 import GamesList from '@/components/home/GamesList.vue'
+import { useProfile } from '~/composables/useProfile';
 
 definePageMeta({
   title: "Home",
@@ -18,7 +15,8 @@ definePageMeta({
 });
 
 const user = useSupabaseUser()
-const router = useRouter()
+const { profile } = useProfile()
+const { refresh } = useRooms()
 
 // Constants
 const REFRESH_INTERVAL = 5000
@@ -39,9 +37,6 @@ const gameState = reactive({
   playerCharacter: null as PlayerCharacter | null,
 })
 
-// Composables
-const sock = useGameSocket()
-
 // Methods
 const handleCharacterCreated = (character: PlayerCharacter) => {
   gameState.playerCharacter = { ...character }
@@ -51,19 +46,21 @@ const handleCharacterCreated = (character: PlayerCharacter) => {
 
 const handleCreateRoom = async (e?: Event) => {
   if (e) e.preventDefault()
-
   if (!gameState.newRoomName.trim()) return
 
   try {
-    await sock.createRoom(
-      gameState.newRoomName,
-      gameState.premise,
-      gameState.fastMode
-    )
+    await useFetch('/api/rooms', {
+      method: 'POST',
+      body: {
+        name: gameState.newRoomName,
+        premise: gameState.premise,
+        fastMode: gameState.fastMode
+      }
+    })
+
     gameState.newRoomName = ''
     gameState.premise = ''
-    await delay(100)
-    await sock.refreshRooms()
+    refresh()
   } catch (error) {
     console.error('Failed to create room:', error)
     // You could add error handling/user notification here
@@ -79,9 +76,6 @@ onMounted(() => {
     gameState.playerCharacter = character
     gameState.hasCharacter = true
   }
-
-  sock.refreshRooms()
-  refreshInterval = setInterval(() => sock.refreshRooms(), REFRESH_INTERVAL)
 })
 
 onUnmounted(() => {
@@ -91,14 +85,18 @@ onUnmounted(() => {
 <template>
   <div class="relative h-full flex flex-col items-center gap-4 mx-auto max-w-7xl">
     <div class="flex flex-col lg:flex-row max-w-6xl mx-auto px-4 py-6 gap-4">
-      <!-- Active Games -->
       <GamesList />
+      <template v-if="user && profile && !profile.approved">
+        <ApprovalMessage />
+      </template>
       <!-- Character Creation -->
-      <section v-if="user?.confirmed_at" class="bg-gray-800 rounded-lg p-6 order-first lg:order-none">
+      <section v-if="user?.confirmed_at && profile?.approved"
+        class="bg-gray-800 rounded-lg p-6 order-first lg:order-none">
         <CreateCharacter @change="handleCharacterCreated" />
       </section>
       <!-- Create Game -->
-      <section v-if="user?.confirmed_at" class="bg-gray-800 rounded-lg p-6 transition-all duration-300">
+      <section v-if="user?.confirmed_at && profile?.approved"
+        class="bg-gray-800 rounded-lg p-6 transition-all duration-300">
         <h2 class="text-2xl font-bold mb-6 flex items-center">
           <i class="i-heroicons-plus-circle mr-2" /> Create a Game
         </h2>
