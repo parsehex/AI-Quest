@@ -27,7 +27,7 @@ CREATE POLICY "Users can manage their own characters"
 -- Rooms policies
 CREATE POLICY "Anyone can view rooms"
     ON rooms FOR SELECT
-    TO authenticated
+    TO public
     USING (true);
 
 CREATE POLICY "Public can view room players"
