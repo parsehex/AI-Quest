@@ -133,8 +133,8 @@ export default defineNuxtConfig({
 
   supabase: {
     redirectOptions: {
-      login: '/login',
-      callback: '/confirm',
+      login: import.meta.dev ? 'https://ai-quest.clickagain.xyz/login' : '/login',
+      callback: import.meta.dev ? 'https://ai-quest.clickagain.xyz/confirm' : '/confirm',
       include: undefined,
       exclude: ['/', '/room/*'],
       cookieRedirect: true,
