@@ -62,16 +62,19 @@ onBeforeRouteLeave((to, from) => {
     <h2 class="text-xl font-semibold text-center">{{ sock.thisRoom.value?.name }}</h2>
     <div class="container-fluid mx-auto py-8 flex gap-2 relative">
       <Game :roomId="roomId" :is-full-width="!isChatOpen" />
-      <div class="fixed top-1/3 right-0 flex flex-col items-center">
-        <span class="text-xs text-muted mb-1 select-none"></span>
-        <button @click="isChatOpen = !isChatOpen"
-          class="bg-white dark:bg-neutral-800 p-2 rounded-l-lg border dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-700">
-          <i :class="isChatOpen ? 'i-heroicons-chevron-right' : 'i-heroicons-chevron-left'" class="w-5 h-5"></i>
-        </button>
+      <div v-if="!isChatOpen" class="fixed top-1/3 right-0 flex flex-col items-center">
+        <UButton @click="isChatOpen = !isChatOpen" class="p-2 rounded-l-lg border dark:border-neutral-700" color="gray"
+          :icon="isChatOpen ? 'i-heroicons-chevron-right' : 'i-heroicons-chevron-left'">
+        </UButton>
       </div>
       <UTabs :items="tabs"
-        :class="`flex flex-col h-full rounded-lg border dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow fixed transition-all duration-300 top-0 bottom-0 ${isChatOpen ? 'w-1/3' : 'hidden'}`">
+        :class="`flex flex-col h-full rounded-lg border dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow fixed transition-all duration-300 top-0 right-0 bottom-0 ${isChatOpen ? 'w-1/3' : 'hidden'}`">
+        <template #default="{ item, index, selected }">
+          <span class="truncate" :class="[selected && 'text-primary-500 dark:text-primary-400']">{{ item.label }}</span>
+        </template>
         <template #item="{ item, selected }">
+          <UButton @click="isChatOpen = !isChatOpen" class="ml-4 p-2 rounded-l-lg border dark:border-neutral-700"
+            color="red" variant="outline"> Close </UButton>
           <ChatRoom v-if="selected && item.content === 'chat'" :messages="messages" :room-id="roomId"
             v-model:is-open="isChatOpen" />
           <RoomDetails v-else-if="selected && item.content === 'room-details'" />
