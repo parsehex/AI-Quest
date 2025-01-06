@@ -1,4 +1,3 @@
-'use client';
 import type { AILoadingState, ChatMessage, PlayerCharacter, Room } from '~/types/Game'
 import { socket } from '~/lib/socket'
 import { ref, computed } from 'vue'

@@ -1,4 +1,3 @@
-'use client';
 import { ref } from 'vue';
 import { socket } from '~/lib/socket';
 
