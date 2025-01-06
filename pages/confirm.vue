@@ -6,11 +6,12 @@ const cookieName = useRuntimeConfig().public.supabase.cookieName
 const redirectPath = useCookie(`${cookieName}-redirect-path`).value
 
 watch(user, () => {
+	console.log('user', user.value);
 	if (user.value) {
 		// Clear cookie
 		useCookie(`${cookieName}-redirect-path`).value = null
 		// Redirect to path
-		return navigateTo(redirectPath || '/');
+		// return navigateTo(redirectPath || '/');
 	}
 }, { immediate: true })
 </script>

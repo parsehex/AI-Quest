@@ -79,3 +79,11 @@ CREATE POLICY "Room participants can send messages"
         WHERE rp.room_id = chat_messages.room_id
         AND rp.user_id = auth.uid()
     ));
+
+-- https://stackoverflow.com/a/76887510
+grant usage on schema "public" to anon;
+grant usage on schema "public" to authenticated;
+grant usage on schema "public" to service_role;
+GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA "public" TO anon;
+GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA "public" TO authenticated;
+GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA "public" TO service_role;
