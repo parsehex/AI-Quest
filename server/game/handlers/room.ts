@@ -10,18 +10,6 @@ export const registerRoomHandlers = (socket: Socket) => {
 	const io = useIO();
 	const roomManager = useRoomManager();
 
-	socket.on('createRoom', async (roomName: string, premise: string, fastMode: boolean) => {
-		// TODO only authed players should be able to create rooms
-		const SocketId = socket.id;
-		const playerName = socket.data.nickname || 'Anonymous';
-		log.debug({ _ctx: { SocketId, roomName, playerName, premise, fastMode } }, 'Creating room');
-		const room = await roomManager.createRoom(socket.id, roomName, premise, fastMode, playerName);
-		socket.join(room.id);
-
-		// Generate initial turnm
-		playChoice(room.id, playerName);
-	});
-
 	socket.on('joinRoom', async ({ roomId, nickname, clientId, playerCharacter, isSpectator }) => {
 		const room = roomManager.getRoom(roomId);
 		if (room) {
