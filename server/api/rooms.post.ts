@@ -15,11 +15,14 @@ export default defineEventHandler(async (event: H3Event) => {
 	const body = await readBody<CreateRoomBody>(event)
 	const roomManager = useRoomManager()
 
-	if (!body.name || !body.premise || !body.playerName) {
+	if (!body.name || !body.premise) {
 		throw createError({
 			statusCode: 400,
-			message: 'Name, premise and playerName are required'
+			message: 'Name and premise are required'
 		})
+	}
+	if (!body.playerName) {
+		body.playerName = 'Anonymous'
 	}
 
 	const { data: { session } } = await client.auth.getSession()
