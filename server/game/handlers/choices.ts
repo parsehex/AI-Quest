@@ -11,7 +11,7 @@ import { AILoadingState } from '~/types/Game';
 const log = useLog('handlers/choices');
 
 // In-memory loading state tracking
-const roomLoadingStates = new Map<string, AILoadingState>();
+export const roomLoadingStates = new Map<string, AILoadingState>();
 
 const updateLoadingState = (roomId: string, io: ReturnType<typeof useIO>, loadingState: AILoadingState | null) => {
 	if (loadingState) {
@@ -74,6 +74,10 @@ const generateAIResponse = async (roomId: string, currentPlayer = '', isRetrying
 		narrative: response.match(/<narrative>(.*?)<\/narrative>/s)?.[1]?.trim() || '',
 		choices: response.match(/<choices>(.*?)<\/choices>/s)?.[1]?.trim().split('\n')
 			.map(choice => choice.replace(/- /, '').trim()) || [],
+		// TODO add LLM output section for text that describes the choice in the thrid person
+		//   i.e. "[Player] did [whatever]"
+		// to be used for stream of status updates on the home page
+		//   to show what's going on across all games
 		tts: undefined as string | undefined
 	};
 

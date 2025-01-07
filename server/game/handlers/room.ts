@@ -1,7 +1,7 @@
 import { type Socket } from 'socket.io';
 import { useRoomManager, updateRoom } from '../GameRoomManager';
 import { useLog } from '~/composables/useLog';
-import { playChoice } from './choices';
+import { playChoice, roomLoadingStates } from './choices';
 import { useIO } from '~/server/plugins/socket.io';
 
 const log = useLog('handlers/rooms');
@@ -46,6 +46,9 @@ export const registerRoomHandlers = (socket: Socket) => {
 			// }
 
 			io.to(roomId).emit('playerJoined', { roomId, nickname, isSpectator });
+
+			const loadingState = roomLoadingStates.get(roomId);
+			io.to(roomId).emit('aiLoadingState', { roomId, loadingState });
 
 			// Send chat history to joining user
 			const history = await roomManager.getChatHistory(roomId);
