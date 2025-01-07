@@ -1,3 +1,5 @@
+const isDev = import.meta.dev;
+
 export default defineNuxtConfig({
   app: {
     layoutTransition: {
@@ -92,6 +94,13 @@ export default defineNuxtConfig({
     prerender: {
       crawlLinks: true,
       routes: ["/sitemap.xml"],
+
+      // If there are errors during build but no useful info,
+      //   try setting this to false and running the app
+      // There should be a thrown error when you go to the page
+      // https://github.com/nuxt/nuxt/discussions/22397#discussioncomment-7724547
+      // https://stackoverflow.com/questions/76752732/error-while-deploying-nuxt-3-in-pre-rendered-mode/76761528#76761528
+      failOnError: false,
     },
     storage: {
       'server-logs': {
@@ -128,13 +137,13 @@ export default defineNuxtConfig({
       preprocessorOptions: {
         scss: { api: 'modern' }
       }
-    }
+    },
   },
 
   supabase: {
     redirectOptions: {
-      login: import.meta.dev ? 'https://ai-quest.clickagain.xyz/login' : '/login',
-      callback: import.meta.dev ? 'https://ai-quest.clickagain.xyz/confirm' : '/confirm',
+      login: '/login',
+      callback: '/confirm',
       include: undefined,
       exclude: ['/', '/room/*'],
       cookieRedirect: true,

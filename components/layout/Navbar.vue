@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 // TODO navigation elements are not reactive
-const navigation = getNavigation("home");
+const navigation = useNavigation("home");
 const isRoomRoute = useRoute().name === 'room-id';
 </script>
 <template>
@@ -11,7 +11,7 @@ const isRoomRoute = useRoute().name === 'room-id';
         <nav
           class="z-10 h-[50px] sm:h-[45px] flex items-center justify-around gap-2 sm:hover:gap-4 p-1 transition-all duration-300 ease-in-out">
           <Connection v-if="isRoomRoute" />
-          <NuxtLink v-for="item in navigation" :id="item.name.toLowerCase()" :key="item.name"
+          <NuxtLink v-for="item in navigation.routes.value" :id="item.name.toLowerCase()" :key="item.name"
             :aria-label="item.name + ' navigation link'" :class="[
               item.name === $route.name
                 ? 'text-black/80 dark:text-white/75 shadow-black/50 dark:shadow-white/50 shadow-2xl border border-white/5 backdrop-blur-3xl bg-zinc-900/10'
