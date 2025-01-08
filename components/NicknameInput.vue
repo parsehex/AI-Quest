@@ -35,7 +35,7 @@ onMounted(() => {
 <template>
   <div class="inline-flex items-center gap-2">
     <UInput v-model="nickname" placeholder="Enter character name" @change="updateNickname"
-      :icon="nickname && isValid ? 'i-heroicons-check-circle' : ''" :color="nickname && isValid ? 'green' : ''" :ui="{
+      :icon="nickname && isValid ? 'i-heroicons-check-circle' : ''" :color="nickname && isValid ? 'green' : 'gray'" :ui="{
         input: 'text-sm',
         base: `rounded-md border-0 shadow-sm ring-1 ${nickname && !isValid ? 'ring-red-500' : 'ring-gray-300'
           }`
