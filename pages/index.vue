@@ -3,6 +3,7 @@ import { delay } from '~/lib/utils'
 import type { PlayerCharacter } from '~/types/Game'
 import CreateCharacter from '@/components/home/CreateCharacter.vue'
 import GamesList from '@/components/home/GamesList.vue'
+import { STARTER_PREMISES } from '~/lib/constants';
 
 definePageMeta({
   title: "Home",
@@ -16,18 +17,9 @@ const sock = useGameSocket()
 
 // Constants
 const REFRESH_INTERVAL = 5000
-const STARTER_PREMISES = [
-  'A bank robbery gone supernatural',
-  'Dragon heist in a modern metropolis',
-  'stupid bakery robbery during a blood moon',
-  'Exploring a forgotten city beneath the waves',
-  'Time-traveling train hijacking',
-]
 
 // Reactive State
 const gameState = reactive({
-  newRoomName: import.meta.env.DEV ? `Game ${Math.floor(Math.random() * 1000)}` : '',
-  premise: import.meta.env.DEV ? STARTER_PREMISES[Math.floor(Math.random() * STARTER_PREMISES.length)] : '',
   fastMode: true,
   hasCharacter: false,
   playerCharacter: null as PlayerCharacter | null,
@@ -42,16 +34,14 @@ const handleCharacterCreated = (character: PlayerCharacter) => {
 
 const handleCreateRoom = async (e?: Event) => {
   if (e) e.preventDefault()
-  if (!gameState.newRoomName.trim()) return
 
   try {
     sock.createRoom(
-      gameState.premise,
+      sock.premiseInput.value,
       gameState.fastMode
     )
 
-    gameState.newRoomName = ''
-    gameState.premise = ''
+    sock.premiseInput.value = ''
     sock.refreshRooms()
   } catch (error) {
     console.error('Failed to create room:', error)
@@ -59,7 +49,7 @@ const handleCreateRoom = async (e?: Event) => {
 }
 
 const handleRefreshStarterPremise = async () => {
-  gameState.premise = STARTER_PREMISES[Math.floor(Math.random() * STARTER_PREMISES.length)]
+  sock.premiseInput.value = STARTER_PREMISES[Math.floor(Math.random() * STARTER_PREMISES.length)]
 }
 
 // Lifecycle
@@ -92,11 +82,13 @@ onUnmounted(() => {
         </h2>
         <form @submit.prevent="handleCreateRoom" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium mb-2"> Game Premise
-              <UButton icon="i-heroicons-arrow-path-16-solid" variant="ghost" size="xs"
+            <span class="block text-sm font-medium mb-2"> Game Premise
+              <UButton type="button" icon="i-heroicons-arrow-path-16-solid" variant="ghost" size="xs"
                 @click="handleRefreshStarterPremise" class="ml-2" />
-            </label>
-            <UTextarea v-model="gameState.premise" placeholder="Describe your game scenario..." :rows="3"
+              <UButton type="button" icon="i-heroicons-sparkles" variant="ghost" size="xs" @click="sock.remixPremise"
+                class="ml-2" />
+            </span>
+            <UTextarea v-model="sock.premiseInput.value" placeholder="Describe your game scenario..." :rows="3"
               class="w-full" />
           </div>
           <div class="flex items-center gap-4">
@@ -109,8 +101,7 @@ onUnmounted(() => {
               </div>
             </UTooltip>
           </div>
-          <UButton type="submit" :disabled="!gameState.newRoomName.trim()" icon="i-heroicons-plus" class="w-full">
-            Create Game </UButton>
+          <UButton type="submit" icon="i-heroicons-plus" class="w-full"> Create Game </UButton>
         </form>
       </section>
     </div>

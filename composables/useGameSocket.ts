@@ -2,6 +2,7 @@
 import type { ChatMessage, PlayerCharacter, Room } from '~/types/Game'
 import { socket } from '~/lib/socket'
 import { ref, computed } from 'vue'
+import { STARTER_PREMISES } from '~/lib/constants';
 
 const log = useLog('useGameSocket');
 
@@ -42,6 +43,7 @@ class GameSocketManager {
 	public error = ref(null);
 	public messages = ref<ChatMessage[]>([]);
 	public hasRooms = computed(() => this.rooms.value.length > 0);
+	public premiseInput = ref(import.meta.env.DEV ? STARTER_PREMISES[Math.floor(Math.random() * STARTER_PREMISES.length)] : '',);
 
 	private constructor() {
 		this.initializeSocketListeners();
@@ -131,6 +133,7 @@ class GameSocketManager {
 		socket.off('playerJoined');
 		socket.off('chatHistory');
 		socket.off('newMessage');
+		socket.off('kicked');
 	}
 
 	// Public methods
@@ -205,6 +208,7 @@ export function useGameSocket() {
 	});
 
 	return {
+		premiseInput: gameSocket.premiseInput,
 		isConnected: gameSocket.isConnected,
 		transport: gameSocket.transport,
 		rooms: gameSocket.rooms,
