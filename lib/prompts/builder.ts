@@ -1,7 +1,15 @@
+import type { PromptMetadata } from '~/types/Prompts';
+
 type PromptInputs = Record<string, any>;
 
 export const createPrompt = <T extends PromptInputs>(
-	buildFn: (inputs: T) => string
+	text: string,
+	buildFn: (inputs: T) => string,
+	metadata?: PromptMetadata
 ) => {
-	return (inputs: T): string => buildFn(inputs);
+	return {
+		text,
+		build: buildFn,
+		metadata
+	};
 };

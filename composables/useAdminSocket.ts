@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { socket } from '~/lib/socket';
 import type { ModelConfig } from '~/types/Game/AI';
+import type { PromptTemplate } from '~/types/Prompts';
 
 const log = useLog('useAdminSocket');
 
@@ -11,6 +12,8 @@ class AdminSocketManager {
 
 	public isValidated = ref(false);
 	private password = ref('');
+	public prompts = ref<PromptTemplate[]>([]);
+	public currentPrompt = ref<PromptTemplate | null>(null);
 
 	private constructor() {
 		this.initializeSocketListeners();
@@ -26,6 +29,16 @@ class AdminSocketManager {
 	private initializeSocketListeners(): void {
 		socket.on('admin:success', this.onAdminSuccess.bind(this));
 		socket.on('admin:error', this.onAdminError.bind(this));
+		socket.on('admin:prompts', this.onPrompts.bind(this));
+		socket.on('admin:prompt', this.onPrompt.bind(this));
+		socket.on('promptsUpdated', this.getPrompts.bind(this));
+	}
+	public cleanup(): void {
+		socket.off('admin:success');
+		socket.off('admin:error');
+		socket.off('admin:prompts');
+		socket.off('admin:prompt');
+		socket.off('promptsUpdated');
 	}
 
 	private onAdminSuccess({ message }: { message: string }): void {
@@ -42,6 +55,38 @@ class AdminSocketManager {
 			description: message,
 		});
 		this.isValidated.value = false;
+	}
+
+	private onPrompts(prompts: PromptTemplate[]): void {
+		this.prompts.value = [...prompts];
+	}
+
+	private onPrompt(prompt: PromptTemplate): void {
+		this.currentPrompt.value = { ...prompt };
+	}
+
+	public getPrompts(): void {
+		if (!this.isValidated.value) return;
+		log.debug('Getting all prompts');
+		socket.emit('admin:getPrompts', this.password.value);
+	}
+
+	public getPrompt(name: string): void {
+		if (!this.isValidated.value) return;
+		log.debug('Getting prompt:', name);
+		socket.emit('admin:getPrompt', this.password.value, name);
+	}
+
+	public updatePrompt(name: string, template: Partial<PromptTemplate>): void {
+		if (!this.isValidated.value) return;
+		log.debug('Updating prompt:', name);
+		socket.emit('admin:updatePrompt', this.password.value, name, template);
+	}
+
+	public resetPrompt(name: string): void {
+		if (!this.isValidated.value) return;
+		log.debug('Resetting prompt:', name);
+		socket.emit('admin:resetPrompt', this.password.value, name);
 	}
 
 	public checkPassword(password: string): void {
@@ -86,11 +131,6 @@ class AdminSocketManager {
 		socket.emit('admin:toggleFastMode', this.password.value, roomId);
 	}
 
-	public cleanup(): void {
-		socket.off('admin:success');
-		socket.off('admin:error');
-	}
-
 	public setGameActive(active: boolean): void {
 		if (!this.isValidated.value) return;
 		log.debug('Setting game active:', active);
@@ -122,5 +162,11 @@ export function useAdminSocket() {
 		toggleFastMode: adminSocket.toggleFastMode.bind(adminSocket),
 		setGameActive: adminSocket.setGameActive.bind(adminSocket),
 		setModelConfig: adminSocket.setModelConfig.bind(adminSocket),
+		getPrompts: adminSocket.getPrompts.bind(adminSocket),
+		getPrompt: adminSocket.getPrompt.bind(adminSocket),
+		updatePrompt: adminSocket.updatePrompt.bind(adminSocket),
+		resetPrompt: adminSocket.resetPrompt.bind(adminSocket),
+		prompts: adminSocket.prompts,
+		currentPrompt: adminSocket.currentPrompt,
 	};
 }

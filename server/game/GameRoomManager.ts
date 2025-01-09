@@ -2,8 +2,8 @@ import { ChatMessage, PlayerCharacter, Room } from '~/types/Game';
 import { useLog } from '~/composables/useLog';
 import { Server } from 'socket.io';
 import { useIO } from '../plugins/socket.io';
-import { GenerateTitle } from '~/lib/prompts/templates';
 import { LLMManager } from '~/lib/llm';
+import { usePromptManager } from '~/lib/prompts/PromptManager';
 
 const log = useLog('GameRoomManager');
 
@@ -69,10 +69,11 @@ export class GameRoomManager {
 		log.debug({ _ctx: { socketId, premise, fastMode, createdBy } }, 'Creating room');
 		const roomId = Math.random().toString(36).substring(7);
 		const llm = LLMManager.getInstance();
+		const GenerateTitle = usePromptManager().getPrompt('GenerateTitle');
 		let response = await llm.generateResponse([
-			{ role: 'system', content: GenerateTitle.System({}) },
+			{ role: 'system', content: GenerateTitle.System.build({}) },
 			{
-				role: 'user', content: GenerateTitle.User({
+				role: 'user', content: GenerateTitle.User.build({
 					premise,
 					playerName: createdBy,
 				}),

@@ -2,6 +2,7 @@
 import RoomLogsModal from '~/components/admin/RoomLogsModal.vue';
 import { useGameStatus } from '~/composables/useGameStatus';
 import type { ModelConfig } from '~/types/Game/AI';
+import type { PromptTemplate } from '~/types/Prompts';
 
 definePageMeta({
 	title: "Admin",
@@ -17,6 +18,16 @@ const currentEnv = ref(import.meta.dev ? 'dev' : 'prod');
 
 const modelConfig = ref<ModelConfig | null>(null);
 const selectedEnv = ref(currentEnv.value);
+const editingPrompt = ref<string | null>(null);
+const promptForm = ref<Partial<PromptTemplate> | null>(null);
+
+const promptsAccordionItems = computed(() => {
+	return admin.prompts.value.map(prompt => ({
+		label: prompt.name,
+		color: prompt.isDefault ? 'gray' : prompt.isRuntime ? 'primary' : '',
+		variant: prompt.isDefault ? 'outline' : prompt.isRuntime ? 'solid' : '',
+	}));
+});
 
 // # of players across all rooms
 const totalPlayers = computed(() => {
@@ -42,15 +53,18 @@ onMounted(async () => {
 		admin.checkPassword(savedPassword);
 	}
 
-	if (isValidated.value) {
-		gameStatus.refreshGameActive();
-	}
-
 	const response = await fetch('/api/admin/model-config');
 	modelConfig.value = await response.json();
 });
 
 const { isValidated } = admin;
+
+watch(() => isValidated.value, (value) => {
+	if (value) {
+		gameStatus.refreshGameActive();
+		admin.getPrompts();
+	}
+});
 
 const password = ref('');
 
@@ -105,6 +119,25 @@ const handleSaveModelConfig = () => {
 	if (!modelConfig.value) return;
 	admin.setModelConfig(modelConfig.value);
 };
+
+const handleEditPrompt = (name: string) => {
+	editingPrompt.value = name;
+	const prompt = admin.prompts.value.find(p => p.name === name);
+	if (prompt) {
+		promptForm.value = { ...prompt };
+	}
+};
+
+const handleSavePrompt = () => {
+	if (!promptForm.value || !editingPrompt.value) return;
+	admin.updatePrompt(editingPrompt.value, promptForm.value);
+	editingPrompt.value = null;
+	promptForm.value = null;
+};
+
+const handleResetPrompt = (name: string) => {
+	admin.resetPrompt(name);
+};
 </script>
 <template>
 	<div class="container mx-auto p-4">
@@ -140,8 +173,8 @@ const handleSaveModelConfig = () => {
 			</div>
 		</div>
 		<!-- Model Configuration -->
-		<Collapsible v-show="isValidated" title="Model Configuration" :subtitle="currentEnv"
-			class="bg-white dark:bg-neutral-800 rounded-lg shadow p-4 my-2">
+		<Collapsible v-show="isValidated" title="Model Configuration"
+			class="bg-white dark:bg-neutral-800 rounded-lg shadow p-4 my-2 inline-block w-1/3">
 			<div v-if="modelConfig" class="grid grid-cols-1 md:grid-cols-2 gap-6">
 				<!-- Fast Model -->
 				<div class="space-y-4">
@@ -163,11 +196,67 @@ const handleSaveModelConfig = () => {
 						<UInput v-model="modelConfig[selectedEnv].good[1]" />
 					</UFormGroup>
 				</div>
-				<div class="md:col-span-2 flex justify-end">
+				<div class="md:col-span-2 flex justify-end"> <span class="mr-4 select-none">{{ currentEnv }} mode</span>
 					<UButton @click="handleSaveModelConfig" color="primary"> Save Configuration </UButton>
 				</div>
 			</div>
 			<div v-else class="text-center py-4"> Loading configuration... </div>
+		</Collapsible>
+		<Collapsible v-show="isValidated" title="Prompt Manager"
+			class="bg-white dark:bg-neutral-800 rounded-lg shadow p-4 my-2 inline-block w-2/3">
+			<div v-if="admin.prompts.value.length" class="space-y-4">
+				<UButton @click="admin.getPrompts" color="sky" size="xs" variant="outline"> Refresh </UButton>
+				<UAccordion :items="promptsAccordionItems"
+					:ui="{ item: { base: 'border dark:border-neutral-700 rounded-lg p-4' } }">
+					<template #default="{ item, index }">
+						<div class="flex items-center justify-between">
+							<div class="flex items-center gap-2">
+								<h3 class="font-semibold">{{ item.label }}</h3>
+								<UBadge v-if="admin.prompts.value[index].isDefault" color="blue">Default</UBadge>
+								<UBadge v-if="admin.prompts.value[index].isRuntime" color="orange">Modified</UBadge>
+							</div>
+							<div class="flex gap-2">
+								<UButton @click.stop="handleEditPrompt(item.label)" :disabled="editingPrompt === item.label" color="sky"
+									variant="outline">Edit</UButton>
+								<UButton v-if="admin.prompts.value[index].isRuntime" @click.stop="handleResetPrompt(item.label)"
+									color="red" variant="outline">Reset</UButton>
+							</div>
+						</div>
+					</template>
+					<template #item="{ item, index }">
+						<!-- Editing Form -->
+						<div v-if="editingPrompt === item.label && promptForm" class="mt-4 space-y-4">
+							<UFormGroup label="System Prompt" v-if="promptForm.System">
+								<UTextarea v-model="promptForm.System.text" />
+							</UFormGroup>
+							<UFormGroup label="User Prompt" v-if="promptForm.User">
+								<UTextarea v-model="promptForm.User.text" resize />
+							</UFormGroup>
+							<UFormGroup label="Description" v-if="promptForm.metadata">
+								<UInput v-model="promptForm.metadata.description" />
+							</UFormGroup>
+							<div class="flex justify-end gap-2">
+								<UButton @click="editingPrompt = null" color="gray">Cancel</UButton>
+								<UButton @click="handleSavePrompt" color="primary">Save Changes</UButton>
+							</div>
+						</div>
+						<!-- Preview -->
+						<div v-else class="mt-2 space-y-2">
+							<div class="mb-4">
+								<div class="font-medium">System Prompt:</div>
+								<div class="whitespace-pre-wrap">{{ admin.prompts.value[index].System.text }}</div>
+							</div>
+							<div class="mb-4">
+								<div class="font-medium">User Prompt:</div>
+								<div class="whitespace-pre-wrap">{{ admin.prompts.value[index].User.text }}</div>
+							</div>
+						</div>
+					</template>
+				</UAccordion>
+			</div>
+			<div v-else class="text-center py-4"> Loading prompts... <UButton @click="admin.getPrompts" color="sky" size="xs"
+					variant="outline"> Refresh </UButton>
+			</div>
 		</Collapsible>
 		<!-- Rooms List -->
 		<div v-show="isValidated" class="bg-white dark:bg-neutral-800 rounded-lg shadow p-4">

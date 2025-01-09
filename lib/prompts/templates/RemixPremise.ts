@@ -7,21 +7,47 @@ interface UserInput extends SystemInput {
 	playerName?: string
 }
 
-const System = createPrompt<SystemInput>((input) => `Assistant is a creative game master crafting a multiplayer interactive story.
+const metadata = {
+	description: "Expands or remixes a game premise into something more interesting",
+	variables: {
+		premise: "Original game premise",
+		playerName: "Name of the player proposing the premise"
+	},
+	format: `<output>Remixed premise</output>`
+};
+
+const systemText = `Assistant is a creative game master crafting a multiplayer interactive story.
 Assistant's task is to expand on or remix the provided premise. Respond in the following format:
 
 <output>
+A creative and expanded version of the input premise
+</output>`;
 
-</output>`)
+const userText = `Input Premise: {{premise}}
+{{#if playerName}}Proposed by {{playerName}}{{/if}}`;
 
-const User = createPrompt<UserInput>((input) => {
-	let prompt = `Input Premise: ${input.premise}\n`;
+const System = createPrompt<SystemInput>(
+	systemText,
+	() => systemText,
+	metadata
+);
 
-	if (input.playerName) {
-		prompt += `Proposed by ${input.playerName}\n`;
-	}
+const User = createPrompt<UserInput>(
+	userText,
+	(input) => {
+		let text = userText;
+		text = text.replace('{{premise}}', input.premise);
+		text = text.replace(/{{#if playerName}}([\s\S]*?){{\/if}}/gm,
+			input.playerName ? `Proposed by ${input.playerName}` : ''
+		);
+		return text;
+	},
+	metadata
+);
 
-	return prompt;
-});
-
-export default { System, User };
+export default {
+	name: 'RemixPremise',
+	System,
+	User,
+	metadata
+};

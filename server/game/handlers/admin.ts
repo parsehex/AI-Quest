@@ -4,6 +4,8 @@ import { useServerOptions } from '../ServerOptionsManager';
 import { useLog } from '~/composables/useLog';
 import { useIO } from '~/server/plugins/socket.io';
 import { ModelConfig } from '~/types/Game/AI';
+import { usePromptManager } from '~/lib/prompts/PromptManager';
+import { PromptTemplate } from '~/types/Prompts';
 
 const log = useLog('handlers/admin');
 
@@ -14,6 +16,8 @@ const validateAdminPassword = (password: string): boolean => {
 export const registerAdminHandlers = (socket: Socket) => {
 	const io = useIO();
 	const roomManager = useRoomManager();
+	const serverOptions = useServerOptions();
+	const promptManager = usePromptManager();
 
 	const adminGuard = (password: string, callback: Function) => {
 		if (!validateAdminPassword(password)) {
@@ -142,7 +146,6 @@ export const registerAdminHandlers = (socket: Socket) => {
 		adminGuard(password, () => {
 			const SocketId = socket.id;
 			log.info({ _ctx: { SocketId } }, 'Updating model configuration');
-			const serverOptions = useServerOptions();
 			serverOptions.setModelConfig(config)
 				.then(() => {
 					io.emit('modelConfig', serverOptions.getModelConfig());
@@ -152,6 +155,59 @@ export const registerAdminHandlers = (socket: Socket) => {
 					log.error({ _ctx: { SocketId, error } }, 'Failed to update model configuration');
 					socket.emit('admin:error', { message: 'Failed to update model configuration' });
 				});
+		});
+	});
+
+	socket.on('admin:getPrompts', (password: string) => {
+		adminGuard(password, () => {
+			const SocketId = socket.id;
+			log.info({ _ctx: { SocketId } }, 'Getting all prompts');
+			const prompts = promptManager.getAllPrompts();
+			socket.emit('admin:prompts', prompts);
+		});
+	});
+
+	socket.on('admin:getPrompt', (password: string, name: string) => {
+		adminGuard(password, () => {
+			const SocketId = socket.id;
+			log.info({ _ctx: { SocketId, name } }, 'Getting prompt');
+			const prompt = promptManager.getPrompt(name);
+			if (prompt) {
+				socket.emit('admin:prompt', prompt);
+			} else {
+				socket.emit('admin:error', { message: 'Prompt not found' });
+			}
+		});
+	});
+
+	socket.on('admin:updatePrompt', (password: string, name: string, template: Partial<PromptTemplate>) => {
+		adminGuard(password, async () => {
+			const SocketId = socket.id;
+			log.info({ _ctx: { SocketId, name } }, 'Updating prompt');
+			try {
+				await promptManager.updatePrompt(name, template);
+				io.emit('promptsUpdated');
+				socket.emit('admin:success', { message: 'Prompt updated' });
+			} catch (error) {
+				log.error({ _ctx: { SocketId, error } }, 'Failed to update prompt');
+				socket.emit('admin:error', { message: 'Failed to update prompt' });
+				throw error;
+			}
+		});
+	});
+
+	socket.on('admin:resetPrompt', (password: string, name: string) => {
+		adminGuard(password, async () => {
+			const SocketId = socket.id;
+			log.info({ _ctx: { SocketId, name } }, 'Resetting prompt');
+			try {
+				await promptManager.updatePrompt(name, {});
+				io.emit('promptsUpdated');
+				socket.emit('admin:success', { message: 'Prompt reset to default' });
+			} catch (error) {
+				log.error({ _ctx: { SocketId, error } }, 'Failed to reset prompt');
+				socket.emit('admin:error', { message: 'Failed to reset prompt' });
+			}
 		});
 	});
 };

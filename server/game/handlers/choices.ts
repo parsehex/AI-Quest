@@ -2,8 +2,8 @@ import { type Socket } from 'socket.io';
 import { updateRoom, useRoomManager } from '../GameRoomManager';
 import { useLog } from '~/composables/useLog';
 import { LLMManager } from '~/lib/llm';
-import { GameMaster } from '~/lib/prompts/templates';
 import { TTSManager } from '~/lib/tts';
+import { usePromptManager } from '~/lib/prompts/PromptManager';
 
 const log = useLog('handlers/choices');
 
@@ -26,16 +26,17 @@ const generateAIResponse = async (roomId: string, currentPlayer = '', isRetrying
 	const playerNames = history.map(evt => evt.player);
 	const isNewPlayer = playerNames.includes(currentPlayer);
 	const playerCharacter = room.players.find(player => player.nickname === currentPlayer)?.character;
-	const prompt = GameMaster.System({ currentPlayer });
+	const GameMaster = usePromptManager().getPrompt('GameMaster');
+	console.log('GameMaster', GameMaster.System.build({ currentPlayer }));
 
 	const latestEvent = history.slice(-1)[0];
-	const latestEventText = `Player \`${latestEvent.player}\` chose: ${latestEvent.choice}`;
+	const latestEventText = latestEvent ? `Player \`${latestEvent.player}\` chose: ${latestEvent.choice}` : '';
 	history = history.slice(0, -1);
 
 	let response = await llm.generateResponse([
-		{ role: 'system', content: prompt },
+		{ role: 'system', content: GameMaster.System.build({ currentPlayer }) },
 		{
-			role: 'user', content: GameMaster.User({
+			role: 'user', content: GameMaster.User.build({
 				currentPlayer,
 				premise,
 				history,
