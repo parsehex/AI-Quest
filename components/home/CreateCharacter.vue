@@ -62,27 +62,25 @@ const cardTitle = computed(() => {
 <template>
 	<Collapsible :class="'create-character' + (isExpanded ? ' expanded' : '') + (props.readOnly ? ' readonly' : '')"
 		:title="cardTitle" subtitle="You">
-		<template #default>
-			<div v-if="isExpanded" class="space-y-2 flex flex-col justify-center">
-				<div class="form-group">
-					<label class="block text-sm font-medium mb-1">Name</label>
-					<NicknameInput v-if="!readOnly" @update:name="updateDisplayName" />
-					<p v-else>{{ displayName }}</p>
-				</div>
-				<div v-if="!readOnly || character.race" class="form-group">
-					<label class="block text-sm font-medium mb-1">Race</label>
-					<USelect v-model="character.race" :options="characterOptions.races" :disabled="readOnly" />
-				</div>
-				<div v-if="!readOnly || character.class" class="form-group">
-					<label class="block text-sm font-medium mb-1">Class</label>
-					<USelect v-model="character.class" :options="characterOptions.classes" :disabled="readOnly" />
-				</div>
-				<div v-if="!readOnly || character.background" class="form-group">
-					<label class="block text-sm font-medium mb-1">Background</label>
-					<USelect v-model="character.background" :options="characterOptions.backgrounds" :disabled="readOnly" />
-				</div>
+		<div class="space-y-2 flex flex-col justify-center">
+			<div class="form-group">
+				<label class="block text-sm font-medium mb-1">Name</label>
+				<NicknameInput v-if="!readOnly" @update:name="updateDisplayName" />
+				<p v-else>{{ displayName }}</p>
 			</div>
-		</template>
+			<div class="form-group">
+				<label class="block text-sm font-medium mb-1">Race</label>
+				<USelect v-model="character.race" :options="characterOptions.races" :disabled="readOnly" />
+			</div>
+			<div class="form-group">
+				<label class="block text-sm font-medium mb-1">Class</label>
+				<USelect v-model="character.class" :options="characterOptions.classes" :disabled="readOnly" />
+			</div>
+			<div class="form-group">
+				<label class="block text-sm font-medium mb-1">Background</label>
+				<USelect v-model="character.background" :options="characterOptions.backgrounds" :disabled="readOnly" />
+			</div>
+		</div>
 	</Collapsible>
 </template>
 <style scoped lang="scss">
