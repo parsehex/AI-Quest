@@ -59,7 +59,7 @@ onBeforeRouteLeave((to, from) => {
 <template>
   <div>
     <h2 class="text-xl font-semibold text-center">{{ sock.thisRoom.value?.name }}</h2>
-    <div class="container-fluid mx-auto py-8 flex gap-2 relative">
+    <div class="px-6 mx-auto py-8 flex gap-2 relative">
       <Game :roomId="roomId" :is-full-width="!isChatOpen" />
       <div class="fixed top-1/3 right-0 flex flex-col items-center">
         <span class="text-xs text-muted mb-1 select-none"></span>
