@@ -56,8 +56,9 @@ const navigateToRoom = (roomId: string, isSpectator = false) => {
 					<p>{{ game.premise }}</p>
 				</Collapsible>
 				<div class="flex items-center gap-2 flex-shrink-0">
-					<UButton icon="i-heroicons-eye" color="sky" variant="soft" size="sm" @click="navigateToRoom(game.id, true)">
-						Spectate </UButton>
+					<!-- TODO spectate -->
+					<!-- <UButton icon="i-heroicons-eye" color="sky" variant="soft" size="sm" @click="navigateToRoom(game.id, true)">
+						Spectate </UButton> -->
 					<UButton icon="i-heroicons-play" color="green" size="sm" @click="navigateToRoom(game.id)"> Join </UButton>
 				</div>
 			</li>
