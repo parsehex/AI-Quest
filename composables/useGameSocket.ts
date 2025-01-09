@@ -134,9 +134,9 @@ class GameSocketManager {
 	}
 
 	// Public methods
-	public createRoom(roomName: string, premise: string, fastMode = false): void {
-		log.debug({ _ctx: { roomName, premise, fastMode } }, 'Creating room');
-		socket.emit('createRoom', roomName, premise, fastMode);
+	public createRoom(premise: string, fastMode = false): void {
+		log.debug({ _ctx: { premise, fastMode } }, 'Creating room');
+		socket.emit('createRoom', premise, fastMode);
 	}
 
 	public joinRoom(roomId: string): void {

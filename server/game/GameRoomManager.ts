@@ -2,6 +2,8 @@ import { ChatMessage, PlayerCharacter, Room } from '~/types/Game';
 import { useLog } from '~/composables/useLog';
 import { Server } from 'socket.io';
 import { useIO } from '../plugins/socket.io';
+import { GenerateTitleSystem, GenerateTitleUser } from '~/lib/prompts/templates/GenerateTitle';
+import { LLMManager } from '~/lib/llm';
 
 const log = useLog('GameRoomManager');
 
@@ -63,12 +65,29 @@ export class GameRoomManager {
 		await this.saveRooms();
 	}
 
-	async createRoom(socketId: string, roomName: string, premise: string, fastMode: boolean, createdBy: string): Promise<Room> {
-		log.debug({ _ctx: { socketId, roomName, premise, fastMode, createdBy } }, 'Creating room');
+	async createRoom(socketId: string, premise: string, fastMode: boolean, createdBy: string): Promise<Room> {
+		log.debug({ _ctx: { socketId, premise, fastMode, createdBy } }, 'Creating room');
 		const roomId = Math.random().toString(36).substring(7);
+		const llm = LLMManager.getInstance();
+		let response = await llm.generateResponse([
+			{ role: 'system', content: GenerateTitleSystem({}) },
+			{
+				role: 'user', content: GenerateTitleUser({
+					premise,
+					playerName: createdBy,
+				}),
+			}
+		], true, { roomId });
+		console.log(response);
+		let name = '';
+		const nameMatch = response.match(/<output>(.*?)<\/output>/s);
+		if (nameMatch) {
+			name = nameMatch[1].trim();
+		}
+
 		const room: Room = {
 			id: roomId,
-			name: roomName,
+			name,
 			players: [],
 			premise,
 			history: [],

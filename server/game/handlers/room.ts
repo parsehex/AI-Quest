@@ -10,15 +10,16 @@ export const registerRoomHandlers = (socket: Socket) => {
 	const io = useIO();
 	const roomManager = useRoomManager();
 
-	socket.on('createRoom', async (roomName: string, premise: string, fastMode: boolean) => {
+	socket.on('createRoom', async (premise: string, fastMode: boolean) => {
 		const SocketId = socket.id;
 		const playerName = socket.data.nickname || 'Anonymous';
-		log.debug({ _ctx: { SocketId, roomName, playerName, premise, fastMode } }, 'Creating room');
-		const room = await roomManager.createRoom(socket.id, roomName, premise, fastMode, playerName);
+		log.debug({ _ctx: { SocketId, playerName, premise, fastMode } }, 'Socket is creating room');
+
+		const room = await roomManager.createRoom(socket.id, premise, fastMode, playerName);
 		socket.join(room.id);
 
-		// Generate initial turnm
-		playChoice(room.id, playerName);
+		// Generate initial turn
+		// playChoice(room.id, playerName);
 	});
 
 	socket.on('joinRoom', async ({ roomId, nickname, clientId, playerCharacter }) => {

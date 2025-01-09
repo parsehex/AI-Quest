@@ -19,7 +19,7 @@ const REFRESH_INTERVAL = 5000
 const STARTER_PREMISES = [
   'A bank robbery gone supernatural',
   'Dragon heist in a modern metropolis',
-  'Magical bakery robbery during a blood moon',
+  'stupid bakery robbery during a blood moon',
   'Exploring a forgotten city beneath the waves',
   'Time-traveling train hijacking',
 ]
@@ -46,7 +46,6 @@ const handleCreateRoom = async (e?: Event) => {
 
   try {
     sock.createRoom(
-      gameState.newRoomName,
       gameState.premise,
       gameState.fastMode
     )
@@ -57,6 +56,10 @@ const handleCreateRoom = async (e?: Event) => {
   } catch (error) {
     console.error('Failed to create room:', error)
   }
+}
+
+const handleRefreshStarterPremise = async () => {
+  gameState.premise = STARTER_PREMISES[Math.floor(Math.random() * STARTER_PREMISES.length)]
 }
 
 // Lifecycle
@@ -89,15 +92,10 @@ onUnmounted(() => {
         </h2>
         <form @submit.prevent="handleCreateRoom" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium mb-2">Room Name</label>
-            <!-- TODO I think it makes sense to generate room titles -->
-            <UInput v-model="gameState.newRoomName" placeholder="Enter a name for your game..." :ui="{
-              width: 'w-full',
-              input: 'text-sm'
-            }" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium mb-2">Game Premise</label>
+            <label class="block text-sm font-medium mb-2"> Game Premise
+              <UButton icon="i-heroicons-arrow-path-16-solid" variant="ghost" size="xs"
+                @click="handleRefreshStarterPremise" class="ml-2" />
+            </label>
             <UTextarea v-model="gameState.premise" placeholder="Describe your game scenario..." :rows="3"
               class="w-full" />
           </div>
