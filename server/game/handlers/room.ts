@@ -3,6 +3,8 @@ import { useRoomManager, updateRoom } from '../GameRoomManager';
 import { useLog } from '~/composables/useLog';
 import { playChoice } from './choices';
 import { useIO } from '~/server/plugins/socket.io';
+import { LLMManager } from '~/lib/llm';
+import { RemixPremise } from '~/lib/prompts/templates';
 
 const log = useLog('handlers/rooms');
 
@@ -31,8 +33,10 @@ export const registerRoomHandlers = (socket: Socket) => {
 
 			const existingPlayer = room.players.find(p => p.clientId === clientId);
 			if (existingPlayer) {
+				log.info({ _ctx: { SocketId, roomId, clientId } }, 'Re-attaching player');
 				existingPlayer.id = socket.id;
 			} else {
+				log.info({ _ctx: { SocketId, roomId, nickname, clientId, playerCharacter } }, 'Joined player');
 				await roomManager.joinRoom(socket.id, roomId, nickname, clientId, playerCharacter);
 			}
 
@@ -42,17 +46,17 @@ export const registerRoomHandlers = (socket: Socket) => {
 
 			// TODO since player ids still get reset, this doesnt work well
 			// are there 1 players now and not loading? then set currentPlayer to that player and generate their turn
-			// if (room.players.length === 1 && !room.aiLoading) {
-			// 	const CurrentPlayer = room.players[0].id;
-			// 	log.debug({ _ctx: { roomId, CurrentPlayer } }, "Setting current player");
-			// 	// TODO maybe just expose this from choices.ts
-			// 	updateRoom(roomId, room => {
-			// 		room.currentPlayer = room.players[0].id;
-			// 		room.history = room.history.slice(-4);
-			// 		const playerName = socket.data.nickname || 'Anonymous';
-			// 		playChoice(roomId, playerName);
-			// 	});
-			// }
+			if (room.players.length === 1 && !room.aiLoading) {
+				// TODO maybe just expose this from choices.ts
+				updateRoom(roomId, room => {
+					const CurrentPlayerId = room.players[0].id;
+					log.info({ _ctx: { roomId, CurrentPlayerId } }, "Setting current player");
+					room.currentPlayer = CurrentPlayerId;
+					room.history = room.history.slice(-4);
+					const playerName = socket.data.nickname || 'Anonymous';
+					playChoice(roomId, playerName);
+				});
+			}
 
 			io.to(roomId).emit('playerJoined', { roomId, nickname });
 
@@ -68,6 +72,21 @@ export const registerRoomHandlers = (socket: Socket) => {
 		roomManager.leaveRoom(socket.id, roomId);
 		socket.leave(roomId);
 		io.emit('roomList', roomManager.getRooms());
+	});
+
+	socket.on('remixPremise', async ({ roomId, premise, playerName }) => {
+		console.log('remixPremise', { roomId, premise, playerName });
+		const llm = LLMManager.getInstance();
+		const response = await llm.generateResponse([
+			{ role: 'system', content: RemixPremise.System({}) },
+			{
+				role: 'user', content: RemixPremise.User({
+					premise,
+					playerName,
+				}),
+			}
+		], true, { roomId });
+		socket.emit('remixResponse', response);
 	});
 
 	socket.on('getRooms', () => {

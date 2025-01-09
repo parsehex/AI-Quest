@@ -73,6 +73,7 @@ class GameSocketManager {
 		socket.on('chatHistory', this.onChatHistory.bind(this));
 		socket.on('newMessage', this.onNewMessage.bind(this));
 		socket.on('kicked', this.onKicked.bind(this));
+		socket.on('remixResponse', this.onKicked.bind(this));
 	}
 
 	private onConnect(): void {
@@ -179,6 +180,14 @@ class GameSocketManager {
 		socket.emit('regenerateResponse', roomId);
 	}
 
+	public remixPremise() {
+		const playerName = localStorage.getItem('nickname') || 'Anonymous';
+		socket.emit('remixPremise', { premise: this.premiseInput.value, playerName });
+	}
+	private onRemixPremise(premise: string) {
+		this.premiseInput.value = premise
+	}
+
 	public async waitConnected(): Promise<void> {
 		if (this.isConnected.value) {
 			return;
@@ -228,5 +237,6 @@ export function useGameSocket() {
 		sendMessage: gameSocket.sendMessage.bind(gameSocket),
 		waitConnected: gameSocket.waitConnected.bind(gameSocket),
 		makeChoice: gameSocket.makeChoice.bind(gameSocket),
+		remixPremise: gameSocket.remixPremise.bind(gameSocket),
 	}
 }

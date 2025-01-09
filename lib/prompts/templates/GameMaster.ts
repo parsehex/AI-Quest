@@ -1,11 +1,11 @@
 import type { GameHistoryItem, PlayerCharacter } from '~/types/Game'
 import { createPrompt } from '../builder'
 
-interface SystemProps {
+interface SystemInput {
 	currentPlayer: string
 }
 
-interface UserProps extends SystemProps {
+interface UserInput extends SystemInput {
 	premise: string,
 	history: GameHistoryItem[],
 	latestEvent: string,
@@ -13,7 +13,7 @@ interface UserProps extends SystemProps {
 	playerCharacter?: PlayerCharacter
 }
 
-export const GameMasterSystem = createPrompt<SystemProps>((input) => `Assistant is a creative game master crafting a multiplayer interactive story.
+const System = createPrompt<SystemInput>((input) => `Assistant is a creative game master crafting a multiplayer interactive story.
 Assistant's task is to create a response with the following format:
 <intro>
 A brief intro of the current situation
@@ -30,7 +30,7 @@ Use the choice text without anything preceding. Create choices which make sense 
 Pay attention and react to the latest choice in a natural way.`)
 
 // TODO convert history to messages
-export const GameMasterUser = createPrompt<UserProps>((input) => {
+const User = createPrompt<UserInput>((input) => {
 	let prompt = `Original premise: ${input.premise}\n`;
 
 	// Add character info
@@ -47,12 +47,12 @@ export const GameMasterUser = createPrompt<UserProps>((input) => {
 	if (input.history.length) {
 		prompt += `Events:\n`;
 		input.history.forEach(event => {
-			if (event.type === 'narrative') {
-				prompt += `  ${event.text}\n`;
-			} else if (event.type === 'choice') {
-				prompt += `  Player \`${event.player}\` chose: ${event.text}\n`;
-			}
+			prompt += event.intro + '\n';
+			prompt += event.narrative + '\n';
+			prompt += `Player \`${event.player}\` chose: ${event.choice}\n`;
 		});
 	}
 	return prompt;
 });
+
+export default { System, User };

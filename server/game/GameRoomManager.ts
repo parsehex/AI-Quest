@@ -2,7 +2,7 @@ import { ChatMessage, PlayerCharacter, Room } from '~/types/Game';
 import { useLog } from '~/composables/useLog';
 import { Server } from 'socket.io';
 import { useIO } from '../plugins/socket.io';
-import { GenerateTitleSystem, GenerateTitleUser } from '~/lib/prompts/templates/GenerateTitle';
+import { GenerateTitle } from '~/lib/prompts/templates';
 import { LLMManager } from '~/lib/llm';
 
 const log = useLog('GameRoomManager');
@@ -70,9 +70,9 @@ export class GameRoomManager {
 		const roomId = Math.random().toString(36).substring(7);
 		const llm = LLMManager.getInstance();
 		let response = await llm.generateResponse([
-			{ role: 'system', content: GenerateTitleSystem({}) },
+			{ role: 'system', content: GenerateTitle.System({}) },
 			{
-				role: 'user', content: GenerateTitleUser({
+				role: 'user', content: GenerateTitle.User({
 					premise,
 					playerName: createdBy,
 				}),

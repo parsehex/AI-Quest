@@ -2,7 +2,7 @@ import { type Socket } from 'socket.io';
 import { updateRoom, useRoomManager } from '../GameRoomManager';
 import { useLog } from '~/composables/useLog';
 import { LLMManager } from '~/lib/llm';
-import { GameMasterSystem, GameMasterUser } from '~/lib/prompts/templates/GameMaster';
+import { GameMaster } from '~/lib/prompts/templates';
 import { TTSManager } from '~/lib/tts';
 
 const log = useLog('handlers/choices');
@@ -23,19 +23,19 @@ const generateAIResponse = async (roomId: string, currentPlayer = '', isRetrying
 	let history = room.history;
 
 	const llm = LLMManager.getInstance();
-	const playerNames = history.filter(evt => evt.type === 'choice').map(evt => evt.player);
+	const playerNames = history.map(evt => evt.player);
 	const isNewPlayer = playerNames.includes(currentPlayer);
 	const playerCharacter = room.players.find(player => player.nickname === currentPlayer)?.character;
-	const prompt = GameMasterSystem({ currentPlayer });
+	const prompt = GameMaster.System({ currentPlayer });
 
 	const latestEvent = history.slice(-1)[0];
-	const latestEventText = latestEvent?.type === 'choice' ? `Player \`${latestEvent.player}\` chose: ${latestEvent.text}` : latestEvent?.text;
+	const latestEventText = `Player \`${latestEvent.player}\` chose: ${latestEvent.choice}`;
 	history = history.slice(0, -1);
 
 	let response = await llm.generateResponse([
 		{ role: 'system', content: prompt },
 		{
-			role: 'user', content: GameMasterUser({
+			role: 'user', content: GameMaster.User({
 				currentPlayer,
 				premise,
 				history,
@@ -85,30 +85,64 @@ const generateAIResponse = async (roomId: string, currentPlayer = '', isRetrying
 	});
 };
 
+interface TurnManager {
+	currentTurn: number;
+	players: Array<{ id: string; nickname: string }>;
+}
+
+const getNextTurn = (room: TurnManager): number => {
+	const totalPlayers = room.players.length;
+	if (totalPlayers === 0) return 0;
+	return ((room.currentTurn || 0) + 1) % totalPlayers;
+};
+
+const validatePlayerTurn = (room: TurnManager, playerId: string): boolean => {
+	const currentPlayer = room.players[room.currentTurn];
+	return currentPlayer?.id === playerId;
+};
+
 export const playChoice = (roomId: string, currentPlayer = '', choice = '') => {
 	updateRoom(roomId, room => {
 		const { lastAiResponse } = room;
 
-		const history = room.history || [];
 		if (currentPlayer && choice) {
 			if (!lastAiResponse) {
 				log.error({ _ctx: { roomId, currentPlayer } }, 'No last AI response found');
 				return;
 			}
-			// Player made a choice -- add to history and move to next turn
-			// TODO game history manager
-			room.history.push({ type: 'intro', text: lastAiResponse.intro });
-			room.history.push({ type: 'narrative', text: lastAiResponse.narrative });
-			room.history.push({ type: 'choice', text: choice, player: currentPlayer });
-			room.currentTurn = ((room.currentTurn || 0) + 1) % room.players.length;
+
+			// Validate current player's turn
+			const playerIndex = room.players.findIndex(p => p.nickname === currentPlayer);
+			if (playerIndex === -1 || playerIndex !== room.currentTurn) {
+				log.error({ _ctx: { roomId, currentPlayer } }, 'Invalid player turn');
+				return;
+			}
+
+			// Add history entry
+			room.history.push({
+				intro: lastAiResponse.intro,
+				narrative: lastAiResponse.narrative,
+				choice,
+				player: currentPlayer
+			});
+
+			// Advance to next turn
+			room.currentTurn = getNextTurn(room);
 		} else {
-			// TODO fix
-			// Regenerate last turn -- remove last turn and try again
-			room.history = history.slice(0, -3);
-			const curPlayerindex = room.players.findIndex(player => player.nickname === currentPlayer);
-			room.currentTurn = curPlayerindex;
+			// Regenerating last turn
+			room.history = room.history.slice(0, -1);
+			const playerIndex = room.players.findIndex(p => p.nickname === currentPlayer);
+			if (playerIndex !== -1) {
+				room.currentTurn = playerIndex;
+			}
 		}
+
 		const nextPlayer = room.players[room.currentTurn]?.nickname;
+		if (!nextPlayer) {
+			log.error({ _ctx: { roomId } }, 'No valid next player found');
+			return;
+		}
+
 		generateAIResponse(roomId, nextPlayer);
 	});
 };
@@ -118,20 +152,28 @@ export const registerChoiceHandlers = (socket: Socket) => {
 
 	socket.on('makeChoice', ({ roomId, choice }) => {
 		const room = roomManager.getRoom(roomId);
-		const SocketId = socket.id;
-		if (!room || room.currentPlayer !== SocketId) return;
-		log.debug({ _ctx: { roomId, SocketId, choice } }, 'Player chose');
+		if (!room) return;
 
-		const playerName = room.players.find(player => player.id === SocketId)?.nickname || 'Anonymous';
-		playChoice(roomId, playerName, choice);
+		if (!validatePlayerTurn(room, socket.id)) {
+			log.warn({ _ctx: { roomId, socketId: socket.id } }, 'Player tried to act out of turn');
+			return;
+		}
+
+		const player = room.players.find(p => p.id === socket.id);
+		if (!player) {
+			log.error({ _ctx: { roomId, socketId: socket.id } }, 'Player not found in room');
+			return;
+		}
+
+		playChoice(roomId, player.nickname, choice);
 	});
 
 	socket.on('regenerateResponse', (roomId: string) => {
 		const room = roomManager.getRoom(roomId);
 		if (!room) return;
 		const SocketId = socket.id;
-		log.debug({ _ctx: { roomId, SocketId } }, 'Regenerating response');
 		const playerName = socket.data.nickname || 'Anonymous';
+		log.info({ _ctx: { roomId, SocketId, playerName } }, 'Regenerating response');
 		playChoice(roomId, playerName);
 	});
 };
