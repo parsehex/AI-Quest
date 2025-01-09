@@ -115,7 +115,7 @@ const fetchLogs = async () => {
 	if (filters.value.level) params.append('level', filters.value.level);
 	if (filters.value.fromDate) params.append('from', filters.value.fromDate);
 	params.append('roomId', props.roomId);
-	logs.value = await $fetch('/api/logs?' + params.toString());
+	logs.value = await $fetch('/api/admin/logs?' + params.toString());
 	// sort timestamp strings
 	logs.value.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
 };

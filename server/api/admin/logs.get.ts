@@ -1,4 +1,4 @@
-import { useLogManager } from '../utils/LogManager'
+import { useLogManager } from '../../utils/LogManager'
 
 export default defineEventHandler(async (event) => {
 	const logManager = useLogManager()

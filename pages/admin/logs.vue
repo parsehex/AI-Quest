@@ -167,7 +167,7 @@ const fetchLogs = async () => {
 	if (filters.value.level) params.append('level', filters.value.level)
 	if (filters.value.fromDate) params.append('from', filters.value.fromDate)
 
-	logs.value = [...await $fetch('/api/logs?' + params.toString())]
+	logs.value = [...await $fetch('/api/admin/logs?' + params.toString())]
 }
 
 const exportLogs = () => {
