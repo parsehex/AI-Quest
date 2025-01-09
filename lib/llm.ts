@@ -1,11 +1,18 @@
 import OpenAI from 'openai';
 import { useLog } from '~/composables/useLog';
+import { MODEL_MAP } from './constants';
+import type { ModelConfig } from '~/types/Game/AI';
 
 const log = useLog('lib/llm');
 
 export class LLMManager {
 	private static instance: LLMManager | null = null;
 	private isProcessing = false;
+	public modelConfig: ModelConfig;
+
+	private constructor() {
+		this.modelConfig = MODEL_MAP as ModelConfig;
+	}
 
 	static getInstance(): LLMManager {
 		if (!LLMManager.instance) {
@@ -14,22 +21,22 @@ export class LLMManager {
 		return LLMManager.instance;
 	}
 
+	// TODO convert fastMode to type
 	async generateResponse(messages: any[], fastMode: boolean = false, extraCtx?: Record<string, unknown>): Promise<string> {
 		try {
 			this.isProcessing = true;
 			const config = useRuntimeConfig();
 
-			// Use fast mode settings if enabled and available
-			const baseURL = fastMode && config.private.openaiBaseUrl_fast
-				? config.private.openaiBaseUrl_fast
-				: config.private.openaiBaseUrl;
+			// Determine environment (dev/prod) and type
+			const isProd = process.env.NODE_ENV === 'production';
+			const env = isProd ? 'prod' : 'dev';
+			const type = fastMode ? 'fast' : 'good';
 
-			const model = fastMode && config.private.model_fast
-				? config.private.model_fast
-				: config.private.model;
+			// Get model config for current environment and speed
+			const [baseURL, model] = this.modelConfig[env][type];
 
-			const fast = fastMode ? 'fast' : 'quality';
-			log.debug({ _ctx: { model, baseURL } }, `Using ${fast} model`);
+			const mode = `${env}/${type}`;
+			log.debug({ _ctx: { model, baseURL, mode } }, `Using ${mode} model`);
 
 			// Create a new OpenAI instance with the appropriate baseURL
 			const openai = new OpenAI({

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import RoomLogsModal from '~/components/admin/RoomLogsModal.vue';
 import { useGameStatus } from '~/composables/useGameStatus';
+import type { ModelConfig } from '~/types/Game/AI';
 
 definePageMeta({
 	title: "Admin",
@@ -12,6 +13,10 @@ const log = useLog('pages/admin');
 const sock = useGameSocket();
 const admin = useAdminSocket();
 const gameStatus = useGameStatus();
+const currentEnv = ref(import.meta.dev ? 'dev' : 'prod');
+
+const modelConfig = ref<ModelConfig | null>(null);
+const selectedEnv = ref(currentEnv.value);
 
 // # of players across all rooms
 const totalPlayers = computed(() => {
@@ -29,7 +34,7 @@ const uniquePlayers = computed(() => {
 	return players.size;
 });
 
-onMounted(() => {
+onMounted(async () => {
 	sock.refreshRooms();
 
 	const savedPassword = localStorage.getItem('adminPassword');
@@ -40,6 +45,9 @@ onMounted(() => {
 	if (isValidated.value) {
 		gameStatus.refreshGameActive();
 	}
+
+	const response = await fetch('/api/admin/model-config');
+	modelConfig.value = await response.json();
 });
 
 const { isValidated } = admin;
@@ -89,19 +97,23 @@ const handleShowRoomLogs = (roomId: string) => {
 	showLogsModal.value = true;
 };
 
-
 const handleToggleGameActive = () => {
 	admin.setGameActive(!gameStatus.isActive.value);
+};
+
+const handleSaveModelConfig = () => {
+	if (!modelConfig.value) return;
+	admin.setModelConfig(modelConfig.value);
 };
 </script>
 <template>
 	<div class="container mx-auto p-4">
-		<h1 class="text-2xl font-bold mb-6"> Admin Panel <ULink v-if="isValidated" to="/admin/logs"
+		<h1 class="text-2xl font-bold mb-4"> Admin Panel <ULink v-if="isValidated" to="/admin/logs"
 				class="text-blue-500 hover:underline ml-2 border-l border-gray-500 pl-2">View Server Logs</ULink>
 			<!-- TODO turn logs into a collapsible -->
 		</h1>
 		<!-- Auth and Tools Grid -->
-		<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+		<div class="grid grid-cols-1 md:grid-cols-3 gap-2 my-2">
 			<!-- Authentication -->
 			<div class="p-4 bg-white dark:bg-neutral-800 rounded-lg shadow">
 				<h2 class="text-xl font-semibold mb-2">Authentication</h2>
@@ -127,6 +139,36 @@ const handleToggleGameActive = () => {
 				</div>
 			</div>
 		</div>
+		<!-- Model Configuration -->
+		<Collapsible v-show="isValidated" title="Model Configuration" :subtitle="currentEnv"
+			class="bg-white dark:bg-neutral-800 rounded-lg shadow p-4 my-2">
+			<div v-if="modelConfig" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+				<!-- Fast Model -->
+				<div class="space-y-4">
+					<h3 class="font-semibold">Fast Model</h3>
+					<UFormGroup label="Base URL">
+						<UInput v-model="modelConfig[selectedEnv].fast[0]" />
+					</UFormGroup>
+					<UFormGroup label="Model Name">
+						<UInput v-model="modelConfig[selectedEnv].fast[1]" />
+					</UFormGroup>
+				</div>
+				<!-- Good Model -->
+				<div class="space-y-4">
+					<h3 class="font-semibold">Good Model</h3>
+					<UFormGroup label="Base URL">
+						<UInput v-model="modelConfig[selectedEnv].good[0]" />
+					</UFormGroup>
+					<UFormGroup label="Model Name">
+						<UInput v-model="modelConfig[selectedEnv].good[1]" />
+					</UFormGroup>
+				</div>
+				<div class="md:col-span-2 flex justify-end">
+					<UButton @click="handleSaveModelConfig" color="primary"> Save Configuration </UButton>
+				</div>
+			</div>
+			<div v-else class="text-center py-4"> Loading configuration... </div>
+		</Collapsible>
 		<!-- Rooms List -->
 		<div v-show="isValidated" class="bg-white dark:bg-neutral-800 rounded-lg shadow p-4">
 			<h2 class="text-xl font-semibold mb-4 flex items-center gap-1">

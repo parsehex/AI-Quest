@@ -3,6 +3,7 @@ import { useRoomManager } from '../GameRoomManager';
 import { useServerOptions } from '../ServerOptionsManager';
 import { useLog } from '~/composables/useLog';
 import { useIO } from '~/server/plugins/socket.io';
+import { ModelConfig } from '~/types/Game/AI';
 
 const log = useLog('handlers/admin');
 
@@ -134,6 +135,23 @@ export const registerAdminHandlers = (socket: Socket) => {
 				io.emit('kicked');
 			}
 			socket.emit('admin:success', { message: `Game ${active ? 'activated' : 'deactivated'}` });
+		});
+	});
+
+	socket.on('admin:setModelConfig', (password: string, config: ModelConfig) => {
+		adminGuard(password, () => {
+			const SocketId = socket.id;
+			log.info({ _ctx: { SocketId } }, 'Updating model configuration');
+			const serverOptions = useServerOptions();
+			serverOptions.setModelConfig(config)
+				.then(() => {
+					io.emit('modelConfig', serverOptions.getModelConfig());
+					socket.emit('admin:success', { message: 'Model configuration updated' });
+				})
+				.catch((error) => {
+					log.error({ _ctx: { SocketId, error } }, 'Failed to update model configuration');
+					socket.emit('admin:error', { message: 'Failed to update model configuration' });
+				});
 		});
 	});
 };

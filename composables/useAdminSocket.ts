@@ -1,6 +1,7 @@
 'use client';
 import { ref } from 'vue';
 import { socket } from '~/lib/socket';
+import type { ModelConfig } from '~/types/Game/AI';
 
 const log = useLog('useAdminSocket');
 
@@ -95,6 +96,12 @@ class AdminSocketManager {
 		log.debug('Setting game active:', active);
 		socket.emit('admin:setGameActive', this.password.value, active);
 	}
+
+	public setModelConfig(config: ModelConfig): void {
+		if (!this.isValidated.value) return;
+		log.debug('Updating model configuration');
+		socket.emit('admin:setModelConfig', this.password.value, config);
+	}
 }
 
 export function useAdminSocket() {
@@ -114,5 +121,6 @@ export function useAdminSocket() {
 		kickPlayer: adminSocket.kickPlayer.bind(adminSocket),
 		toggleFastMode: adminSocket.toggleFastMode.bind(adminSocket),
 		setGameActive: adminSocket.setGameActive.bind(adminSocket),
+		setModelConfig: adminSocket.setModelConfig.bind(adminSocket),
 	};
 }

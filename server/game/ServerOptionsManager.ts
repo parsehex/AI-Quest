@@ -1,6 +1,14 @@
 import { useLog } from '~/composables/useLog';
+import { MODEL_MAP } from '~/lib/constants';
+import { deepAssign } from '~/lib/utils';
+import { ModelConfig } from '~/types/Game/AI';
 
 const log = useLog('ServerOptionsManager');
+
+interface ServerOptions {
+  gameActive: boolean;
+  ModelCfg: ModelConfig;
+}
 
 let optionsManagerInstance: ServerOptionsManager | null = null;
 
@@ -13,7 +21,7 @@ export function useServerOptions(): ServerOptionsManager {
 
 export class ServerOptionsManager {
   private storage = useStorage('server-options');
-  private options: { gameActive: boolean } = { gameActive: true };
+  private options = { gameActive: true, ModelCfg: MODEL_MAP } as ServerOptions;
 
   constructor() {
     this.loadOptions();
@@ -21,7 +29,7 @@ export class ServerOptionsManager {
 
   private async loadOptions() {
     try {
-      const savedOptions = await this.storage.getItem('options.json') as { gameActive: boolean } | null;
+      const savedOptions = await this.storage.getItem('options.json') as ServerOptions | null;
       if (savedOptions) {
         this.options = savedOptions;
       }
@@ -44,6 +52,15 @@ export class ServerOptionsManager {
 
   public async setGameActive(active: boolean): Promise<void> {
     this.options.gameActive = active;
+    await this.saveOptions();
+  }
+
+  public getModelConfig(): ModelConfig {
+    return this.options.ModelCfg;
+  }
+
+  public async setModelConfig(config: ModelConfig): Promise<void> {
+    deepAssign(this.options.ModelCfg, config);
     await this.saveOptions();
   }
 }
