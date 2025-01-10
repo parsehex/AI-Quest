@@ -140,7 +140,8 @@ class GameSocketManager {
 	// Public methods
 	public createRoom(premise: string, fastMode = false): void {
 		log.debug({ _ctx: { premise, fastMode } }, 'Creating room');
-		socket.emit('createRoom', premise, fastMode);
+		const nickname = localStorage.getItem('nickname') || 'Anonymous';
+		socket.emit('createRoom', premise, fastMode, nickname);
 	}
 
 	public joinRoom(roomId: string): void {

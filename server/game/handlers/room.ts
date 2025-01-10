@@ -12,9 +12,8 @@ export const registerRoomHandlers = (socket: Socket) => {
 	const io = useIO();
 	const roomManager = useRoomManager();
 
-	socket.on('createRoom', async (premise: string, fastMode: boolean) => {
+	socket.on('createRoom', async (premise: string, fastMode: boolean, playerName = '') => {
 		const SocketId = socket.id;
-		const playerName = socket.data.nickname || 'Anonymous';
 		log.debug({ _ctx: { SocketId, playerName, premise, fastMode } }, 'Socket is creating room');
 
 		const room = await roomManager.createRoom(socket.id, premise, fastMode, playerName);
