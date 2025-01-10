@@ -72,7 +72,7 @@
 </template>
 <script setup>
 import { ref, computed } from 'vue'
-import { JsonViewer } from '~/components/JsonViewer'
+import JsonViewer from '~/components/JsonViewer/Viewer.vue'
 
 const levels = ['debug', 'info', 'warn', 'error']
 const isModalOpen = ref(false)

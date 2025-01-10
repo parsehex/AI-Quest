@@ -8,7 +8,7 @@ import { defineComponent } from 'vue'
 import JsonViewerItem from './Item.vue'
 
 export default defineComponent({
-	name: 'JsonViewer',
+	name: 'Viewer',
 	components: {
 		JsonViewerItem
 	},

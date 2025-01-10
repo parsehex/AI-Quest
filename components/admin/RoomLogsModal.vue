@@ -66,7 +66,7 @@
 </template>
 <script setup lang="ts">
 import type { LogEntry, LogLevel } from '~/types/Logs';
-import { JsonViewer } from '~/components/JsonViewer';
+import JsonViewer from '~/components/JsonViewer/Viewer.vue';
 
 const props = defineProps<{
 	modelValue: boolean,

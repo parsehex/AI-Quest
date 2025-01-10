@@ -17,14 +17,19 @@
 				</div>
 			</template>
 		</div>
-		<span v-if="!isObject" class="primitive" :class="valueType"> {{ formatValue(data) }} </span>
+		<span v-if="!isObject" class="primitive" :class="valueType">
+			<UTooltip v-if="typeof data === 'string'" text="Copy value">
+				<span class="string-value" @click="copyValue(data)">{{ formatValue(data) }}</span>
+			</UTooltip>
+			<template v-else>{{ formatValue(data) }}</template>
+		</span>
 	</div>
 </template>
 <script lang="ts">
 import { defineComponent, ref, computed } from 'vue'
 
 export default defineComponent({
-	name: 'JsonViewerItem',
+	name: 'Item',
 	props: {
 		data: {
 			type: [Object, Array, String, Number, Boolean],
@@ -36,6 +41,8 @@ export default defineComponent({
 		}
 	},
 	setup(props) {
+		const toast = useToast()
+
 		const isExpanded = ref(true)
 
 		const isObject = computed(() =>
@@ -59,13 +66,22 @@ export default defineComponent({
 			return String(value)
 		}
 
+		const copyValue = (value: string) => {
+			copyToClipboard(value)
+			toast.add({
+				color: 'primary',
+				description: 'Value copied to clipboard'
+			})
+		}
+
 		return {
 			isExpanded,
 			isObject,
 			isArray,
 			valueType,
 			toggle,
-			formatValue
+			formatValue,
+			copyValue
 		}
 	}
 })
@@ -100,6 +116,10 @@ export default defineComponent({
 	color: #c41a16;
 	word-break: break-word;
 	white-space: pre-wrap;
+}
+
+.string-value {
+	cursor: pointer;
 }
 
 .primitive.number {
