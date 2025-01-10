@@ -8,10 +8,10 @@ interface UserInput extends SystemInput {
 }
 
 const System = createPrompt<SystemInput>((input) => `Assistant is a creative game master crafting a multiplayer interactive story.
-Assistant's task is to expand on or remix the provided premise. Respond in the following format:
+Assistant's task is to expand on or remix the provided premise, responding in the following format:
 
 <output>
-
+Expanded Premise
 </output>`)
 
 const User = createPrompt<UserInput>((input) => {

@@ -4,6 +4,7 @@ import { useLog } from '~/composables/useLog';
 import { LLMManager } from '~/lib/llm';
 import { GameMaster } from '~/lib/prompts/templates';
 import { TTSManager } from '~/lib/tts';
+import { delay } from '~/lib/utils';
 
 const log = useLog('handlers/choices');
 
@@ -26,11 +27,12 @@ const generateAIResponse = async (roomId: string, currentPlayer = '', isRetrying
 	const playerNames = history.map(evt => evt.player);
 	const isNewPlayer = playerNames.includes(currentPlayer);
 	const playerCharacter = room.players.find(player => player.nickname === currentPlayer)?.character;
+	const roomName = room.name;
 	const prompt = GameMaster.System({ currentPlayer });
 
-	const latestEvent = history.slice(-1)[0];
-	const latestEventText = `Player \`${latestEvent.player}\` chose: ${latestEvent.choice}`;
-	history = history.slice(0, -1);
+	// const latestEvent = history.slice(-1)[0];
+	// const latestEventText = latestEvent ? `Player \`${latestEvent.player}\` chose: ${latestEvent.choice}` : '';
+	// console.log('Generating response', { currentPlayer, history });
 
 	let response = await llm.generateResponse([
 		{ role: 'system', content: prompt },
@@ -39,12 +41,13 @@ const generateAIResponse = async (roomId: string, currentPlayer = '', isRetrying
 				currentPlayer,
 				premise,
 				history,
-				latestEvent: latestEventText,
+				roomName,
+				// latestEvent: latestEventText,
 				isNewPlayer,
 				playerCharacter
 			}),
 		}
-	], room.fastMode, { roomId, currentPlayer, isRetrying, playerCharacter, history });
+	], room.fastMode, { roomId, roomName, currentPlayer, isRetrying, playerCharacter, history });
 
 	// The last closing tag is often cut off in LLM responses
 	if (!response.includes('</choices>') && response.includes('<choices>')) {
@@ -90,11 +93,6 @@ interface TurnManager {
 	players: Array<{ id: string; nickname: string }>;
 }
 
-const getNextTurn = (room: TurnManager): number => {
-	const totalPlayers = room.players.length;
-	if (totalPlayers === 0) return 0;
-	return ((room.currentTurn || 0) + 1) % totalPlayers;
-};
 
 const validatePlayerTurn = (room: TurnManager, playerId: string): boolean => {
 	const currentPlayer = room.players[room.currentTurn];
@@ -102,7 +100,11 @@ const validatePlayerTurn = (room: TurnManager, playerId: string): boolean => {
 };
 
 export const playChoice = (roomId: string, currentPlayer = '', choice = '') => {
-	updateRoom(roomId, room => {
+	const roomManager = useRoomManager();
+	const room = roomManager.getRoom(roomId);
+	if (!room) return;
+
+	updateRoom(roomId, async room => {
 		const { lastAiResponse } = room;
 
 		if (currentPlayer && choice) {
@@ -118,19 +120,24 @@ export const playChoice = (roomId: string, currentPlayer = '', choice = '') => {
 				return;
 			}
 
-			// Add history entry
-			room.history.push({
+			// Create new history entry
+			const historyEntry = {
 				intro: lastAiResponse.intro,
 				narrative: lastAiResponse.narrative,
 				choice,
 				player: currentPlayer
-			});
+			};
+			console.log('adding', historyEntry);
+
+			// Ensure history is initialized as an array
+			room.history = Array.isArray(room.history) ? [...room.history, historyEntry] : [historyEntry];
 
 			// Advance to next turn
-			room.currentTurn = getNextTurn(room);
+			room.currentTurn = ((playerIndex + 1) % room.players.length);
 		} else {
-			// Regenerating last turn
-			room.history = room.history.slice(0, -1);
+			console.log(typeof room.history, Array.isArray(room.history), room.history);
+			// Regenerating last turn or generating first turn
+			room.history = Array.isArray(room.history) ? room.history.slice(0, -1) : [];
 			const playerIndex = room.players.findIndex(p => p.nickname === currentPlayer);
 			if (playerIndex !== -1) {
 				room.currentTurn = playerIndex;
@@ -143,6 +150,7 @@ export const playChoice = (roomId: string, currentPlayer = '', choice = '') => {
 			return;
 		}
 
+		await delay(25)
 		generateAIResponse(roomId, nextPlayer);
 	});
 };
@@ -165,6 +173,7 @@ export const registerChoiceHandlers = (socket: Socket) => {
 			return;
 		}
 
+		console.log('Player made choice', { roomId, player: player.nickname });
 		playChoice(roomId, player.nickname, choice);
 	});
 
@@ -174,6 +183,7 @@ export const registerChoiceHandlers = (socket: Socket) => {
 		const SocketId = socket.id;
 		const playerName = socket.data.nickname || 'Anonymous';
 		log.info({ _ctx: { roomId, SocketId, playerName } }, 'Regenerating response');
+		console.log('Regenerating response', { roomId, playerName });
 		playChoice(roomId, playerName);
 	});
 };
