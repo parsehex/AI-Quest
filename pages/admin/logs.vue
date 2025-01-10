@@ -63,16 +63,16 @@
 			</div>
 		</div>
 		<!-- Context Modal -->
-		<UModal v-model="isModalOpen" :ui="{ width: 'max-w-2xl' }">
+		<UModal v-model="isModalOpen" :ui="{ width: 'max-w-5xl' }">
 			<template #header> Log Context </template>
 			<!-- TODO json viewer -->
-			<pre class="rounded p-4 overflow-x-auto whitespace-pre-wrap break-words"><code>{{ JSON.stringify(selectedLog?.context,
-				null, 2) }}</code></pre>
+			<JsonViewer v-if="selectedLog" :data="selectedLog.context" />
 		</UModal>
 	</div>
 </template>
 <script setup>
 import { ref, computed } from 'vue'
+import { JsonViewer } from '~/components/JsonViewer'
 
 const levels = ['debug', 'info', 'warn', 'error']
 const isModalOpen = ref(false)

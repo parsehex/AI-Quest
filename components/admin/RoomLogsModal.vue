@@ -58,15 +58,15 @@
 			</UTable>
 		</div>
 		<!-- Context Modal -->
-		<UModal v-model="isContextModalOpen" :ui="{ width: 'max-w-2xl' }">
+		<UModal v-model="isContextModalOpen" :ui="{ width: 'max-w-5xl' }">
 			<template #header>Log Context</template>
-			<pre class="rounded p-4 overflow-x-auto whitespace-pre-wrap break-words"><code>{{ JSON.stringify(selectedLog?.context,
-				null, 2) }}</code></pre>
+			<JsonViewer v-if="selectedLog" :data="selectedLog.context" />
 		</UModal>
 	</UModal>
 </template>
 <script setup lang="ts">
 import type { LogEntry, LogLevel } from '~/types/Logs';
+import { JsonViewer } from '~/components/JsonViewer';
 
 const props = defineProps<{
 	modelValue: boolean,
@@ -84,7 +84,7 @@ const isOpen = computed({
 const levels = ['debug', 'info', 'warn', 'error'];
 const logs = ref([] as LogEntry[]);
 const isContextModalOpen = ref(false);
-const selectedLog = ref(null as LogEntry | null);
+const selectedLog = ref(null as any);
 const filters = ref({
 	level: '',
 	fromDate: '',
