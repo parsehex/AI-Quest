@@ -54,7 +54,7 @@ watch(() => sock.thisRoom.value?.lastAiResponse?.tts, (newTTS) => {
       <div v-if="room?.history" class="prose dark:prose-invert max-w-none">
         <div v-for="(msg, i) in room?.history" :key="i">
           <p>{{ msg.intro }}</p>
-          <p>{{ msg.narrative }}</p>
+          <p class="whitespace-pre-wrap">{{ msg.narrative }}</p>
           <p>
             <span class="text-muted">{{ msg.player }} chose: </span>
             <span class="font-bold">{{ msg.choice }}</span>
@@ -70,7 +70,7 @@ watch(() => sock.thisRoom.value?.lastAiResponse?.tts, (newTTS) => {
           <audio v-if="sock.thisRoom.value.lastAiResponse.tts" ref="audioRef"
             :src="sock.thisRoom.value.lastAiResponse.tts" controls class="w-full mt-2 mb-4" />
           <h3>{{ sock.thisRoom.value.lastAiResponse.intro }}</h3>
-          <p>{{ sock.thisRoom.value.lastAiResponse.narrative }}</p>
+          <p class="whitespace-pre-wrap">{{ sock.thisRoom.value.lastAiResponse.narrative }}</p>
           <div v-if="isMyTurn" class="mt-4">
             <h4>Your turn - Choose your action:</h4>
             <div class="space-y-2">
