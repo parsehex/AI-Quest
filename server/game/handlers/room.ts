@@ -5,6 +5,7 @@ import { playChoice } from './choices';
 import { useIO } from '~/server/plugins/socket.io';
 import { LLMManager } from '~/lib/llm';
 import { RemixPremise } from '~/lib/prompts/templates';
+import { extractOutput } from '~/lib/utils';
 
 const log = useLog('handlers/rooms');
 
@@ -76,7 +77,7 @@ export const registerRoomHandlers = (socket: Socket) => {
 	socket.on('remixPremise', async ({ roomId, premise, playerName }) => {
 		console.log('remixPremise', { roomId, premise, playerName });
 		const llm = LLMManager.getInstance();
-		const response = await llm.generateResponse([
+		let response = await llm.generateResponse([
 			{ role: 'system', content: RemixPremise.System({}) },
 			{
 				role: 'user', content: RemixPremise.User({
@@ -85,6 +86,7 @@ export const registerRoomHandlers = (socket: Socket) => {
 				}),
 			}
 		], true, { roomId });
+		response = extractOutput(response);
 		socket.emit('remixResponse', response);
 	});
 

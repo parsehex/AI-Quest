@@ -4,6 +4,7 @@ import { Server } from 'socket.io';
 import { useIO } from '../plugins/socket.io';
 import { GenerateTitle } from '~/lib/prompts/templates';
 import { LLMManager } from '~/lib/llm';
+import { extractOutput } from '~/lib/utils';
 
 const log = useLog('GameRoomManager');
 
@@ -69,7 +70,7 @@ export class GameRoomManager {
 		log.debug({ _ctx: { socketId, premise, fastMode, createdBy } }, 'Creating room');
 		const roomId = Math.random().toString(36).substring(7);
 		const llm = LLMManager.getInstance();
-		let response = await llm.generateResponse([
+		const response = await llm.generateResponse([
 			{ role: 'system', content: GenerateTitle.System({}) },
 			{
 				role: 'user', content: GenerateTitle.User({
@@ -78,12 +79,7 @@ export class GameRoomManager {
 				}),
 			}
 		], true, { roomId });
-		console.log(response);
-		let name = '';
-		const nameMatch = response.match(/<output>(.*?)<\/output>/s);
-		if (nameMatch) {
-			name = nameMatch[1].trim();
-		}
+		const name = extractOutput(response);
 
 		const room: Room = {
 			id: roomId,

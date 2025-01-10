@@ -53,9 +53,9 @@ const generateAIResponse = async (roomId: string, currentPlayer = '', isRetrying
 
 	// Parse sections
 	const sections = {
-		intro: response.match(/<intro>(.*?)<\/intro>/s)?.[1] || '',
-		narrative: response.match(/<narrative>(.*?)<\/narrative>/s)?.[1] || '',
-		choices: response.match(/<choices>(.*?)<\/choices>/s)?.[1].trim().split('\n') || [],
+		intro: response.match(/<\/?intro>(.*?)<\/intro>/s)?.[1] || '',
+		narrative: response.match(/<\/?narrative>(.*?)<\/narrative>/s)?.[1] || '',
+		choices: response.match(/<\/?choices>(.*?)<\/choices>/s)?.[1].trim().split('\n') || [],
 		tts: undefined as string | undefined
 	};
 	sections.intro = sections.intro.trim();
