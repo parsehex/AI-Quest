@@ -49,7 +49,12 @@ const handleCreateRoom = async (e?: Event) => {
 }
 
 const handleRefreshStarterPremise = async () => {
-  sock.premiseInput.value = STARTER_PREMISES[Math.floor(Math.random() * STARTER_PREMISES.length)]
+  const picked = STARTER_PREMISES[Math.floor(Math.random() * STARTER_PREMISES.length)]
+  if (picked === sock.premiseInput.value) {
+    handleRefreshStarterPremise()
+  } else {
+    sock.premiseInput.value = picked
+  }
 }
 
 // Lifecycle
