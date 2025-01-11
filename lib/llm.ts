@@ -49,6 +49,8 @@ export class LLMManager {
 				model,
 				temperature: 0.25,
 				max_tokens: 768,
+				frequency_penalty: 1.01,
+				presence_penalty: 1.05,
 			};
 
 			const completion = await openai.chat.completions.create(Request);
