@@ -8,6 +8,7 @@ const props = defineProps({
 	}
 });
 
+const { setCharacter } = useCharacter()
 const isExpanded = ref(false);
 const displayName = ref('');
 const character = ref({
@@ -25,10 +26,8 @@ const characterOptions = {
 	backgrounds: ['', 'Noble', 'Merchant', 'Criminal', 'Soldier', 'Scholar']
 };
 
-const emit = defineEmits(['change']);
-
 watch(() => character, () => {
-	emit('change', character.value);
+	setCharacter(character.value);
 }, { deep: true });
 
 onMounted(() => {
