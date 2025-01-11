@@ -3,7 +3,7 @@
   "author": "parsehex",
   "version": "1.0.0",
   "private": true,
-  "license": "MIT License",
+  "license": "AGPL License",
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev --host 0.0.0.0",
