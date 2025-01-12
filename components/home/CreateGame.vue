@@ -2,10 +2,7 @@
 const { fastMode, createRoom, refreshStarterPremise, premiseInput, remixPremise } = useCreateGame()
 </script>
 <template>
-	<section class="bg-gray-800 rounded-lg p-6 transition-all duration-300">
-		<h2 class="text-2xl font-bold mb-6 flex items-center">
-			<i class="i-heroicons-plus-circle mr-2" /> Create a Game
-		</h2>
+	<BaseCard title="Create a Game" icon="i-heroicons-plus-circle">
 		<form @submit.prevent="createRoom" class="space-y-4">
 			<div>
 				<span class="block text-sm font-medium mb-2"> Game Premise
@@ -28,5 +25,5 @@ const { fastMode, createRoom, refreshStarterPremise, premiseInput, remixPremise 
 			</div>
 			<UButton type="submit" icon="i-heroicons-plus" class="w-full"> Create Game </UButton>
 		</form>
-	</section>
+	</BaseCard>
 </template>

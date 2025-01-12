@@ -36,14 +36,11 @@ const navigateToRoom = (roomId: string, isSpectator = false) => {
 };
 </script>
 <template>
-	<section class="bg-gray-800 rounded-lg p-6 transition-all duration-300 max-w-2xl mx-auto">
-		<header class="flex items-center justify-between mb-4 gap-4">
-			<h2 class="text-2xl font-bold flex items-center">
-				<i class="i-heroicons-play-circle mr-2" /> Game Rooms
-			</h2>
+	<BaseCard title="Game Rooms" icon="i-heroicons-play-circle">
+		<template #header-right>
 			<UBadge v-if="games.length" :color="activeGames.length ? 'green' : 'gray'" size="xs"> {{ activeGames.length }}
 				Active </UBadge>
-		</header>
+		</template>
 		<div v-if="!games.length" class="text-center py-8 text-gray-400">
 			<i class="i-heroicons-face-frown text-4xl mb-2" />
 			<p>No games found</p>
@@ -63,5 +60,5 @@ const navigateToRoom = (roomId: string, isSpectator = false) => {
 				</div>
 			</li>
 		</ul>
-	</section>
+	</BaseCard>
 </template>
