@@ -22,7 +22,7 @@ export class LLMManager {
 	}
 
 	// TODO convert fastMode to type
-	async generateResponse(messages: any[], fastMode: boolean = false, extraCtx?: Record<string, unknown>): Promise<string> {
+	async generateResponse(messages: any[], fastMode: boolean = false, extraCtx?: Record<string, unknown>, modelOverride = ''): Promise<string> {
 		try {
 			this.isProcessing = true;
 			const config = useRuntimeConfig();
@@ -33,7 +33,8 @@ export class LLMManager {
 			const type = fastMode ? 'fast' : 'good';
 
 			// Get model config for current environment and speed
-			const [baseURL, model] = this.modelConfig[env][type];
+			let [baseURL, model] = this.modelConfig[env][type];
+			if (modelOverride) model = modelOverride;
 
 			const mode = `${env}/${type}`;
 			log.debug({ _ctx: { model, baseURL, mode } }, `Using ${mode} model`);

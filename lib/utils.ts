@@ -26,7 +26,7 @@ export function extractOutput(llmResponse: string): string {
 			startIndex = llmResponse.indexOf(startTag);
 			console.log('partial tag\n', llmResponse, '--');
 		} else {
-			return '';
+			return llmResponse;
 		}
 	}
 

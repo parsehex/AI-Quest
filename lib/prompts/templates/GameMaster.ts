@@ -8,6 +8,7 @@ const info = {
 interface SystemInput {
 	currentPlayer: string
 	roomName?: string
+	thoughts?: string
 }
 
 interface UserInput extends SystemInput {
@@ -40,7 +41,7 @@ Detailed and contextually specific description of the events and actions that ha
 </choices>
 Create contextually-engaging choices to push the adventure forward.
 Respond with the sections' text without further prose.
-Pay attention and react to the latest event in a natural way.`)
+Pay attention and react to the latest event in a natural way.${input.thoughts ? `\n\nThese are the Game Master's thoughts:\n${input.thoughts}` : ''}`);
 
 // TODO convert history to messages
 const User = createPrompt<UserInput>((input) => {

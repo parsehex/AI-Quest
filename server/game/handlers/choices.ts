@@ -2,9 +2,9 @@ import { type Socket } from 'socket.io';
 import { updateRoom, useRoomManager } from '../GameRoomManager';
 import { useLog } from '~/composables/useLog';
 import { LLMManager } from '~/lib/llm';
-import { GameMaster } from '~/lib/prompts/templates';
+import { GameMaster, Thoughts } from '~/lib/prompts/templates';
 import { TTSManager } from '~/lib/tts';
-import { delay } from '~/lib/utils';
+import { delay, extractOutput } from '~/lib/utils';
 
 const log = useLog('handlers/choices');
 
@@ -28,7 +28,14 @@ const generateAIResponse = async (roomId: string, currentPlayer = '', isRetrying
 	const isNewPlayer = playerNames.includes(currentPlayer);
 	const playerCharacter = room.players.find(player => player.nickname === currentPlayer)?.character;
 	const roomName = room.name;
-	const prompt = GameMaster.System({ currentPlayer });
+
+	let thoughts = await llm.generateResponse([
+		{ role: 'system', content: Thoughts.System({}) },
+		{ role: 'user', content: GameMaster.User({ currentPlayer, premise, history, isNewPlayer, playerCharacter }) }
+	], room.fastMode, { roomId, roomName, currentPlayer, isRetrying, playerCharacter, history }, 'huihui_ai/llama3.2-abliterate:3b-instruct');
+	thoughts = extractOutput(thoughts);
+	console.log('Thoughts', thoughts);
+	const prompt = GameMaster.System({ currentPlayer, thoughts });
 
 	// const latestEvent = history.slice(-1)[0];
 	// const latestEventText = latestEvent ? `Player \`${latestEvent.player}\` chose: ${latestEvent.choice}` : '';
@@ -69,6 +76,14 @@ const generateAIResponse = async (roomId: string, currentPlayer = '', isRetrying
 		log.warn({ _ctx: { roomId } }, 'No choices found, regenerating response');
 		await generateAIResponse(roomId, currentPlayer, true);
 	}
+
+	// TODO get different tenses for choices using 3b model
+	//   (i.e. extract each choice into 1st person, 2nd person, 3rd person)
+	// use 2nd person for choice buttons
+	// 1st person when showing in history in UI
+	// 3rd person to use in history section for the AI
+	// TODO generate profile pictures for characters
+	// disjointed: use 3b to let players chat with the GM
 
 	if (sections.narrative) {
 		updateRoom(roomId, async room => {
@@ -179,6 +194,8 @@ export const registerChoiceHandlers = (socket: Socket) => {
 
 	socket.on('regenerateResponse', (roomId: string) => {
 		const room = roomManager.getRoom(roomId);
+		// TODO if there are no players and this is the previous player, acknowledge/welcome them back
+
 		if (!room) return;
 		const SocketId = socket.id;
 		const playerName = socket.data.nickname || 'Anonymous';
