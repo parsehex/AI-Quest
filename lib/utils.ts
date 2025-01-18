@@ -12,6 +12,13 @@ export function deepAssign(target: Record<string, unknown>, source: Record<strin
 }
 
 export function extractOutput(llmResponse: string): string {
+	const startIsQuote = llmResponse[0] === '"';
+	const endIsQuote = llmResponse[llmResponse.length - 1] === '"';
+
+	if (startIsQuote && endIsQuote) {
+		return llmResponse.substring(1, llmResponse.length - 2).trim();
+	}
+
 	const startTag = '<output>';
 	const endTag = '</output>';
 
@@ -24,7 +31,7 @@ export function extractOutput(llmResponse: string): string {
 			const newLines = llmResponse.split('\n').slice(1);
 			llmResponse = startTag + '\n' + newLines.join('\n');
 			startIndex = llmResponse.indexOf(startTag);
-			console.log('partial tag\n', llmResponse, '--');
+			// console.log('partial tag\n', llmResponse, '--');
 		} else {
 			return llmResponse;
 		}
