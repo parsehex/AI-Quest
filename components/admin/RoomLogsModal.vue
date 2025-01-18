@@ -14,10 +14,6 @@
 					<div class="font-medium">{{ room.players.length }}</div>
 				</div>
 				<div>
-					<div class="text-sm text-muted">Fast Mode</div>
-					<UBadge :color="room.fastMode ? 'yellow' : 'orange'" :label="room.fastMode ? 'Enabled' : 'Disabled'" />
-				</div>
-				<div>
 					<div class="text-sm text-muted">Created By</div>
 					<div class="font-medium">{{ room.createdBy }}</div>
 				</div>
