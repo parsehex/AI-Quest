@@ -11,22 +11,30 @@ export function deepAssign(target: Record<string, unknown>, source: Record<strin
 	return Object.assign(target || {}, source);
 }
 
+const removeQuotes = (str: string) => {
+	const startIsQuote = str[0] === '"';
+	const endIsQuote = str[str.length - 1] === '"';
+
+	if (startIsQuote && endIsQuote)
+		return str.substring(1, str.length - 1).trim();
+	else
+		return str;
+};
 export function extractOutput(llmResponse: string): string {
 	const startTag = '<output>';
 	const endTag = '</output>';
 
 	let startIndex = llmResponse.indexOf(startTag);
+	// is there a "output>" on the first line?
 	if (startIndex === -1) {
-		// is there a "output>" on the first line?
 		const firstLine = llmResponse.split('\n')[0];
 		if (firstLine.includes('output>')) {
 			// replace first line with the output tag
 			const newLines = llmResponse.split('\n').slice(1);
 			llmResponse = startTag + '\n' + newLines.join('\n');
 			startIndex = llmResponse.indexOf(startTag);
-			// console.log('partial tag\n', llmResponse, '--');
 		} else {
-			return llmResponse;
+			return removeQuotes(llmResponse);
 		}
 	}
 
@@ -42,10 +50,5 @@ export function extractOutput(llmResponse: string): string {
 		content = llmResponse.substring(contentStart, endIndex).trim();
 	}
 
-	const startIsQuote = content[0] === '"';
-	const endIsQuote = content[content.length - 1] === '"';
-
-	if (startIsQuote && endIsQuote)
-		return content.substring(1, content.length - 1).trim();
-	return content;
+	return removeQuotes(content);
 }

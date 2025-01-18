@@ -17,10 +17,7 @@ const llmOptions = {
 }
 
 const System = createPrompt<SystemInput>((input) => `Assistant's task is to write a creative title for an interactive game based on the provided premise.
-Respond in the following format:
-<output>
-Name
-</output>`)
+Respond with the name only, without further prose.`)
 
 const User = createPrompt<UserInput>((input) => {
 	let prompt = `Game Premise: ${input.premise}\n`;
