@@ -42,6 +42,9 @@ export class LLMManager {
 			const openai = new OpenAI({
 				baseURL,
 				apiKey: config.private.openrouterApiKey,
+				defaultHeaders: {
+					"X-Title": "AI Quest",
+				},
 			});
 
 			const Request = {
