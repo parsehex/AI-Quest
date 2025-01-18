@@ -14,5 +14,7 @@ export const MODEL_MAP = {
 	prod: {
 		fast: ['https://openrouter.ai/api/v1', 'meta-llama/llama-3.1-8b-instruct'],
 		good: ['https://openrouter.ai/api/v1', 'meta-llama/llama-3.3-70b-instruct']
+		fast: ['https://openrouter.ai/api/v1', 'meta-llama/llama-3.1-8b-instruct:free'],
+		good: ['https://openrouter.ai/api/v1', 'meta-llama/llama-3.1-70b-instruct:free']
 	}
 };
