@@ -6,6 +6,7 @@ import { useIO } from '~/server/plugins/socket.io';
 import { LLMManager } from '~/lib/llm';
 import { RemixPremise } from '~/lib/prompts/templates';
 import { extractOutput } from '~/lib/utils';
+import { STARTER_PREMISES } from '~/lib/constants';
 
 const log = useLog('handlers/rooms');
 
@@ -16,6 +17,12 @@ export const registerRoomHandlers = (socket: Socket) => {
 	socket.on('createRoom', async (premise: string, fastMode: boolean, playerName = '') => {
 		const SocketId = socket.id;
 		log.debug({ _ctx: { SocketId, playerName, premise, fastMode } }, 'Socket is creating room');
+
+		const isDev = process.env.NODE_ENV === 'development';
+		if (!STARTER_PREMISES.includes(premise) && isDev) {
+			socket.emit('toast', 'Invalid Premise', 'You must use a predefined premise');
+			return;
+		}
 
 		const room = await roomManager.createRoom(socket.id, premise, fastMode, playerName);
 		socket.join(room.id);

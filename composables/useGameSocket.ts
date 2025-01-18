@@ -34,6 +34,7 @@ export function getPlayerCharacter(): PlayerCharacter {
 class GameSocketManager {
 	private static instance: GameSocketManager | null = null;
 	private refreshInterval: NodeJS.Timeout | null = null;
+	private toast = useToast();
 
 	public isConnected = ref(false);
 	public transport = ref('N/A');
@@ -43,7 +44,7 @@ class GameSocketManager {
 	public error = ref(null);
 	public messages = ref<ChatMessage[]>([]);
 	public hasRooms = computed(() => this.rooms.value.length > 0);
-	public premiseInput = ref(import.meta.env.DEV ? STARTER_PREMISES[Math.floor(Math.random() * STARTER_PREMISES.length)] : '',);
+	public premiseInput = ref(STARTER_PREMISES[Math.floor(Math.random() * STARTER_PREMISES.length)]);
 
 	private constructor() {
 		this.initializeSocketListeners();
@@ -74,6 +75,7 @@ class GameSocketManager {
 		socket.on('newMessage', this.onNewMessage.bind(this));
 		socket.on('kicked', this.onKicked.bind(this));
 		socket.on('remixResponse', this.onKicked.bind(this));
+		socket.on('toast', this.onToast.bind(this));
 	}
 
 	private onConnect(): void {
@@ -127,6 +129,13 @@ class GameSocketManager {
 		window.location.href = '/';
 	}
 
+	private onToast(title: string, description: string) {
+		this.toast.add({
+			title,
+			description,
+		});
+	}
+
 	public cleanup(): void {
 		socket.off('connect');
 		socket.off('disconnect');
@@ -135,6 +144,8 @@ class GameSocketManager {
 		socket.off('chatHistory');
 		socket.off('newMessage');
 		socket.off('kicked');
+		socket.off('remixResponse');
+		socket.off('toast');
 	}
 
 	// Public methods
