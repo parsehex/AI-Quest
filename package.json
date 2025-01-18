@@ -12,7 +12,8 @@
     "postinstall": "nuxt prepare",
     "start": "node .output/server/index.mjs",
     "lint": "eslint --ext .js,.ts,.vue --ignore-path .gitignore .",
-    "lint:fix": "eslint --ext .js,.ts,.vue --ignore-path .gitignore . --fix"
+    "lint:fix": "eslint --ext .js,.ts,.vue --ignore-path .gitignore . --fix",
+    "test": "vitest"
   },
   "devDependencies": {
     "@heroicons/vue": "^2.0.18",
@@ -36,7 +37,8 @@
     "prettier": "^2.8.8",
     "resend": "^2.0.0",
     "sass": "^1.63.3",
-    "sitemap": "^7.1.1"
+    "sitemap": "^7.1.1",
+    "vitest": "^3.0.2"
   },
   "overrides": {
     "vite": "5.x"

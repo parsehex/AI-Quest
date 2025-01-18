@@ -12,13 +12,6 @@ export function deepAssign(target: Record<string, unknown>, source: Record<strin
 }
 
 export function extractOutput(llmResponse: string): string {
-	const startIsQuote = llmResponse[0] === '"';
-	const endIsQuote = llmResponse[llmResponse.length - 1] === '"';
-
-	if (startIsQuote && endIsQuote) {
-		return llmResponse.substring(1, llmResponse.length - 2).trim();
-	}
-
 	const startTag = '<output>';
 	const endTag = '</output>';
 
@@ -40,9 +33,19 @@ export function extractOutput(llmResponse: string): string {
 	const contentStart = startIndex + startTag.length;
 	const endIndex = llmResponse.indexOf(endTag, contentStart);
 
+	let content = '';
+
 	if (endIndex === -1) {
-		return llmResponse.substring(contentStart).trim();
+		// no </output>, return all past starting tag
+		content = llmResponse.substring(contentStart).trim();
+	} else {
+		content = llmResponse.substring(contentStart, endIndex).trim();
 	}
 
-	return llmResponse.substring(contentStart, endIndex).trim();
+	const startIsQuote = content[0] === '"';
+	const endIsQuote = content[content.length - 1] === '"';
+
+	if (startIsQuote && endIsQuote)
+		return content.substring(1, content.length - 1).trim();
+	return content;
 }
