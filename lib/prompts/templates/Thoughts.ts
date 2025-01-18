@@ -17,7 +17,7 @@ const info = {
 }
 
 const llmOptions = {
-	model: 'huihui_ai/llama3.2-abliterate:3b-instruct'
+	temperature: 0.3
 }
 
 const System = createPrompt<SystemInput>((input) => `Assistant's task is to help the Game Master, who is crafting a multiplayer interactive adventure, and needs to use the provided game information to write the next turn.

@@ -12,7 +12,6 @@ const info = {
 }
 
 const llmOptions = {
-	model: 'huihui_ai/llama3.2-abliterate:3b-instruct',
 	temperature: 0.75,
 	max_tokens: 75
 }
