@@ -78,7 +78,7 @@ export class GameRoomManager {
 					playerName: createdBy,
 				}),
 			}
-		], true, { roomId });
+		], GenerateTitle.info.fast, { roomId }, GenerateTitle.llmOptions);
 		const name = extractOutput(response);
 
 		const room: Room = {

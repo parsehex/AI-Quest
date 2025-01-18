@@ -32,7 +32,7 @@ const generateAIResponse = async (roomId: string, currentPlayer = '', isRetrying
 	let thoughts = await llm.generateResponse([
 		{ role: 'system', content: Thoughts.System({}) },
 		{ role: 'user', content: GameMaster.User({ currentPlayer, premise, history, isNewPlayer, playerCharacter }) }
-	], room.fastMode, { roomId, roomName, currentPlayer, isRetrying, playerCharacter, history }, 'huihui_ai/llama3.2-abliterate:3b-instruct');
+	], Thoughts.info.fast, { roomId, roomName, currentPlayer, isRetrying, playerCharacter, history }, Thoughts.llmOptions);
 	thoughts = extractOutput(thoughts);
 	console.log('Thoughts', thoughts);
 	const prompt = GameMaster.System({ currentPlayer, thoughts });
@@ -54,7 +54,7 @@ const generateAIResponse = async (roomId: string, currentPlayer = '', isRetrying
 				playerCharacter
 			}),
 		}
-	], room.fastMode, { roomId, roomName, currentPlayer, isRetrying, playerCharacter, history });
+	], GameMaster.info.fast, { roomId, roomName, currentPlayer, isRetrying, playerCharacter, history }, GameMaster.llmOptions);
 
 	// The last closing tag is often cut off in LLM responses
 	if (!response.includes('</choices>') && response.includes('<choices>')) {

@@ -7,8 +7,18 @@ interface UserInput extends SystemInput {
 	playerName?: string
 }
 
-const System = createPrompt<SystemInput>((input) => `Assistant is a creative game master crafting a multiplayer interactive story.
-Assistant's task is to write a title for this game based on the provided premise, responding in the following format:
+const info = {
+	fast: true
+}
+
+const llmOptions = {
+	model: 'huihui_ai/llama3.2-abliterate:3b-instruct',
+	temperature: 0.75,
+	max_tokens: 75
+}
+
+const System = createPrompt<SystemInput>((input) => `Assistant's task is to write a creative title for an interactive game based on the provided premise.
+Respond in the following format and without further prose:
 
 <output>
 Name
@@ -24,4 +34,4 @@ const User = createPrompt<UserInput>((input) => {
 	return prompt;
 });
 
-export default { System, User };
+export default { System, User, llmOptions, info };

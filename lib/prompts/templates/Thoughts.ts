@@ -12,6 +12,14 @@ interface UserInput extends SystemInput {
 	playerCharacter?: PlayerCharacter
 }
 
+const info = {
+	fast: true
+}
+
+const llmOptions = {
+	model: 'huihui_ai/llama3.2-abliterate:3b-instruct'
+}
+
 const System = createPrompt<SystemInput>((input) => `Assistant's task is to help the Game Master, who is crafting a multiplayer interactive adventure, and needs to use the provided game information to write the next turn.
 Respond in the following format:
 <output>
@@ -57,4 +65,4 @@ const User = createPrompt<UserInput>((input) => {
 	return prompt;
 });
 
-export default { System, User };
+export default { System, User, llmOptions, info };

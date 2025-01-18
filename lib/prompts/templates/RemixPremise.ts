@@ -7,6 +7,14 @@ interface UserInput extends SystemInput {
 	playerName?: string
 }
 
+const info = {
+	fast: false
+}
+
+const llmOptions = {
+	temperature: 0.25
+}
+
 const System = createPrompt<SystemInput>((input) => `Assistant is a creative game master crafting a multiplayer interactive story.
 Assistant's task is to expand on or remix the provided premise, responding in the following format:
 
@@ -24,4 +32,4 @@ const User = createPrompt<UserInput>((input) => {
 	return prompt;
 });
 
-export default { System, User };
+export default { System, User, llmOptions, info };

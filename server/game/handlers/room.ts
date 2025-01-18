@@ -85,7 +85,7 @@ export const registerRoomHandlers = (socket: Socket) => {
 					playerName,
 				}),
 			}
-		], true, { roomId });
+		], RemixPremise.info.fast, { roomId }, RemixPremise.llmOptions);
 		response = extractOutput(response);
 		socket.emit('remixResponse', response);
 	});

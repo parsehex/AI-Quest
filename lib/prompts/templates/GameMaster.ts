@@ -2,7 +2,12 @@ import type { GameHistoryItem, PlayerCharacter } from '~/types/Game'
 import { createPrompt } from '../builder'
 
 const info = {
-	description: 'Used for the main game loop to generate a turn + choices'
+	description: 'Used for the main game loop to generate a turn + choices',
+	fast: false
+}
+
+const llmOptions = {
+	temperature: 0.5,
 }
 
 interface SystemInput {
@@ -78,4 +83,4 @@ const User = createPrompt<UserInput>((input) => {
 	return prompt;
 });
 
-export default { System, User, info };
+export default { System, User, info, llmOptions };
