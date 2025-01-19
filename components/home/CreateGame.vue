@@ -16,8 +16,7 @@ const { createRoom, refreshStarterPremise, premiseInput, remixPremise } = useCre
 				<!-- <UTextarea v-model="premiseInput" placeholder="Describe your game scenario..." :rows="3" class="w-full" /> -->
 				<USelect v-model="premiseInput" :options="STARTER_PREMISES" />
 			</div>
-			<UButton type="submit" icon="i-heroicons-plus" class="w-full" :disabled="!premiseInput.valueOf"> Create Game
-			</UButton>
+			<UButton type="submit" icon="i-heroicons-plus" class="w-full" :disabled="!premiseInput"> Create Game </UButton>
 		</form>
 	</BaseCard>
 </template>

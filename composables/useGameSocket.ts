@@ -44,7 +44,6 @@ class GameSocketManager {
 	public error = ref(null);
 	public messages = ref<ChatMessage[]>([]);
 	public hasRooms = computed(() => this.rooms.value.length > 0);
-	public premiseInput = ref(STARTER_PREMISES[Math.floor(Math.random() * STARTER_PREMISES.length)]);
 
 	private constructor() {
 		this.initializeSocketListeners();
@@ -133,6 +132,7 @@ class GameSocketManager {
 		this.toast.add({
 			title,
 			description,
+			timeout: 7500,
 		});
 	}
 
@@ -194,10 +194,10 @@ class GameSocketManager {
 
 	public remixPremise() {
 		const playerName = localStorage.getItem('nickname') || 'Anonymous';
-		socket.emit('remixPremise', { premise: this.premiseInput.value, playerName });
+		socket.emit('remixPremise', { premise: useCreateGame().premiseInput.value, playerName });
 	}
 	private onRemixPremise(premise: string) {
-		this.premiseInput.value = premise
+		useCreateGame().premiseInput.value = premise
 	}
 
 	public async waitConnected(): Promise<void> {
@@ -229,7 +229,6 @@ export function useGameSocket() {
 	});
 
 	return {
-		premiseInput: gameSocket.premiseInput,
 		isConnected: gameSocket.isConnected,
 		transport: gameSocket.transport,
 		rooms: gameSocket.rooms,

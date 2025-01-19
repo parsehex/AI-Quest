@@ -6,6 +6,17 @@ export const STARTER_PREMISES = [
 	'Time-traveling train hijacking',
 ]
 
+export const STARTER_NAMES = [
+	'George Washington',
+	'Dave',
+	'Trengar',
+];
+
+export const CHARACTER_OPTIONS = {
+	classes: ['', 'Warrior', 'Mage', 'Rogue', 'Cleric', 'Ranger'],
+	backgrounds: ['', 'Noble', 'Merchant', 'Criminal', 'Soldier', 'Scholar']
+};
+
 export const MODEL_MAP = {
 	dev: {
 		fast: ['http://127.0.0.1:11434/v1/', 'llama3.2:3b-instruct-q6_K'],

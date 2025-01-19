@@ -3,11 +3,12 @@ import { STARTER_PREMISES } from '~/lib/constants'
 export function useCreateGame() {
   const sock = useGameSocket()
   const fastMode = ref(true)
+  const premiseInput = ref(STARTER_PREMISES[Math.floor(Math.random() * STARTER_PREMISES.length)])
 
   const createRoom = async () => {
     try {
-      await sock.createRoom(sock.premiseInput.value, fastMode.value)
-      sock.premiseInput.value = ''
+      await sock.createRoom(premiseInput.value, fastMode.value)
+      premiseInput.value = ''
       sock.refreshRooms()
     } catch (error) {
       console.error('Failed to create room:', error)
@@ -16,10 +17,10 @@ export function useCreateGame() {
 
   const refreshStarterPremise = () => {
     const picked = STARTER_PREMISES[Math.floor(Math.random() * STARTER_PREMISES.length)]
-    if (picked === sock.premiseInput.value) {
+    if (picked === premiseInput.value) {
       refreshStarterPremise()
     } else {
-      sock.premiseInput.value = picked
+      premiseInput.value = picked
     }
   }
 
@@ -27,7 +28,7 @@ export function useCreateGame() {
     fastMode,
     createRoom,
     refreshStarterPremise,
-    premiseInput: sock.premiseInput,
+    premiseInput,
     remixPremise: sock.remixPremise
   }
 }

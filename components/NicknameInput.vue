@@ -1,45 +1,16 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
-
-const nickname = ref('');
-const isValid = ref(false);
-
-const emit = defineEmits(['update:name']);
-
-const validateName = (name: string) => {
-  return name.trim().length >= 2;
-};
-
-watch(nickname, (newValue) => {
-  isValid.value = validateName(newValue);
-  if (isValid.value) {
-    emit('update:name', newValue);
-  }
-});
-
-const updateNickname = () => {
-  if (isValid.value) {
-    localStorage.setItem('nickname', nickname.value);
-    emit('update:name', nickname.value);
-  }
-}
-
-onMounted(() => {
-  const savedName = localStorage.getItem('nickname') || '';
-  nickname.value = savedName;
-  if (validateName(savedName)) {
-    emit('update:name', savedName);
-  }
-});
+const createCharacter = useCreateCharacter();
 </script>
 <template>
   <div class="inline-flex items-center gap-2">
-    <UIcon v-if="nickname && isValid" name="i-heroicons-check-circle" class="text-green-500" />
-    <UInput v-model="nickname" placeholder="Enter character name" @change="updateNickname" :ui="{
-      width: 'w-48',
-      input: 'text-sm',
-      base: `rounded-md border-0 shadow-sm ring-1 ${nickname && !isValid ? 'ring-red-500' : 'ring-gray-300'
-        }`
-    }" />
+    <UButton type="button" icon="i-heroicons-arrow-path-16-solid" variant="ghost" size="xs"
+      @click="createCharacter.shuffleName" class="ml-2"> Shuffle </UButton>
+    <UTooltip text="You can only use preset names in the demo" :open-delay="500">
+      <UInput :value="createCharacter.nameInput.value" disabled placeholder="Enter character name" :ui="{
+        width: 'w-48',
+        input: 'text-sm muted',
+        base: `rounded-md border-0 shadow-sm ring-1`,
+      }" />
+    </UTooltip>
   </div>
 </template>
