@@ -214,7 +214,7 @@ class GameSocketManager {
 		});
 	}
 
-	public makeChoice(roomId: string, choice: string): void {
+	public makeChoice(roomId: string, choice: number): void {
 		log.debug({ _ctx: { roomId, choice } }, 'Making choice');
 		socket.emit('makeChoice', { roomId, choice });
 	}

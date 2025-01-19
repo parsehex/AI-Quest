@@ -13,7 +13,7 @@ const choice = ref('');
 
 const room = computed(() => sock.thisRoom.value);
 
-const makeChoice = (choice: string) => {
+const makeChoice = (choice: number) => {
   if (!isMyTurn.value) return;
   sock.makeChoice(props.roomId, choice);
 };
@@ -75,9 +75,9 @@ watch(() => sock.thisRoom.value?.lastAiResponse?.tts, (newTTS) => {
             <h4>Your turn - Choose your action:</h4>
             <div class="space-y-2">
               <UButton v-for="(choice, i) in sock.thisRoom.value.lastAiResponse.choices" :key="i" block
-                @click="makeChoice(choice)"> {{ choice }} </UButton>
-              <UInput v-model="choice" placeholder="Enter your own choice"
-                @keyup.enter="makeChoice(choice); choice = ''" />
+                @click="makeChoice(i)"> {{ choice }} </UButton>
+              <!-- <UInput v-model="choice" placeholder="Enter your own choice"
+                @keyup.enter="makeChoice(choice); choice = ''" /> -->
             </div>
           </div>
           <div v-else class="mt-4 text-muted"> Waiting for {{ sock.thisRoom.value.players.find(p => p.id ===

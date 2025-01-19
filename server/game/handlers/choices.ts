@@ -114,7 +114,7 @@ const validatePlayerTurn = (room: TurnManager, playerId: string): boolean => {
 	return currentPlayer?.id === playerId;
 };
 
-export const playChoice = (roomId: string, currentPlayer = '', choice = '') => {
+export const playChoice = (roomId: string, currentPlayer = '', choice: string | number = '') => {
 	const roomManager = useRoomManager();
 	const room = roomManager.getRoom(roomId);
 	if (!room) return;
@@ -133,6 +133,10 @@ export const playChoice = (roomId: string, currentPlayer = '', choice = '') => {
 			if (playerIndex === -1 || playerIndex !== room.currentTurn) {
 				log.error({ _ctx: { roomId, currentPlayer } }, 'Invalid player turn');
 				return;
+			}
+
+			if (typeof choice === 'number') {
+				choice = lastAiResponse.choices[choice];
 			}
 
 			// Create new history entry
@@ -185,6 +189,13 @@ export const registerChoiceHandlers = (socket: Socket) => {
 		const player = room.players.find(p => p.id === socket.id);
 		if (!player) {
 			log.error({ _ctx: { roomId, socketId: socket.id } }, 'Player not found in room');
+			return;
+		}
+
+		const isDev = process.env.NODE_ENV === 'development';
+		if (typeof choice !== 'number' && !isDev) {
+			log.error({ _ctx: { roomId, socketId: socket.id, choice } }, 'Player made custom choice');
+			socket.emit('toast', 'Invalid Choice', 'You must pick one of the choices')
 			return;
 		}
 
