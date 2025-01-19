@@ -6,9 +6,10 @@ import { useIO } from '~/server/plugins/socket.io';
 import { ModelConfig } from '~/types/Game/AI';
 
 const log = useLog('handlers/admin');
+const config = useRuntimeConfig();
 
 const validateAdminPassword = (password: string): boolean => {
-	return password === 'test';
+	return password === config.private.adminPassword;
 };
 
 export const registerAdminHandlers = (socket: Socket) => {

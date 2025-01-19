@@ -163,11 +163,26 @@ const stats = computed(() => {
 })
 
 const fetchLogs = async () => {
-	const params = new URLSearchParams()
-	if (filters.value.level) params.append('level', filters.value.level)
-	if (filters.value.fromDate) params.append('from', filters.value.fromDate)
+	const savedPassword = localStorage.getItem('adminPassword');
+	if (!savedPassword) {
+		window.location.href = '/admin';
+		return;
+	}
 
-	logs.value = [...await $fetch('/api/admin/logs?' + params.toString())]
+	const body = { password: savedPassword };
+	if (filters.value.level) body.level = filters.value.level
+	if (filters.value.fromDate) body.from = filters.value.fromDate
+
+	try {
+		logs.value = [...await $fetch('/api/admin/logs', {
+			method: 'POST',
+			body
+		})]
+	} catch (err) {
+		if (err?.status === 401) {
+			window.location.href = '/admin';
+		}
+	}
 }
 
 const exportLogs = () => {

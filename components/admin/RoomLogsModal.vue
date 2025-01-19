@@ -70,6 +70,7 @@ const props = defineProps<{
 }>();
 
 const sock = useGameSocket();
+const toast = useToast();
 const emit = defineEmits(['update:modelValue']);
 
 const isOpen = computed({
@@ -107,13 +108,33 @@ const showContext = (log: LogEntry) => {
 };
 
 const fetchLogs = async () => {
-	const params = new URLSearchParams();
-	if (filters.value.level) params.append('level', filters.value.level);
-	if (filters.value.fromDate) params.append('from', filters.value.fromDate);
-	params.append('roomId', props.roomId);
-	logs.value = await $fetch('/api/admin/logs?' + params.toString());
-	// sort timestamp strings
-	logs.value.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+	const savedPassword = localStorage.getItem('adminPassword');
+	if (!savedPassword) {
+		toast.add({
+			title: 'No Password',
+			description: 'Please fill the admin password'
+		});
+		return;
+	}
+
+	const body = { password: savedPassword, roomId: props.roomId } as Record<string, any>;
+	if (filters.value.level) body.level = filters.value.level;
+	if (filters.value.fromDate) body.from = filters.value.fromDate;
+
+	try {
+		logs.value = [...await $fetch('/api/admin/logs', {
+			method: 'POST',
+			body
+		})];
+		logs.value.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+	} catch (err: any) {
+		if (err?.status === 401) {
+			toast.add({
+				title: 'Invalid Password',
+				description: 'Please fill the correct password'
+			});
+		}
+	}
 };
 
 const exportLogs = () => {
@@ -129,6 +150,6 @@ const exportLogs = () => {
 	document.body.removeChild(a);
 };
 
-watch(() => props.roomId, fetchLogs, { immediate: true });
+watch(() => props.roomId, fetchLogs);
 watch(filters, fetchLogs);
 </script>
