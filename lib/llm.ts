@@ -50,9 +50,11 @@ export class LLMManager {
 			}
 			this.lastCall = Date.now();
 
+			const apiKey = config.private.openrouterApiKey || process.env.OPENROUTER_API_KEY;
+
 			const openai = new OpenAI({
 				baseURL,
-				apiKey: config.private.openrouterApiKey,
+				apiKey,
 				defaultHeaders: {
 					"X-Title": "AI Quest",
 				},

@@ -48,8 +48,9 @@ export class TTSManager {
 
 			this.isProcessing = true;
 			const config = useRuntimeConfig();
+			const allTalkUrl = config.private.alltalkTtsUrl || process.env.server;
 
-			if (!config.private.alltalkTtsUrl) {
+			if (!allTalkUrl) {
 				log.warn({ _ctx: { hash, ...extraCtx } }, 'TTS URL not set');
 				return null;
 			}
@@ -57,7 +58,7 @@ export class TTSManager {
 			const formData = new URLSearchParams();
 			formData.append('text_input', text);
 
-			const response = await fetch(`${config.private.alltalkTtsUrl}/api/tts-generate`, {
+			const response = await fetch(`${allTalkUrl}/api/tts-generate`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/x-www-form-urlencoded',
@@ -75,7 +76,7 @@ export class TTSManager {
 			}
 
 			// e.g. /audiocache/myoutputfile_17359053275b5d0.wav
-			const audioResponse = await fetch(config.private.alltalkTtsUrl + result.output_cache_url);
+			const audioResponse = await fetch(allTalkUrl + result.output_cache_url);
 			const audioBuffer = await audioResponse.arrayBuffer();
 			await this.storage.setItemRaw(hash + '.wav', Buffer.from(audioBuffer));
 

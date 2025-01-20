@@ -9,7 +9,8 @@ const log = useLog('handlers/admin');
 const config = useRuntimeConfig();
 
 const validateAdminPassword = (password: string): boolean => {
-	return password === config.private.adminPassword;
+	const adminPw = config.private.adminPassword || process.env.ADMIN_PASSWORD;
+	return password === adminPw;
 };
 
 export const registerAdminHandlers = (socket: Socket) => {

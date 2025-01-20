@@ -8,9 +8,9 @@ export default defineEventHandler(async (event) => {
 	const logs = logManager.getLogs()
 	const body = await readBody(event)
 
-	const pw = body.password
-	if (pw !== config.private.adminPassword) {
-		console.log(config);
+	const adminPw = config.private.adminPassword || process.env.ADMIN_PASSWORD;
+	const pw = body.password.trim()
+	if (pw !== adminPw) {
 		throw createError({
 			statusCode: 401,
 			message: 'invalid password'
