@@ -1,3 +1,12 @@
+import path from 'path';
+
+const isDev = process.env.NODE_ENV === 'development';
+const storagePath = path.resolve(
+  isDev ? __dirname :
+    process.env.STORAGE_PATH || './',
+  'data'
+);
+
 export default defineNuxtConfig({
   app: {
     layoutTransition: {
@@ -96,19 +105,19 @@ export default defineNuxtConfig({
     storage: {
       'server-logs': {
         driver: 'fs',
-        base: './data/logs',
+        base: path.join(storagePath, './data/logs'),
       },
       'rooms': {
         driver: 'fs',
-        base: './data/rooms',
+        base: path.join(storagePath, './data/rooms'),
       },
       'tts': {
         driver: 'fs',
-        base: './data/tts',
+        base: path.join(storagePath, './data/tts'),
       },
       'server-options': {
         driver: 'fs',
-        base: './data/options',
+        base: path.join(storagePath, './data/options'),
       }
     },
   },
