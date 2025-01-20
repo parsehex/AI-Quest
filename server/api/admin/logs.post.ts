@@ -10,6 +10,7 @@ export default defineEventHandler(async (event) => {
 
 	const pw = body.password
 	if (pw !== config.private.adminPassword) {
+		console.log(config);
 		throw createError({
 			statusCode: 401,
 			message: 'invalid password'
