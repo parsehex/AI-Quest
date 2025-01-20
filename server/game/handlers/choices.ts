@@ -34,7 +34,7 @@ const generateAIResponse = async (roomId: string, currentPlayer = '', isRetrying
 		{ role: 'user', content: GameMaster.User({ currentPlayer, premise, history, isNewPlayer, playerCharacter }) }
 	], Thoughts.info.fast, { roomId, roomName, currentPlayer, isRetrying, playerCharacter, history }, Thoughts.llmOptions);
 	thoughts = extractOutput(thoughts);
-	console.log('Thoughts', thoughts);
+	// console.log('Thoughts', thoughts);
 	const prompt = GameMaster.System({ currentPlayer, thoughts });
 
 	// const latestEvent = history.slice(-1)[0];

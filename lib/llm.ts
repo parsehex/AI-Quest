@@ -2,13 +2,18 @@ import OpenAI from 'openai';
 import { useLog } from '~/composables/useLog';
 import { MODEL_MAP } from './constants';
 import type { ModelConfig } from '~/types/Game/AI';
+import { delay } from './utils';
 
 const log = useLog('lib/llm');
+
+const isDev = import.meta.dev;
+const DELAY_BETWEEN_CALLS = isDev ? 250 : 1000;
 
 export class LLMManager {
 	private static instance: LLMManager | null = null;
 	private isProcessing = false;
 	public modelConfig: ModelConfig;
+	private lastCall = 0;
 
 	private constructor() {
 		this.modelConfig = MODEL_MAP as ModelConfig;
@@ -23,12 +28,14 @@ export class LLMManager {
 
 	// TODO convert fastMode to type
 	async generateResponse(messages: any[], fastMode: boolean = false, extraCtx?: Record<string, unknown>, options?: Record<string, any>): Promise<string> {
+		let Request: any;
+		let Response: any;
 		try {
 			this.isProcessing = true;
 			const config = useRuntimeConfig();
 
 			// Determine environment (dev/prod) and type
-			const isProd = process.env.NODE_ENV === 'production';
+			const isProd = process.env.NODE_ENV !== 'production';
 			const env = isProd ? 'prod' : 'dev';
 			const type = fastMode ? 'fast' : 'good';
 
@@ -38,7 +45,11 @@ export class LLMManager {
 			const mode = `${env}/${type}`;
 			log.debug({ _ctx: { model, baseURL, mode } }, `Using ${mode} model`);
 
-			// Create a new OpenAI instance with the appropriate baseURL
+			while (Date.now() - this.lastCall >= DELAY_BETWEEN_CALLS) {
+				await delay(100);
+			}
+			this.lastCall = Date.now();
+
 			const openai = new OpenAI({
 				baseURL,
 				apiKey: config.private.openrouterApiKey,
@@ -47,7 +58,7 @@ export class LLMManager {
 				},
 			});
 
-			const Request = {
+			Request = {
 				messages,
 				model,
 				temperature: 0.15,
@@ -59,14 +70,15 @@ export class LLMManager {
 
 			const completion = await openai.chat.completions.create(Request);
 
-			const Response = completion.choices[0]
+			Response = completion;
+			Response = Response.choices[0];
 			const resStr = Response.message.content || "No response generated";
 			if (extraCtx) {
 				log.debug({ _ctx: { Request, Response, ...extraCtx } }, 'LLM input / output');
 			}
 			return resStr;
 		} catch (e: any) {
-			log.error({ _ctx: { error: e.message } }, 'Error generating response');
+			log.error({ _ctx: { error: e, Request, Response } }, 'Error generating response');
 			return "Error generating AI response";
 		} finally {
 			this.isProcessing = false;
