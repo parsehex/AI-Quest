@@ -1,50 +1,57 @@
 import { expect, test } from 'vitest'
 import { extractOutput } from './utils';
 
+const expected = 'Lorem Ipsum: A Test';
+
 test('extracts content between <output> tags', () => {
 	const output = `<output>
 Lorem Ipsum: A Test
 </output>`;
 	const extractedOutput = extractOutput(output);
-	expect(extractedOutput).toBe('Lorem Ipsum: A Test');
+	expect(extractedOutput).toBe(expected);
 });
 
-test('extracts content between <output> tags, with broken tag', () => {
-	const output = `output>
-Lorem Ipsum: A Test
+test('extracts content between <output> tags, with broken tags', () => {
+	const cutOffOutput = `output>
+${expected}
 </output>`;
-	const extractedOutput = extractOutput(output);
-	expect(extractedOutput).toBe('Lorem Ipsum: A Test');
+	const extractedCutOffOutput = extractOutput(cutOffOutput);
+	expect(extractedCutOffOutput).toBe(expected);
+
+	const closingOutput = `</output>
+${expected}`;
+	const extractedClosingOutput = extractOutput(closingOutput);
+	expect(extractedClosingOutput).toBe(expected);
 });
 
 test('extracts content between <output> tags, without end tag', () => {
 	const output = `<output>
-Lorem Ipsum: A Test`;
+${expected}`;
 	const extractedOutput = extractOutput(output);
-	expect(extractedOutput).toBe('Lorem Ipsum: A Test');
+	expect(extractedOutput).toBe(expected);
 });
 
 test('extracts content between <output> tags, with any whitespace', () => {
-	const output = `<output> Lorem Ipsum: A Test
+	const output = `<output> ${expected}
 </output>`;
 	const extractedOutput = extractOutput(output);
-	expect(extractedOutput).toBe('Lorem Ipsum: A Test');
+	expect(extractedOutput).toBe(expected);
 });
 
 test('extracts content between <output> tags, removing quotes', () => {
 	const output = `<output>
-	"Lorem Ipsum: A Test"
+	"${expected}"
 	</output>`;
 	const extractedOutput = extractOutput(output);
-	expect(extractedOutput).toBe('Lorem Ipsum: A Test');
+	expect(extractedOutput).toBe(expected);
 });
 
 test('extracts content without <output> tags', () => {
-	const outputWithQuotes = `"Lorem Ipsum: A Test"`;
+	const outputWithQuotes = `"${expected}"`;
 	const extractedOutputQuotes = extractOutput(outputWithQuotes);
-	expect(extractedOutputQuotes).toBe('Lorem Ipsum: A Test');
+	expect(extractedOutputQuotes).toBe(expected);
 
-	const output = `Lorem Ipsum: A Test`;
+	const output = `${expected}`;
 	const extractedOutput = extractOutput(output);
-	expect(extractedOutput).toBe('Lorem Ipsum: A Test');
+	expect(extractedOutput).toBe(expected);
 });
