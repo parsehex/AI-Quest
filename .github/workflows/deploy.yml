@@ -27,7 +27,9 @@ jobs:
         run: bun install
 
       - name: Build application
-        run: bun run build
+        run: |
+          export STORAGE_PATH="${{ secrets.STORAGE_PATH }}"
+          bun run build
 
       - name: Setup SSH
         run: |

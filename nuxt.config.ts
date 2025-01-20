@@ -1,7 +1,7 @@
 import path from 'path';
 
 const storagePath = process.env.STORAGE_PATH || './data';
-console.log(process.env);
+console.log(storagePath);
 
 export default defineNuxtConfig({
   app: {
