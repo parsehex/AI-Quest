@@ -45,7 +45,7 @@ export class LLMManager {
 			const mode = `${env}/${type}`;
 			log.debug({ _ctx: { model, baseURL, mode } }, `Using ${mode} model`);
 
-			while (Date.now() - this.lastCall >= DELAY_BETWEEN_CALLS) {
+			while (Date.now() - this.lastCall < DELAY_BETWEEN_CALLS) {
 				await delay(100);
 			}
 			this.lastCall = Date.now();
