@@ -11,12 +11,11 @@ const gameStatus = useGameStatus();
           class="z-10 h-[50px] sm:h-[45px] flex items-center justify-around gap-2 sm:hover:gap-4 p-1 transition-all duration-300 ease-in-out">
           <Connection />
           <span v-if="!gameStatus.isActive.value" class="text-red-500">Game inactive</span>
-          <NuxtLink aria-label="logo-home navigation link" :class="['text-black/60 dark:text-muted',
+          <!-- <NuxtLink aria-label="logo-home navigation link" :class="['text-black/60 dark:text-muted',
           ]" :to="'/'"
             class="flex items-center rounded-full px-4 sm:px-6 py-1 border border-transparent hover:text-black hover:bg-white-900/50 hover:border-white/5 dark:hover:text-white/70 duration-300 ease-in-out transition-all">
-            <!-- <component :is="item.icon" /> -->
             <NuxtImg src="/logo-64px.png" class="w-8 h-8" />
-          </NuxtLink>
+          </NuxtLink> -->
           <NuxtLink v-for="item in navigation" :id="item.name.toLowerCase()" :key="item.name"
             :aria-label="item.name + ' navigation link'" :class="[
               item.name === $route.name
