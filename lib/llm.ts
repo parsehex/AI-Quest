@@ -35,7 +35,7 @@ export class LLMManager {
 			const config = useRuntimeConfig();
 
 			// Determine environment (dev/prod) and type
-			const isProd = process.env.NODE_ENV !== 'production';
+			const isProd = process.env.NODE_ENV === 'production';
 			const env = isProd ? 'prod' : 'dev';
 			const type = fastMode ? 'fast' : 'good';
 
