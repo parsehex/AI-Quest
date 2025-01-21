@@ -53,11 +53,11 @@ watch(() => sock.thisRoom.value?.lastAiResponse?.tts, (newTTS) => {
     <div class="flex-1 overflow-y-auto p-4 space-y-4">
       <div v-if="room?.history" class="prose dark:prose-invert max-w-none">
         <div v-for="(msg, i) in room?.history" :key="i">
-          <p>{{ msg.intro }}</p>
+          <p class="font-bold">{{ msg.intro }}</p>
           <p class="whitespace-pre-wrap">{{ msg.narrative }}</p>
           <p>
             <span class="text-muted">{{ msg.player }} chose: </span>
-            <span class="font-bold">{{ msg.choice }}</span>
+            <span class="font-bold italic">{{ msg.choice }}</span>
           </p>
         </div>
       </div>
