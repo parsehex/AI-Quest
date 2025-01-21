@@ -80,7 +80,7 @@ export class LLMManager {
 			}
 			return resStr;
 		} catch (e: any) {
-			log.error({ _ctx: { error: e, Request, Response } }, 'Error generating response');
+			log.error({ _ctx: { error: e, Request, Response, ...extraCtx } }, 'Error generating response');
 			return "Error generating AI response";
 		} finally {
 			this.isProcessing = false;
