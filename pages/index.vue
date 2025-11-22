@@ -91,19 +91,19 @@ onUnmounted(() => {
 </script>
 <template>
   <div class="relative h-full flex flex-col items-center gap-4 mx-auto max-w-7xl">
-    <div class="flex flex-col lg:flex-row max-w-6xl mx-auto px-4 py-6 gap-4">
+    <div class="flex flex-wrap flex-col lg:flex-row max-w-6xl mx-auto px-4 py-6 gap-4">
       <GamesList />
       <ApprovalMessage v-if="user && profile && !profile.approved" />
       <!-- Character Selection -->
       <section v-if="user?.confirmed_at && profile?.approved"
-        class="bg-gray-800 rounded-lg p-6 order-first lg:order-none">
+        class="rounded-lg p-6 order-first lg:order-none border-gray-700 border">
         <h2 class="text-2xl font-bold mb-4 flex items-center">
           <i class="i-heroicons-user mr-2" /> Your Character
         </h2>
         <div v-if="characters.length > 0" class="space-y-4">
           <USelect v-model="activeCharacterIdModel" :options="mutableCharacters" option-attribute="nickname"
             value-attribute="id" label="Select Character" />
-          <div v-if="activeCharacter" class="bg-gray-700 p-4 rounded-lg">
+          <div v-if="activeCharacter" class="p-4 rounded-lg border-gray-700 border">
             <p class="font-bold text-lg">{{ activeCharacter.nickname }}</p>
             <p class="text-sm text-gray-400">{{ activeCharacter.race }} {{ activeCharacter.class }}</p>
             <p class="text-xs text-gray-500 mt-1">{{ activeCharacter.background }}</p>
@@ -120,7 +120,7 @@ onUnmounted(() => {
       </section>
       <!-- Create Game -->
       <section v-if="user?.confirmed_at && profile?.approved"
-        class="bg-gray-800 rounded-lg p-6 transition-all duration-300">
+        class="rounded-lg p-6 transition-all duration-300 border-gray-700 border">
         <h2 class="text-2xl font-bold mb-6 flex items-center">
           <i class="i-heroicons-plus-circle mr-2" /> Create a Game
         </h2>

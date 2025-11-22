@@ -17,6 +17,7 @@ export function useRoomMessages() {
 		error.value = null
 
 		try {
+			// First get messages
 			const { data, error: err } = await client
 				.from('chat_messages')
 				.select(`
@@ -30,8 +31,31 @@ export function useRoomMessages() {
 				.order('created_at', { ascending: true })
 
 			if (err) throw err
-			messages.value = data || []
-			return data
+
+			// Then get room players to map sender_id to character
+			const { data: roomPlayers } = await client
+				.from('room_players')
+				.select(`
+					user_id,
+					character:player_characters (
+						nickname
+					)
+				`)
+				.eq('room_id', roomId)
+
+			// Create a map of user_id to character nickname
+			const characterMap = new Map(
+				(roomPlayers || []).map((rp: any) => [rp.user_id, rp.character?.nickname])
+			)
+
+			// Attach character info to messages
+			const messagesWithCharacters = (data || []).map((msg: any) => ({
+				...msg,
+				character_nickname: characterMap.get(msg.sender_id)
+			}))
+
+			messages.value = messagesWithCharacters
+			return messagesWithCharacters
 		} catch (e) {
 			error.value = e as Error
 			return []

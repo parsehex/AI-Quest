@@ -55,8 +55,8 @@ watch(() => messages.value, () => {
         </div>
         <div class="flex flex-col">
           <div class="flex items-center gap-2">
-            <span class="font-medium text-sm">{{ (msg as any).sender?.discord_username || msg.sender_id?.slice(0, 10) ||
-              'User' }}</span>
+            <span class="font-medium text-sm">{{ (msg as any).sender?.discord_username || (msg as
+              any).character_nickname || 'User' }}</span>
             <span class="text-xs text-muted" v-if="msg.created_at">{{ new Date(msg.created_at).toLocaleTimeString() }}
             </span>
           </div>
