@@ -12,6 +12,8 @@ definePageMeta({
   path: "/",
   description: "Home page",
   keywords: "Home",
+  pageTransition: false,
+  layoutTransition: false
 });
 
 const user = useSupabaseUser()
@@ -86,9 +88,7 @@ onUnmounted(() => {
   <div class="relative h-full flex flex-col items-center gap-4 mx-auto max-w-7xl">
     <div class="flex flex-col lg:flex-row max-w-6xl mx-auto px-4 py-6 gap-4">
       <GamesList />
-      <template v-if="user && profile && !profile.approved">
-        <ApprovalMessage />
-      </template>
+      <ApprovalMessage v-if="user && profile && !profile.approved" />
       <!-- Character Creation -->
       <section v-if="user?.confirmed_at && profile?.approved"
         class="bg-gray-800 rounded-lg p-6 order-first lg:order-none">
