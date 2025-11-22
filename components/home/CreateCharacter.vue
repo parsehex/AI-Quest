@@ -66,8 +66,8 @@ const updateDisplayName = (name: string) => {
 				<UButton icon="i-heroicons-chevron-down" variant="ghost" :class="{ 'rotate-180': isExpanded }" />
 			</div>
 		</template>
-		<template #default>
-			<div v-if="isExpanded" class="space-y-2 flex flex-col justify-center">
+		<template v-if="isExpanded" #default>
+			<div class="space-y-2 flex flex-col justify-center">
 				<div class="form-group">
 					<label class="block text-sm font-medium mb-1">Name</label>
 					<NicknameInput v-if="!readOnly" @update:name="updateDisplayName" />

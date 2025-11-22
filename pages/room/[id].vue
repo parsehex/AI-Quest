@@ -7,7 +7,7 @@ import ChatRoom from '~/components/sidebar/ChatRoom.vue'
 
 const tabs = [{
   label: 'Chat',
-  icon: 'i-heroicons-information-chat-bubble-left-solid',
+  icon: 'i-heroicons-chat-bubble-left',
   content: 'chat'
 }, {
   label: 'Room details',
@@ -68,8 +68,8 @@ onBeforeRouteLeave((to, from) => {
           <span class="truncate" :class="[selected && 'text-primary-500 dark:text-primary-400']">{{ item.label }}</span>
         </template>
         <template #item="{ item, selected }">
-          <UButton @click="isChatOpen = !isChatOpen" class="ml-4 p-2 rounded-l-lg border dark:border-neutral-700"
-            color="red" variant="outline"> Close </UButton>
+          <UButton @click="isChatOpen = !isChatOpen" class="ml-4 mb-2 p-2 rounded-l-lg border dark:border-neutral-700"
+            color="red" variant="outline"> Close sidebar </UButton>
           <ChatRoom v-if="selected && item.content === 'chat'" :room-id="roomId" v-model:is-open="isChatOpen" />
           <RoomDetails v-else-if="selected && item.content === 'room-details'" />
           <Players v-else-if="selected && item.content === 'players'" />

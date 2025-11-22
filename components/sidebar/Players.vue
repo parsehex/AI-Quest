@@ -1,5 +1,7 @@
 <script setup lang="ts">
-const log = useLog('components/sidebar/RoomDetails')
+import CreateCharacter from '../home/CreateCharacter.vue'
+
+const log = useLog('components/sidebar/Players')
 const { room } = useThisRoom()
 const { players } = useRoomPlayers()
 const currentTurnPlayer = computed(() => players.value.find((p: any) => p.id === room.value?.current_player))
@@ -15,5 +17,6 @@ const currentTurnPlayer = computed(() => players.value.find((p: any) => p.id ===
 				<span class="text-sm">{{ player.character.nickname }}</span>
 			</li>
 		</ul>
+		<!-- TODO: cards for other player characters -->
 	</div>
 </template>
