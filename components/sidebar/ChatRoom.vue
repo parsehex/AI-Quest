@@ -13,7 +13,7 @@ const emit = defineEmits<{
 const message = ref('')
 const chatContainer = ref<HTMLElement | null>(null)
 const { room } = useThisRoom()
-const { messages, sendMessage } = useRoomMessages()
+const { messages, sendMessage, loading } = useRoomMessages()
 
 const handleSendMessage = () => {
   if (message.value.trim()) {
@@ -40,15 +40,24 @@ watch(() => messages.value, () => {
     </div>
     <!-- Messages Area -->
     <div ref="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-4">
-      <div v-for="(msg, i) in messages" :key="i" class="flex gap-2">
+      <div v-if="loading" class="text-center py-8">
+        <Spinner />
+        <p class="text-muted mt-2">Loading messages...</p>
+      </div>
+      <div v-else-if="messages.length === 0" class="text-center py-8 text-muted">
+        <p>No messages yet. Start the conversation!</p>
+      </div>
+      <div v-else v-for="(msg, i) in messages" :key="i" class="flex gap-2">
         <div class="flex-shrink-0">
-          <UAvatar :src="`https://api.dicebear.com/7.x/identicon/svg?seed=${msg.sender}`" :alt="msg.nickname"
-            size="sm" />
+          <UAvatar
+            :src="(msg as any).sender?.discord_avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${msg.sender_id}`"
+            :alt="(msg as any).sender?.discord_username || msg.sender_id || 'User'" size="sm" />
         </div>
         <div class="flex flex-col">
           <div class="flex items-center gap-2">
-            <span class="font-medium text-sm">{{ msg.nickname }}</span>
-            <span class="text-xs text-muted" v-if="msg.timestamp"> {{ new Date(msg.timestamp).toLocaleTimeString() }}
+            <span class="font-medium text-sm">{{ (msg as any).sender?.discord_username || msg.sender_id?.slice(0, 10) ||
+              'User' }}</span>
+            <span class="text-xs text-muted" v-if="msg.created_at">{{ new Date(msg.created_at).toLocaleTimeString() }}
             </span>
           </div>
           <p class="text-sm">{{ msg.text }}</p>

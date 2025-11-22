@@ -48,13 +48,16 @@ onMounted(async () => {
   // Use active character from DB if available
   const { activeCharacter, characters } = useCharacters()
   const { refresh: refreshPlayers } = useRoomPlayers()
+  const { refresh: refreshMessages } = useRoomMessages()
 
   // Wait for characters to load
   await until(characters).toMatch(c => c.length > 0 || !useSupabaseUser().value)
 
   await sock.joinRoom(roomId, spectate, activeCharacter.value?.id)
 
+  // Refetch data after joining to ensure RLS policies allow access
   await refreshPlayers()
+  await refreshMessages()
 })
 
 // Leave room when navigating away

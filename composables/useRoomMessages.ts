@@ -1,14 +1,13 @@
 import { useSupabaseClient } from '#imports'
 import type { Tables } from '~/types/database.types'
 
-let instance: ReturnType<typeof createRoomMessagesStore> | null = null
-
-function createRoomMessagesStore() {
+export function useRoomMessages() {
 	const route = useRoute()
 	const client = useSupabaseClient()
-	const messages = ref<Tables<'chat_messages'>[]>([])
-	const loading = ref(false)
-	const error = ref<Error | null>(null)
+
+	const messages = useState<Tables<'chat_messages'>[]>('room_messages', () => [])
+	const loading = useState<boolean>('room_messages_loading', () => false)
+	const error = useState<Error | null>('room_messages_error', () => null)
 
 	async function fetchMessages() {
 		const roomId = route.params.id as string
@@ -45,8 +44,6 @@ function createRoomMessagesStore() {
 		const roomId = route.params.id as string
 		if (!roomId) throw new Error('No room ID provided')
 
-		console.log('msg', getClientId());
-
 		loading.value = true
 		error.value = null
 
@@ -62,25 +59,31 @@ function createRoomMessagesStore() {
 				.single()
 
 			if (err) throw err
+			// Optimistically add to local state
+			await fetchMessages()
 			return data
 		} catch (e) {
 			error.value = e as Error
+			console.error('Error sending message:', e)
 			throw e
 		} finally {
 			loading.value = false
 		}
 	}
 
-	watch(() => route.params.id, () => {
-		fetchMessages()
+	watch(() => route.params.id, (newId) => {
+		if (newId) {
+			fetchMessages()
+		}
 	}, { immediate: true })
 
+	// Setup realtime subscription
 	onMounted(() => {
 		const roomId = route.params.id as string
 		if (!roomId) return
 
 		const subscription = client
-			.channel('chat-messages-channel')
+			.channel(`chat-messages-${roomId}`)
 			.on('postgres_changes',
 				{
 					event: '*',
@@ -104,11 +107,4 @@ function createRoomMessagesStore() {
 		refresh: fetchMessages,
 		sendMessage
 	}
-}
-
-export function useRoomMessages() {
-	if (!instance) {
-		instance = createRoomMessagesStore()
-	}
-	return instance
 }
