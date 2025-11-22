@@ -158,7 +158,7 @@ class GameClientManager {
 					.select('user_id') // Select a field that exists
 					.eq('room_id', roomId)
 					.eq('user_id', user.value.id)
-					.single();
+					.maybeSingle(); // Use maybeSingle to handle 0 or 1 results
 
 				if (!existingPlayer) {
 					// Insert new player

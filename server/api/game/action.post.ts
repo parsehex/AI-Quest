@@ -1,4 +1,5 @@
-import { serverSupabaseUser, serverSupabaseClient } from '#supabase/server'
+import { serverSupabaseUser } from '#supabase/server'
+import { createClient } from '@supabase/supabase-js'
 import { Database } from '~/types/database.types'
 import { LLMManager } from '~/lib/llm'
 import { TTSManager } from '~/lib/tts'
@@ -7,7 +8,11 @@ import { PlayerCharacter } from '~/types/Game'
 
 export default defineEventHandler(async (event) => {
 	const user = await serverSupabaseUser(event)
-	const client = await serverSupabaseClient<Database>(event)
+	// Use service key to bypass RLS for game logic (history, room updates)
+	const client = createClient<Database>(
+		process.env.SUPABASE_URL!,
+		process.env.SUPABASE_SERVICE_KEY!
+	)
 	const body = await readBody(event)
 	const { roomId, choice } = body
 
@@ -151,7 +156,7 @@ export default defineEventHandler(async (event) => {
 	}
 
 	// Save AI response to history (intro + narrative)
-	const newHistoryItems = []
+	const newHistoryItems: { room_id: any; type: "intro" | "narrative"; text: string }[] = []
 	if (sections.intro) newHistoryItems.push({ room_id: roomId, type: 'intro', text: sections.intro })
 	if (sections.narrative) newHistoryItems.push({ room_id: roomId, type: 'narrative', text: sections.narrative })
 

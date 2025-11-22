@@ -1,14 +1,13 @@
 import { useSupabaseClient, useRoute } from '#imports'
 import type { Tables } from '~/types/database.types'
 
-let instance: ReturnType<typeof createThisRoomStore> | null = null
-
-function createThisRoomStore() {
+export function useThisRoom() {
 	const route = useRoute()
 	const client = useSupabaseClient()
-	const room = ref<Tables<'rooms'> | null>(null)
-	const loading = ref(false)
-	const error = ref<Error | null>(null)
+
+	const room = useState<Tables<'rooms'> | null>('this_room', () => null)
+	const loading = useState<boolean>('this_room_loading', () => false)
+	const error = useState<Error | null>('this_room_error', () => null)
 
 	async function fetchRoom() {
 		if (!route.params.id) return null
@@ -33,15 +32,22 @@ function createThisRoomStore() {
 			return data
 		} catch (e) {
 			error.value = e as Error
+			console.error('Error fetching room:', e)
 			return null
 		} finally {
 			loading.value = false
 		}
 	}
 
+	// Watch for route changes
+	watch(() => route.params.id, (newId) => {
+		if (newId) {
+			fetchRoom()
+		}
+	}, { immediate: true })
+
 	onMounted(() => {
-		// Initial fetch
-		fetchRoom()
+		if (!route.params.id) return
 
 		// Realtime subscription
 		const subscription = client
@@ -68,11 +74,4 @@ function createThisRoomStore() {
 		error: readonly(error),
 		refresh: fetchRoom
 	}
-}
-
-export function useThisRoom() {
-	if (!instance) {
-		instance = createThisRoomStore()
-	}
-	return instance
 }
