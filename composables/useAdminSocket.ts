@@ -1,117 +1,112 @@
 import { ref } from 'vue';
-import { socket } from '~/lib/socket';
 
 const log = useLog('useAdminSocket');
 
-class AdminSocketManager {
-	private static instance: AdminSocketManager | null = null;
+class AdminClientManager {
+	private static instance: AdminClientManager | null = null;
 	private toast = useToast();
 
 	public isValidated = ref(false);
 	private password = ref('');
 
-	private constructor() {
-		this.initializeSocketListeners();
-	}
+	private constructor() {}
 
-	static getInstance(): AdminSocketManager {
-		if (!AdminSocketManager.instance) {
-			AdminSocketManager.instance = new AdminSocketManager();
+	static getInstance(): AdminClientManager {
+		if (!AdminClientManager.instance) {
+			AdminClientManager.instance = new AdminClientManager();
 		}
-		return AdminSocketManager.instance;
+		return AdminClientManager.instance;
 	}
 
-	private initializeSocketListeners(): void {
-		socket.on('admin:success', this.onAdminSuccess.bind(this));
-		socket.on('admin:error', this.onAdminError.bind(this));
+	private async callAdminApi(action: string, payload?: any): Promise<boolean> {
+		try {
+			await $fetch('/api/admin/action', {
+				method: 'POST',
+				body: {
+					action,
+					password: this.password.value,
+					payload
+				}
+			});
+			this.toast.add({ title: 'Success', description: `${action} successful` });
+			return true;
+		} catch (e: any) {
+			log.error({ _ctx: { error: e } }, `Admin action ${action} failed`);
+			this.toast.add({ title: 'Error', description: e.message || 'Action failed', color: 'red' });
+			return false;
+		}
 	}
 
-	private onAdminSuccess({ message }: { message: string }): void {
-		this.toast.add({
-			title: 'Success',
-			description: message,
-		});
-		this.isValidated.value = true;
-	}
-
-	private onAdminError({ message }: { message: string }): void {
-		this.toast.add({
-			title: 'Error',
-			description: message,
-		});
-		this.isValidated.value = false;
-	}
-
-	public checkPassword(password: string): void {
+	public async checkPassword(password: string): Promise<void> {
 		log.debug('Checking admin password');
 		this.password.value = password;
-		socket.emit('admin:checkPassword', password);
+		const success = await this.callAdminApi('checkPassword');
+		this.isValidated.value = success;
 	}
 
 	public clearRooms(): void {
 		if (!this.isValidated.value) return;
 		log.debug('Clearing all rooms');
-		socket.emit('admin:clearRooms', this.password.value);
+		this.callAdminApi('clearRooms');
 	}
 
 	public removeRoom(roomId: string): void {
 		if (!this.isValidated.value) return;
 		log.debug('Removing room');
-		socket.emit('admin:removeRoom', this.password.value, roomId);
+		this.callAdminApi('removeRoom', { roomId });
 	}
 
 	public removeAllPlayers(): void {
 		if (!this.isValidated.value) return;
 		log.debug('Removing all players');
-		socket.emit('admin:removeAllPlayers', this.password.value);
+		this.callAdminApi('removeAllPlayers');
 	}
 
 	public setCurrentPlayer(roomId: string, playerId: string): void {
 		if (!this.isValidated.value) return;
 		log.debug('Setting current player');
-		socket.emit('admin:setCurrentPlayer', this.password.value, roomId, playerId);
+		this.callAdminApi('setCurrentPlayer', { roomId, playerId });
 	}
 
 	public kickPlayer(roomId: string, playerId: string): void {
 		if (!this.isValidated.value) return;
 		log.debug('Kicking player');
-		socket.emit('admin:kickPlayer', this.password.value, roomId, playerId);
+		this.callAdminApi('kickPlayer', { roomId, playerId });
 	}
 
 	public toggleFastMode(roomId: string): void {
 		if (!this.isValidated.value) return;
 		log.debug('Toggling fast mode');
-		socket.emit('admin:toggleFastMode', this.password.value, roomId);
-	}
-
-	public cleanup(): void {
-		socket.off('admin:success');
-		socket.off('admin:error');
+		this.callAdminApi('toggleFastMode', { roomId });
 	}
 
 	public setGameActive(active: boolean): void {
 		if (!this.isValidated.value) return;
 		log.debug('Setting game active:', active);
-		socket.emit('admin:setGameActive', this.password.value, active);
+		this.callAdminApi('setGameActive', { active });
+	}
+
+	public cleanup(): void {
+		// No cleanup needed for API calls
 	}
 }
 
 export function useAdminSocket() {
-	const adminSocket = AdminSocketManager.getInstance();
+	const adminClient = AdminClientManager.getInstance();
 
 	onBeforeUnmount(() => {
-		adminSocket.cleanup();
+		adminClient.cleanup();
 	});
 
 	return {
-		isValidated: adminSocket.isValidated,
-		checkPassword: adminSocket.checkPassword.bind(adminSocket),
-		clearRooms: adminSocket.clearRooms.bind(adminSocket),
-		removeRoom: adminSocket.removeRoom.bind(adminSocket),
-		removeAllPlayers: adminSocket.removeAllPlayers.bind(adminSocket),
-		setCurrentPlayer: adminSocket.setCurrentPlayer.bind(adminSocket),
-		kickPlayer: adminSocket.kickPlayer.bind(adminSocket),
-		toggleFastMode: adminSocket.toggleFastMode.bind(adminSocket),
-		setGameActive: adminSocket.setGameActive.bind(adminSocket),
+		isValidated: adminClient.isValidated,
+		checkPassword: adminClient.checkPassword.bind(adminClient),
+		clearRooms: adminClient.clearRooms.bind(adminClient),
+		removeRoom: adminClient.removeRoom.bind(adminClient),
+		removeAllPlayers: adminClient.removeAllPlayers.bind(adminClient),
+		setCurrentPlayer: adminClient.setCurrentPlayer.bind(adminClient),
+		kickPlayer: adminClient.kickPlayer.bind(adminClient),
+		toggleFastMode: adminClient.toggleFastMode.bind(adminClient),
+		setGameActive: adminClient.setGameActive.bind(adminClient),
 	};
 }

@@ -19,19 +19,15 @@ class GameStatusManager {
 	}
 
 	private initializeSocketListeners(): void {
-		socket.on('gameActiveStatus', this.onGameActive.bind(this));
-	}
-
-	private onGameActive(active: boolean): void {
-		this.isActive.value = active;
+		// socket.on('gameActiveStatus', this.onGameActive.bind(this));
 	}
 
 	public refreshGameActive(): void {
-		socket.emit('getGameActive');
+		// socket.emit('getGameActive');
 	}
 
 	public cleanup(): void {
-		socket.off('gameActiveStatus', this.onGameActive);
+		// socket.off('gameActiveStatus', this.onGameActive);
 	}
 }
 

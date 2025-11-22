@@ -3,6 +3,11 @@ import { useLog } from '~/composables/useLog';
 
 const log = useLog('lib/llm');
 
+// NOTES
+// - As it is right now, each room is assigned to a certain model (controlled by fastMode)
+// - What I now (eventually) want is for each user to have their own model (+ API Key)
+// - If the request fails or the user isn't properly set up then we exit early and that player's turn is skipped (fallback in-game action is used e.g. "Player stands motionless.")
+
 export class LLMManager {
 	private static instance: LLMManager | null = null;
 	private isProcessing = false;
@@ -14,7 +19,7 @@ export class LLMManager {
 		return LLMManager.instance;
 	}
 
-	async generateResponse(messages: any[], fastMode: boolean = false, extraCtx?: Record<string, unknown>): Promise<string> {
+	async generateResponse(messages: any[], fastMode: boolean | null = false, extraCtx?: Record<string, unknown>): Promise<string> {
 		try {
 			this.isProcessing = true;
 			const config = useRuntimeConfig();
@@ -29,7 +34,11 @@ export class LLMManager {
 				: config.private.model;
 
 			const fast = fastMode ? 'fast' : 'quality';
-			log.debug({ _ctx: { model, baseURL } }, `Using ${fast} model`);
+			if (extraCtx) {
+				log.debug({ _ctx: { model, baseURL, ...extraCtx } }, `Using ${fast} model`);
+			} else {
+				log.debug({ _ctx: { model, baseURL } }, `Using ${fast} model`);
+			}
 
 			// Create a new OpenAI instance with the appropriate baseURL
 			const openai = new OpenAI({
