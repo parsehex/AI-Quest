@@ -138,20 +138,22 @@ export function useCharacters() {
 
 	// Persist active character ID
 	watch(activeCharacterId, (newId) => {
-		if (newId) {
-			localStorage.setItem('activeCharacterId', newId)
-		} else {
-			localStorage.removeItem('activeCharacterId')
+		if (import.meta.client) {
+			if (newId) {
+				localStorage.setItem('activeCharacterId', newId)
+			} else {
+				localStorage.removeItem('activeCharacterId')
+			}
 		}
 	})
 
-	// Initialize from localStorage if available
-	onMounted(() => {
+	// Initialize from localStorage if available (client-side only)
+	if (import.meta.client && !activeCharacterId.value) {
 		const storedId = localStorage.getItem('activeCharacterId')
-		if (storedId && !activeCharacterId.value) {
+		if (storedId) {
 			activeCharacterId.value = storedId
 		}
-	})
+	}
 
 	return {
 		characters: readonly(characters),

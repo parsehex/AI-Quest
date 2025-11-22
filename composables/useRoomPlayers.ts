@@ -28,10 +28,21 @@ export function useRoomPlayers() {
 	const loading = useState<boolean>('room_players_loading', () => false)
 	const error = useState<Error | null>('room_players_error', () => null)
 
-	const me = computed(() => players.value.find(p => p.user.id === getClientId()))
+	const user = useSupabaseUser()
+	const me = ref<RoomPlayerWithJoins | undefined>(undefined)
+
+	watch([players, user], ([newPlayers, newUser]) => {
+		if (!newUser) {
+			me.value = undefined
+			return
+		}
+		me.value = newPlayers.find(p => p.user.id === newUser.id)
+	}, { immediate: true })
 
 	async function fetchPlayers(): Promise<RoomPlayerWithJoins[] | null> {
-		if (!route.params.id) return null
+		if (!route.params.id) {
+			return null
+		}
 
 		loading.value = true
 		error.value = null

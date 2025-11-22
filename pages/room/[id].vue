@@ -46,9 +46,15 @@ onMounted(async () => {
   sock.reinitializeListeners()
 
   // Use active character from DB if available
-  const { activeCharacter } = useCharacters()
+  const { activeCharacter, characters } = useCharacters()
+  const { refresh: refreshPlayers } = useRoomPlayers()
 
-  sock.joinRoom(roomId, spectate, activeCharacter.value?.id)
+  // Wait for characters to load
+  await until(characters).toMatch(c => c.length > 0 || !useSupabaseUser().value)
+
+  await sock.joinRoom(roomId, spectate, activeCharacter.value?.id)
+
+  await refreshPlayers()
 })
 
 // Leave room when navigating away

@@ -5,16 +5,24 @@ const props = defineProps<{
 }>();
 
 const sock = useGameSocket();
-const { room } = useThisRoom();
-const { me, players } = useRoomPlayers();
+const { room, loading: roomLoading } = useThisRoom();
+const { me, players, loading: playersLoading } = useRoomPlayers();
 const aiLoading = computed(() => sock.aiLoading.value || undefined);
 const isSpectator = computed(() => me.value?.is_spectator);
-const isMyTurn = computed(() => !isSpectator.value && room.value?.current_player === me.value?.user.id);
-const canRegenerate = computed(() => (isMyTurn.value || !players.value.length) && !aiLoading);
+const isMyTurn = computed(() => {
+  // Don't compute turn state until data is loaded
+  if (roomLoading.value || playersLoading.value) return false;
+  return !isSpectator.value && room.value?.current_player === me.value?.user.id;
+});
+const canRegenerate = computed(() => (isMyTurn.value || !players.value.length) && !aiLoading.value);
 const choice = ref('');
 
+// Debug logging
+watch([() => me.value, () => room.value?.current_player, isMyTurn], ([meVal, currentPlayer, myTurn]) => {
+}, { immediate: true });
+
 const currentPlayerName = computed(() => {
-  return players.value.find(p => p.user.id === room.value?.current_player)?.character.nickname;
+  return players.value.find(p => p.user.id === room.value?.current_player)?.character?.nickname;
 });
 
 const makeChoice = (choice: string) => {
@@ -58,6 +66,10 @@ watch(() => sock.thisRoom.value?.lastAiResponse?.tts, (newTTS) => {
       </h2>
     </div>
     <div class="flex-1 overflow-y-auto p-4 space-y-4">
+      <div v-if="roomLoading || playersLoading" class="text-center py-8">
+        <Spinner />
+        <p class="text-muted mt-2">Loading game state...</p>
+      </div>
       <div v-if="room?.history" class="prose dark:prose-invert max-w-none">
         <div v-for="(msg, i) in room?.history" :key="i">
           <span v-if="msg.type === 'intro' || msg.type === 'narrative'">{{ msg.text }}</span>
