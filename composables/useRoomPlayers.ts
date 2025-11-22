@@ -20,15 +20,15 @@ interface RoomPlayerWithJoins {
 	character: PlayerCharacter
 }
 
-let instance: ReturnType<typeof createRoomPlayersStore> | null = null
-
-function createRoomPlayersStore() {
+export function useRoomPlayers() {
 	const route = useRoute()
 	const client = useSupabaseClient()
-	const players = ref<RoomPlayerWithJoins[]>([])
+
+	const players = useState<RoomPlayerWithJoins[]>('room_players', () => [])
+	const loading = useState<boolean>('room_players_loading', () => false)
+	const error = useState<Error | null>('room_players_error', () => null)
+
 	const me = computed(() => players.value.find(p => p.user.id === getClientId()))
-	const loading = ref(false)
-	const error = ref<Error | null>(null)
 
 	async function fetchPlayers(): Promise<RoomPlayerWithJoins[] | null> {
 		if (!route.params.id) return null
@@ -56,19 +56,26 @@ function createRoomPlayersStore() {
 				.eq('room_id', route.params.id) as any
 
 			if (err) throw err
-			players.value = data
+			players.value = data || []
 			return data
 		} catch (e) {
 			error.value = e as Error
+			console.error('Error fetching room players:', e)
 			return null
 		} finally {
 			loading.value = false
 		}
 	}
 
+	// Watch for route changes to refetch
+	watch(() => route.params.id, (newId) => {
+		if (newId) {
+			fetchPlayers()
+		}
+	}, { immediate: true })
+
 	onMounted(() => {
-		// Initial fetch
-		fetchPlayers()
+		if (!route.params.id) return
 
 		// Realtime subscription
 		const subscription = client
@@ -91,16 +98,9 @@ function createRoomPlayersStore() {
 
 	return {
 		players: readonly(players),
-		me: readonly(me),
+		me,
 		loading: readonly(loading),
 		error: readonly(error),
 		refresh: fetchPlayers
 	}
-}
-
-export function useRoomPlayers() {
-	if (!instance) {
-		instance = createRoomPlayersStore()
-	}
-	return instance
 }

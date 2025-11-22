@@ -44,9 +44,8 @@
   "dependencies": {
     "@nuxt/ui": "^2.20.0",
     "@supabase/supabase-js": "2.47.5",
+    "caniuse-lite": "^1.0.30001756",
     "openai": "^4.77.0",
-    "socket.io": "^4.8.1",
-    "socket.io-client": "^4.8.1",
     "uuid": "^11.0.4"
   }
 }

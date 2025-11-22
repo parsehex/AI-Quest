@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import CreateCharacter from '../home/CreateCharacter.vue'
 
 const log = useLog('components/sidebar/Players')
 const { room } = useThisRoom()
@@ -8,15 +7,19 @@ const currentTurnPlayer = computed(() => players.value.find((p: any) => p.id ===
 </script>
 <template>
 	<div class="p-4 border dark:border-neutral-700">
-		<CreateCharacter :read-only="true" />
-		<ul class="mt-4 flex gap-4">
+		<h3 class="text-lg font-bold mb-4">Players</h3>
+		<ul class="flex flex-col gap-4">
 			<li v-for="(player, index) in players" :key="index"
-				:class="'flex items-center gap-2' + (player.user.id === currentTurnPlayer?.user.id ? ' text-primary-500' : '')">
-				<UAvatar :src="`https://api.dicebear.com/7.x/identicon/svg?seed=${player.user.id}`"
-					:alt="player.character.nickname" size="sm" />
-				<span class="text-sm">{{ player.character.nickname }}</span>
+				class="flex items-center gap-3 p-2 rounded-lg bg-gray-100 dark:bg-gray-800">
+				<UAvatar
+					:src="player.user.discord_avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${player.user.id}`"
+					:alt="player.character?.nickname || 'Unknown'" size="md" />
+				<div>
+					<p class="font-bold">{{ player.character?.nickname || 'Unknown' }}</p>
+					<p class="text-xs text-gray-500">{{ player.character?.race }} {{ player.character?.class }}</p>
+					<p class="text-xs text-gray-400">@{{ player.user.discord_username }}</p>
+				</div>
 			</li>
 		</ul>
-		<!-- TODO: cards for other player characters -->
 	</div>
 </template>

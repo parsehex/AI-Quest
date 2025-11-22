@@ -10,7 +10,6 @@ const isRoomRoute = useRoute().name === 'room-id';
         class="border border-white/10 rounded-full backdrop-blur-3xl bg-zinc-900/10 dark:bg-zinc-700/20 dark:border-zinc-900/20">
         <nav
           class="z-10 h-[50px] sm:h-[45px] flex items-center justify-around gap-2 sm:hover:gap-4 p-1 transition-all duration-300 ease-in-out">
-          <Connection v-if="isRoomRoute" />
           <NuxtLink v-for="item in navigation.routes.value" :id="item.name.toLowerCase()" :key="item.name"
             :aria-label="item.name + ' navigation link'" :class="[
               item.name === $route.name

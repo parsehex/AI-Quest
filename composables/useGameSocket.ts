@@ -1,6 +1,6 @@
 import type { AILoadingState, ChatMessage, PlayerCharacter, Room } from '~/types/Game'
 import { ref, computed } from 'vue'
-import { Database } from '~/types/database.types'
+import type { Database } from '~/types/database.types'
 
 const log = useLog('useGameClient');
 
@@ -77,23 +77,34 @@ class GameClientManager {
 			.subscribe();
 
 		this.refreshRooms();
+
+		// Handle tab close
+		if (import.meta.client) {
+			window.addEventListener('beforeunload', () => {
+				this.leaveRoom();
+			});
+		}
 	}
 
 	public cleanup(): void {
+		if (this.currentRoom.value) {
+			this.leaveRoom();
+		}
 		if (this.channel) {
 			this.supabase.removeChannel(this.channel);
 			this.channel = null;
 		}
 		this.supabase.removeAllChannels();
+
+		// Remove listener?
+		// It's on window, so it persists. But if we unmount the app/component using this, we might want to remove it.
+		// But this is a singleton... so it lives as long as the app.
 	}
 
-	// Public methods
-	public async joinRoom(roomId: string, isSpectator = false): Promise<void> {
-		const nickname = localStorage.getItem('nickname') || 'Anonymous';
+	public async joinRoom(roomId: string, isSpectator = false, characterId?: string): Promise<void> {
 		const clientId = getClientId();
-		const playerCharacter = getPlayerCharacter();
 
-		log.debug({ _ctx: { roomId, clientId, nickname, playerCharacter } }, 'Joining room');
+		log.debug({ _ctx: { roomId, clientId, characterId } }, 'Joining room');
 
 		// Join logic is now handled by Supabase RLS and presence/insertions
 		// We just need to subscribe to the room's channel
@@ -137,31 +148,72 @@ class GameClientManager {
 				}
 			});
 
-		// Add player to room_players table via API or direct insert if RLS allows
-		// Since we have complex logic (character creation etc), we might want an API endpoint for joining
-		// OR we assume the user is already added by the UI before calling this?
-		// The original code emitted 'joinRoom'.
-		// Let's assume we need to insert into room_players.
-
+		// Add player to room_players table
 		const user = useSupabaseUser();
 		if (user.value && !isSpectator) {
-			// Check if already joined?
-			// For now, let's try to insert. If conflict, it's fine.
-			// Actually, let's use an RPC or just direct insert.
-			// But we also need to create the character.
-			// This logic was in `GameRoomManager.ts`.
-			// We should probably move "join room" logic to an API endpoint too if it involves character creation.
-			// OR we do it client side.
+			try {
+				// Check if already joined
+				const { data: existingPlayer } = await this.supabase
+					.from('room_players')
+					.select('user_id') // Select a field that exists
+					.eq('room_id', roomId)
+					.eq('user_id', user.value.id)
+					.single();
 
-			// Let's do it client side for now as per plan "Refactor Client Logic"
-			// But character creation is complex.
-			// Maybe we should have a `join.post.ts`?
-			// For now, let's just subscribe. The UI might handle the DB insertion.
+				if (!existingPlayer) {
+					// Insert new player
+					const { error: insertError } = await this.supabase
+						.from('room_players')
+						.insert({
+							room_id: roomId,
+							user_id: user.value.id,
+							client_id: clientId, // client_id is required by schema
+							character_id: characterId || null
+						});
+
+					if (insertError) {
+						log.error({ _ctx: { error: insertError } }, 'Failed to join room');
+						this.toast.add({ title: 'Error', description: 'Failed to join room', color: 'red' });
+					} else {
+						log.debug({ _ctx: { roomId } }, 'Joined room successfully');
+					}
+				} else if (existingPlayer) {
+					// Update character if needed
+					if (characterId) {
+						const { error: updateError } = await this.supabase
+							.from('room_players')
+							.update({ character_id: characterId })
+							.eq('room_id', roomId)
+							.eq('user_id', user.value.id);
+
+						if (updateError) {
+							log.error({ _ctx: { error: updateError } }, 'Failed to update character in room');
+						}
+					}
+				}
+			} catch (e) {
+				log.error({ _ctx: { error: e } }, 'Error joining room');
+			}
 		}
 	}
 
+
+
 	public leaveRoom(): void {
-		log.debug({ _ctx: { roomId: this.currentRoom.value } }, 'Leaving room');
+		const roomId = this.currentRoom.value;
+		if (!roomId) return;
+
+		log.debug({ _ctx: { roomId } }, 'Leaving room');
+
+		// Remove from DB using API with keepalive
+		// This ensures the request completes even if the tab closes
+		$fetch('/api/game/leave', {
+			method: 'POST',
+			body: { roomId },
+			// @ts-ignore - keepalive is supported by native fetch which $fetch uses
+			keepalive: true
+		}).catch(e => log.error({ _ctx: { error: e } }, 'Failed to leave room'));
+
 		if (this.channel) {
 			this.supabase.removeChannel(this.channel);
 			this.channel = null;

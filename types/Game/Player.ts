@@ -1,4 +1,5 @@
 export interface PlayerCharacter {
+	nickname?: string;
 	class: string;
 	race: string;
 	background: string;

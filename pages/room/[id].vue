@@ -44,7 +44,11 @@ onMounted(async () => {
   // }
 
   sock.reinitializeListeners()
-  sock.joinRoom(roomId, spectate)
+
+  // Use active character from DB if available
+  const { activeCharacter } = useCharacters()
+
+  sock.joinRoom(roomId, spectate, activeCharacter.value?.id)
 })
 
 // Leave room when navigating away

@@ -24,8 +24,12 @@ const updateNickname = () => {
   }
 }
 
+const props = defineProps<{
+  initialValue?: string
+}>()
+
 onMounted(() => {
-  const savedName = localStorage.getItem('nickname') || '';
+  const savedName = props.initialValue || localStorage.getItem('nickname') || '';
   nickname.value = savedName;
   if (validateName(savedName)) {
     emit('update:name', savedName);

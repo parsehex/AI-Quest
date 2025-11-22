@@ -2,6 +2,7 @@
 const user = useSupabaseUser()
 const { profile } = useProfile()
 const { rooms, loading: isLoading, refresh } = useRooms()
+const { activeCharacterId, activeCharacter } = useCharacters()
 
 // Computed
 const activeGames = computed(() => {
@@ -50,8 +51,11 @@ const navigateToRoom = (roomId: string, isSpectator = false) => {
 						's' : '' }} </UBadge>
 					<UButton icon="i-heroicons-eye" color="sky" variant="soft" size="sm" @click="navigateToRoom(game.id, true)">
 						Spectate </UButton>
-					<UButton v-if="user?.confirmed_at && profile?.approved" icon="i-heroicons-play" color="green" size="sm"
-						@click="navigateToRoom(game.id)"> Join </UButton>
+					<UTooltip :text="!activeCharacterId ? 'Select a character to join' : 'Join Game'">
+						<UButton v-if="user?.confirmed_at && profile?.approved" icon="i-heroicons-play" color="green" size="sm"
+							:disabled="!activeCharacterId" @click="navigateToRoom(game.id)"> {{ activeCharacter ? `Join as
+							${activeCharacter.nickname}` : 'Join' }} </UButton>
+					</UTooltip>
 				</div>
 			</li>
 		</ul>

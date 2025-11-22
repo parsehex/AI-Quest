@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { delay } from '~/lib/utils'
-import type { PlayerCharacter } from '~/types/Game'
+import type { Room } from '~/types/Game'
 import ApprovalMessage from '@/components/home/ApprovalMessage.vue'
-import CreateCharacter from '@/components/home/CreateCharacter.vue'
 import GamesList from '@/components/home/GamesList.vue'
 import { useProfile } from '~/composables/useProfile';
 
@@ -19,6 +18,11 @@ definePageMeta({
 const user = useSupabaseUser()
 const { profile } = useProfile()
 const { refresh } = useRooms()
+const { characters, activeCharacter, activeCharacterId, fetchCharacters } = useCharacters()
+
+onMounted(() => {
+  fetchCharacters()
+})
 
 // Constants
 const REFRESH_INTERVAL = 5000
@@ -35,23 +39,30 @@ const gameState = reactive({
   newRoomName: import.meta.env.DEV ? `Game ${Math.floor(Math.random() * 1000)}` : '',
   premise: import.meta.env.DEV ? STARTER_PREMISES[Math.floor(Math.random() * STARTER_PREMISES.length)] : '',
   fastMode: true,
-  hasCharacter: false,
-  playerCharacter: null as PlayerCharacter | null,
 })
 
 // Methods
-const handleCharacterCreated = (character: PlayerCharacter) => {
-  gameState.playerCharacter = { ...character }
-  gameState.hasCharacter = true
-  localStorage.setItem('playerCharacter', JSON.stringify(character))
-}
+// Mutable characters for USelect
+const mutableCharacters = computed(() => [...characters.value])
+
+// Handle null <-> undefined conversion for USelect
+const activeCharacterIdModel = computed({
+  get: () => activeCharacterId.value || undefined,
+  set: (val) => activeCharacterId.value = val || null
+})
 
 const handleCreateRoom = async (e?: Event) => {
   if (e) e.preventDefault()
-  if (!gameState.newRoomName.trim()) return
+
+  // Check if character is selected
+  if (!activeCharacterId.value && !gameState.fastMode) {
+    // Maybe prompt to select character?
+    // For now, we allow creating without character if fast mode?
+    // Or we just let them join as anonymous/spectator?
+  }
 
   try {
-    await useFetch('/api/rooms', {
+    const room = await $fetch<Room>('/api/game/room', {
       method: 'POST',
       body: {
         name: gameState.newRoomName,
@@ -60,12 +71,10 @@ const handleCreateRoom = async (e?: Event) => {
       }
     })
 
-    gameState.newRoomName = ''
-    gameState.premise = ''
-    refresh()
+    // Join the room
+    navigateTo(`/room/${room.id}`)
   } catch (error) {
     console.error('Failed to create room:', error)
-    // You could add error handling/user notification here
   }
 }
 
@@ -73,11 +82,7 @@ const handleCreateRoom = async (e?: Event) => {
 let refreshInterval: NodeJS.Timer | null = null
 
 onMounted(() => {
-  const character = getPlayerCharacter()
-  if (character) {
-    gameState.playerCharacter = character
-    gameState.hasCharacter = true
-  }
+  // Legacy cleanup if needed
 })
 
 onUnmounted(() => {
@@ -89,10 +94,29 @@ onUnmounted(() => {
     <div class="flex flex-col lg:flex-row max-w-6xl mx-auto px-4 py-6 gap-4">
       <GamesList />
       <ApprovalMessage v-if="user && profile && !profile.approved" />
-      <!-- Character Creation -->
+      <!-- Character Selection -->
       <section v-if="user?.confirmed_at && profile?.approved"
         class="bg-gray-800 rounded-lg p-6 order-first lg:order-none">
-        <CreateCharacter @change="handleCharacterCreated" />
+        <h2 class="text-2xl font-bold mb-4 flex items-center">
+          <i class="i-heroicons-user mr-2" /> Your Character
+        </h2>
+        <div v-if="characters.length > 0" class="space-y-4">
+          <USelect v-model="activeCharacterIdModel" :options="mutableCharacters" option-attribute="nickname"
+            value-attribute="id" label="Select Character" />
+          <div v-if="activeCharacter" class="bg-gray-700 p-4 rounded-lg">
+            <p class="font-bold text-lg">{{ activeCharacter.nickname }}</p>
+            <p class="text-sm text-gray-400">{{ activeCharacter.race }} {{ activeCharacter.class }}</p>
+            <p class="text-xs text-gray-500 mt-1">{{ activeCharacter.background }}</p>
+          </div>
+          <div class="flex gap-2">
+            <UButton to="/characters" variant="soft" block class="flex-1">Manage Characters</UButton>
+            <UButton to="/characters" icon="i-heroicons-plus" color="gray" variant="ghost" />
+          </div>
+        </div>
+        <div v-else class="text-center py-6">
+          <p class="text-gray-400 mb-4">You don't have any characters yet.</p>
+          <UButton to="/characters" icon="i-heroicons-plus" block>Create Character</UButton>
+        </div>
       </section>
       <!-- Create Game -->
       <section v-if="user?.confirmed_at && profile?.approved"
