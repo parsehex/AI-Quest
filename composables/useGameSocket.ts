@@ -283,6 +283,10 @@ class GameClientManager {
 
 	public async makeChoice(roomId: string, choice: string): Promise<void> {
 		log.debug({ _ctx: { roomId, choice } }, 'Making choice');
+
+		this.aiLoading.value = {
+			message: 'Generating AI response...'
+		};
 		try {
 			await $fetch('/api/game/action', {
 				method: 'POST',
@@ -292,6 +296,7 @@ class GameClientManager {
 			log.error({ _ctx: { error: e } }, 'Failed to make choice');
 			this.toast.add({ title: 'Error', description: 'Failed to make choice', color: 'red' });
 		}
+		this.aiLoading.value = undefined;
 	}
 
 	public requestTurn(roomId: string): void {

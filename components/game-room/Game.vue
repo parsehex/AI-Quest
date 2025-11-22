@@ -21,6 +21,13 @@ const choice = ref('');
 watch([() => me.value, () => room.value?.current_player, isMyTurn], ([meVal, currentPlayer, myTurn]) => {
 }, { immediate: true });
 
+// Clear loading state when room updates with new AI response
+watch(() => room.value, (newRoom) => {
+  if (newRoom && sock.aiLoading.value && newRoom.last_ai_response) {
+    sock.aiLoading.value = undefined;
+  }
+});
+
 const currentPlayerName = computed(() => {
   return players.value.find(p => p.user.id === room.value?.current_player)?.character?.nickname;
 });
