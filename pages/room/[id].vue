@@ -25,6 +25,7 @@ const route = useRoute()
 const roomId = route.params.id as string
 const spectate = route.query.spectate === '1'
 const { rooms } = useRooms()
+const { refresh: refreshRoom } = useThisRoom()
 const roomIds = computed(() => rooms.value.map((r: any) => r.id))
 const { messages } = useRoomMessages()
 const sock = useGameSocket()
@@ -58,6 +59,7 @@ onMounted(async () => {
   // Refetch data after joining to ensure RLS policies allow access
   await refreshPlayers()
   await refreshMessages()
+  await refreshRoom()
 })
 
 // Leave room when navigating away
@@ -67,7 +69,7 @@ onBeforeRouteLeave((to, from) => {
 </script>
 <template>
   <div>
-    <h2 class="text-xl font-semibold text-center">{{ sock.thisRoom.value?.name }}</h2>
+    <h2 class="text-3xl font-semibold text-center">{{ sock.thisRoom.value?.name }}</h2>
     <div class="container-fluid mx-auto py-8 flex gap-2 relative">
       <Game :roomId="roomId" :is-full-width="!isChatOpen" />
       <div v-if="!isChatOpen" class="fixed top-1/3 right-0 flex flex-col items-center">

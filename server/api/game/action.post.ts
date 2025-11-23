@@ -35,7 +35,8 @@ export default defineEventHandler(async (event) => {
 				type,
 				text,
 				player_id,
-				created_at
+				created_at,
+				id
 			)
 		`)
 		.eq('id', roomId)
@@ -78,6 +79,7 @@ export default defineEventHandler(async (event) => {
 	// if (room.current_player !== user.id) { ... }
 
 	// 3. Update History with User Choice
+	let isRegeneration = false
 	if (choice) {
 		const { error: choiceError } = await client
 			.from('game_history')
@@ -96,6 +98,37 @@ export default defineEventHandler(async (event) => {
 			text: choice,
 			player: player.player_characters?.nickname || 'Anonymous'
 		})
+	} else {
+		// Regeneration: remove last AI response if choice is empty
+		const lastItems = history.slice(-2);
+		const itemsToDelete = lastItems.filter((h: any) => h.type === 'intro' || h.type === 'narrative');
+
+		if (itemsToDelete.length > 0) {
+			const rawHistory = (room.game_history || []).sort((a: any, b: any) =>
+				new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+			);
+
+			const idsToDelete: string[] = [];
+			for (let i = rawHistory.length - 1; i >= 0; i--) {
+				const item = rawHistory[i];
+				if (item.type === 'intro' || item.type === 'narrative') {
+					idsToDelete.push(item.id);
+				} else {
+					break;
+				}
+			}
+
+			if (idsToDelete.length > 0) {
+				console.log('Regenerating: Deleting old AI response items:', idsToDelete);
+				await client.from('game_history').delete().in('id', idsToDelete);
+				isRegeneration = true
+
+				// Update local history for prompt
+				while (historyForPrompt.length > 0 && (historyForPrompt[historyForPrompt.length - 1].type === 'intro' || historyForPrompt[historyForPrompt.length - 1].type === 'narrative')) {
+					historyForPrompt.pop();
+				}
+			}
+		}
 	}
 
 	// 4. Generate AI Response
@@ -165,12 +198,14 @@ export default defineEventHandler(async (event) => {
 	}
 
 	// Update room (current_player, last_ai_response, current_turn)
+	const nextTurnNum = isRegeneration ? room.current_turn : (room.current_turn || 0) + 1
+
 	const { error: updateError } = await client
 		.from('rooms')
 		.update({
 			last_ai_response: lastAiResponse,
 			current_player: nextPlayer.user_id,
-			current_turn: (room.current_turn || 0) + 1
+			current_turn: nextTurnNum
 		})
 		.eq('id', roomId)
 

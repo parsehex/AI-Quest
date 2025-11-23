@@ -22,12 +22,16 @@ export function useThisRoom() {
           *,
           room_players (
             user_id
+          ),
+          game_history (
+            *
           )
         `)
 				.eq('id', route.params.id)
 				.single()
 
 			if (err) throw err
+			console.log('Fetched room data:', data)
 			room.value = data
 			return data
 		} catch (e) {
@@ -58,6 +62,15 @@ export function useThisRoom() {
 					schema: 'public',
 					table: 'rooms',
 					filter: `id=eq.${route.params.id}`
+				},
+				() => fetchRoom()
+			)
+			.on('postgres_changes',
+				{
+					event: '*',
+					schema: 'public',
+					table: 'game_history',
+					filter: `room_id=eq.${route.params.id}`
 				},
 				() => fetchRoom()
 			)

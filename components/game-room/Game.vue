@@ -1,11 +1,13 @@
 <script setup lang="ts">
+import GameHistory from './GameHistory.vue';
+
 const props = defineProps<{
   roomId: string,
   isFullWidth: boolean,
 }>();
 
 const sock = useGameSocket();
-const { room, loading: roomLoading } = useThisRoom();
+const { room, loading: roomLoading, refresh } = useThisRoom();
 const { me, players, loading: playersLoading } = useRoomPlayers();
 const aiLoading = computed(() => sock.aiLoading.value || undefined);
 const isSpectator = computed(() => me.value?.is_spectator);
@@ -32,9 +34,46 @@ const currentPlayerName = computed(() => {
   return players.value.find(p => p.user.id === room.value?.current_player)?.character?.nickname;
 });
 
-const makeChoice = (choice: string) => {
+const previousChoice = computed(() => {
+  const r = room.value as any;
+  if (!r?.game_history) return null;
+
+  // Find the last choice in history
+  const history = [...r.game_history].sort((a: any, b: any) =>
+    new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+  );
+
+  const lastChoice = history.reverse().find((h: any) => h.type === 'choice');
+
+  if (!lastChoice) return null;
+
+  // Resolve player name
+  let playerName = 'Unknown';
+  if (lastChoice.player_id) {
+    const player = players.value.find(p => p.user.id === lastChoice.player_id);
+    playerName = player?.character?.nickname || player?.user?.discord_username || 'Unknown';
+  }
+
+  return {
+    ...lastChoice,
+    playerName
+  };
+});
+
+const makeChoice = async (choice: string) => {
   if (!isMyTurn.value) return;
-  sock.makeChoice(props.roomId, choice);
+  await sock.makeChoice(props.roomId, choice);
+  await refresh();
+};
+
+const handleRegenerate = async () => {
+  await sock.regenerateResponse(props.roomId);
+  await refresh();
+};
+
+const handleRequestTurn = async () => {
+  await sock.requestTurn(props.roomId);
+  await refresh();
 };
 
 onBeforeUnmount(() => {
@@ -59,57 +98,57 @@ watch(() => sock.thisRoom.value?.lastAiResponse?.tts, (newTTS) => {
 });
 </script>
 <template>
-  <div class="flex flex-col h-full rounded-lg border dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow w-2/3"
-    :class="isFullWidth ? 'w-full' : ''">
-    <div class="p-4 border-b dark:border-neutral-700">
-      <h2 class="text-xl text-muted font-semibold"> Game <span v-if="isSpectator" class="text-sm text-muted">(Spectator
-          Mode)</span>
-        <UTooltip v-if="canRegenerate" class="float-right" text="Regenerate the last turn">
-          <UButton @click="sock.regenerateResponse(props.roomId)" color="violet" icon="i-heroicons-arrow-path-16-solid">
-            Retry </UButton>
-        </UTooltip>
-        <UButton v-else class="float-right" @click="sock.requestTurn(props.roomId)" color="violet"> Request Turn
-        </UButton>
-      </h2>
-    </div>
-    <div class="flex-1 overflow-y-auto p-4 space-y-4">
-      <div v-if="roomLoading || playersLoading" class="text-center py-8">
-        <Spinner />
-        <p class="text-muted mt-2">Loading game state...</p>
+  <div class="flex flex-col w-2/3" :class="isFullWidth ? 'w-full' : ''">
+    <div
+      class="flex flex-col h-full rounded-lg border dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow mb-4">
+      <div class="p-4 border-b dark:border-neutral-700">
+        <h2 class="text-xl text-muted font-semibold"> Turn #{{ room?.current_turn }} <span v-if="isSpectator"
+            class="text-sm text-muted">(Spectator Mode)</span>
+          <UTooltip v-if="canRegenerate" class="float-right" text="Regenerate the last turn">
+            <UButton @click="handleRegenerate" color="violet" icon="i-heroicons-arrow-path-16-solid"> Retry </UButton>
+          </UTooltip>
+          <UButton v-else class="float-right" @click="handleRequestTurn" color="violet"> Request Turn </UButton>
+        </h2>
       </div>
-      <div v-if="room?.history" class="prose dark:prose-invert max-w-none">
-        <div v-for="(msg, i) in room?.history" :key="i">
-          <span v-if="msg.type === 'intro' || msg.type === 'narrative'">{{ msg.text }}</span>
-          <span v-else-if="msg.type === 'choice'">
-            <span class="text-muted">{{ msg.player }} chose: </span>
-            <span class="font-bold">{{ msg.text }}</span>
-          </span>
+      <div class="flex-1 overflow-y-auto p-4 space-y-4">
+        <div v-if="roomLoading || playersLoading" class="text-center py-8">
+          <Spinner />
+          <p class="text-muted mt-2">Loading game state...</p>
         </div>
-      </div>
-      <div v-if="aiLoading" class="text-center flex flex-col items-center space-y-2">
-        <Spinner :progress="aiLoading.progress" />
-        <span class="text-muted">{{ aiLoading.message }}</span>
-      </div>
-      <template v-else-if="room?.last_ai_response">
-        <div class="prose dark:prose-invert max-w-none">
-          <audio v-if="room.last_ai_response.tts" ref="audioRef" :src="room.last_ai_response.tts" controls
-            class="w-full mt-2 mb-4" />
-          <h3>{{ room.last_ai_response.intro }}</h3>
-          <p>{{ room.last_ai_response.narrative }}</p>
-          <div class="mt-4">
-            <h4>
-              <template v-if="isMyTurn">Your turn - Make your choice:</template>
-              <template v-else>Waiting for {{ currentPlayerName }} to choose:</template>
-            </h4>
-            <div class="space-y-2">
-              <UButton v-for="(choice, i) in room.last_ai_response.choices" :key="i" block :disabled="!isMyTurn"
-                :color="isMyTurn ? 'primary' : 'gray'" @click="makeChoice(choice)"> {{ choice }} </UButton>
-              <UInput v-if="isMyTurn" v-model="choice" placeholder="Enter your own choice"
-                @keyup.enter="makeChoice(choice); choice = ''" />
+        <div v-if="aiLoading" class="text-center flex flex-col items-center space-y-2">
+          <Spinner :progress="aiLoading.progress" />
+          <span class="text-muted">{{ aiLoading.message }}</span>
+        </div>
+        <template v-else-if="room?.last_ai_response">
+          <div class="prose dark:prose-invert max-w-none">
+            <audio v-if="room.last_ai_response.tts" ref="audioRef" :src="room.last_ai_response.tts" controls
+              class="w-full mt-2 mb-4" />
+            <div v-if="previousChoice"
+              class="mb-6 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border dark:border-gray-700">
+              <div class="text-xs font-bold text-muted uppercase tracking-wider mb-1">Previous Turn</div>
+              <div class="text-sm">
+                <span class="text-muted">{{ previousChoice.playerName }} chose: </span>
+                <span class="font-semibold">{{ previousChoice.text }}</span>
+              </div>
+            </div>
+            <h3>{{ room.last_ai_response.intro }}</h3>
+            <p>{{ room.last_ai_response.narrative }}</p>
+            <div class="mt-4">
+              <h4>
+                <template v-if="isMyTurn">Your turn - Make your choice:</template>
+                <template v-else>Waiting for {{ currentPlayerName }} to choose:</template>
+              </h4>
+              <div class="space-y-2">
+                <UButton v-for="(choice, i) in room.last_ai_response.choices" :key="i" block :disabled="!isMyTurn"
+                  :color="isMyTurn ? 'primary' : 'gray'" @click="makeChoice(choice)"> {{ choice }} </UButton>
+                <UInput v-if="isMyTurn" v-model="choice" placeholder="Enter your own choice"
+                  @keyup.enter="makeChoice(choice); choice = ''" />
+              </div>
             </div>
           </div>
-        </div>
-      </template>
+        </template>
+      </div>
     </div>
+    <GameHistory :history="(room as any)?.game_history || []" :players="players as any" :loading="roomLoading" />
   </div>
 </template>

@@ -14,7 +14,7 @@ interface PlayerCharacter {
 	race: string
 }
 
-interface RoomPlayerWithJoins {
+export interface RoomPlayerWithJoins {
 	is_spectator: boolean
 	user: Profile
 	character: PlayerCharacter

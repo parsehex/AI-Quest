@@ -62,7 +62,7 @@ const handleCreateRoom = async (e?: Event) => {
   }
 
   try {
-    const room = await $fetch<Room>('/api/game/room', {
+    const room = await $fetch<Room>('/api/rooms', {
       method: 'POST',
       body: {
         name: gameState.newRoomName,
