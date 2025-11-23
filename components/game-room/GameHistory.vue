@@ -81,7 +81,7 @@ const groupedHistory = computed(() => {
 		<div class="p-4 border-b dark:border-neutral-700">
 			<h3 class="text-lg font-semibold text-muted">Game History</h3>
 		</div>
-		<div class="p-4 space-y-4 max-h-96 overflow-y-auto">
+		<div class="p-4 space-y-4 max-h-[75vh] overflow-y-auto">
 			<div v-if="loading" class="text-center py-4">
 				<span class="text-muted">Loading history...</span>
 			</div>

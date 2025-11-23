@@ -24,8 +24,8 @@ watch([() => me.value, () => room.value?.current_player, isMyTurn], ([meVal, cur
 }, { immediate: true });
 
 // Clear loading state when room updates with new AI response
-watch(() => room.value, (newRoom) => {
-  if (newRoom && sock.aiLoading.value && newRoom.last_ai_response) {
+watch(() => room.value, (newRoom, oldRoom) => {
+  if (newRoom && sock.aiLoading.value && newRoom.last_ai_response && !oldRoom?.last_ai_response) {
     sock.aiLoading.value = undefined;
   }
 });
