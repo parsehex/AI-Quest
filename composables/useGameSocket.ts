@@ -310,10 +310,6 @@ class GameClientManager {
 export function useGameSocket() {
 	const gameClient = GameClientManager.getInstance();
 
-	onBeforeUnmount(() => {
-		gameClient.cleanup();
-	});
-
 	return {
 		aiLoading: gameClient.aiLoading,
 

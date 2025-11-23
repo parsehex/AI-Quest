@@ -8,7 +8,7 @@ const props = defineProps<{
 
 const sock = useGameSocket();
 const { room, loading: roomLoading, refresh } = useThisRoom();
-const { me, players, loading: playersLoading } = useRoomPlayers();
+const { me, players, loading: playersLoading, refresh: refreshPlayers } = useRoomPlayers();
 const aiLoading = computed(() => sock.aiLoading.value || undefined);
 const isSpectator = computed(() => me.value?.is_spectator);
 const isMyTurn = computed(() => {
@@ -76,10 +76,12 @@ const handleRequestTurn = async () => {
   await refresh();
 };
 
-onBeforeUnmount(() => {
-  sock.leaveRoom();
-  sock.refreshRooms();
-});
+const { activeCharacter } = useCharacters();
+
+const handleJoin = async () => {
+  await sock.joinRoom(props.roomId, false, activeCharacter.value?.id);
+  await refreshPlayers();
+};
 
 const audioRef = ref<HTMLAudioElement>();
 const currentTTS = ref<string>();
@@ -115,7 +117,11 @@ watch(() => sock.thisRoom.value?.lastAiResponse?.tts, (newTTS) => {
           <Spinner />
           <p class="text-muted mt-2">Loading game state...</p>
         </div>
-        <div v-if="aiLoading" class="text-center flex flex-col items-center space-y-2">
+        <div v-else-if="!me && !isSpectator" class="text-center py-8 flex flex-col items-center justify-center h-full">
+          <p class="text-muted mb-4">You are viewing this room but have not yet joined.</p>
+          <UButton @click="handleJoin" size="lg" color="primary" icon="i-heroicons-user-plus">Join Game</UButton>
+        </div>
+        <div v-else-if="aiLoading" class="text-center flex flex-col items-center space-y-2">
           <Spinner :progress="aiLoading.progress" />
           <span class="text-muted">{{ aiLoading.message }}</span>
         </div>
